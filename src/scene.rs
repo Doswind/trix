@@ -2,7 +2,10 @@
 
 use crate::canvas::Canvas;
 use crate::cli::Charset;
-use crate::scenes::{DragonScene, FireScene, MapScene, MatrixScene, RainScene};
+use crate::scenes::{
+    BeamsScene, BlackHoleScene, BuddhaScene, DragonScene, FireScene, FireworksScene, GalaxyScene,
+    MapScene, MatrixScene, RainScene, SolarScene, TomJerryScene,
+};
 use crate::theme::{self, Theme};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -12,15 +15,29 @@ pub enum EffectId {
     Dragon,
     Map,
     Matrix,
+    BlackHole,
+    Beams,
+    Fireworks,
+    Solar,
+    Galaxy,
+    Buddha,
+    TomJerry,
 }
 
 impl EffectId {
-    pub const ALL: [EffectId; 5] = [
+    pub const ALL: [EffectId; 12] = [
         EffectId::Rain,
         EffectId::Fire,
         EffectId::Dragon,
         EffectId::Map,
         EffectId::Matrix,
+        EffectId::BlackHole,
+        EffectId::Beams,
+        EffectId::Fireworks,
+        EffectId::Solar,
+        EffectId::Galaxy,
+        EffectId::Buddha,
+        EffectId::TomJerry,
     ];
 
     pub fn key(self) -> &'static str {
@@ -30,6 +47,13 @@ impl EffectId {
             EffectId::Dragon => "dragon",
             EffectId::Map => "map",
             EffectId::Matrix => "matrix",
+            EffectId::BlackHole => "blackhole",
+            EffectId::Beams => "beams",
+            EffectId::Fireworks => "fireworks",
+            EffectId::Solar => "solar",
+            EffectId::Galaxy => "galaxy",
+            EffectId::Buddha => "buddha",
+            EffectId::TomJerry => "tomjerry",
         }
     }
 
@@ -39,7 +63,14 @@ impl EffectId {
             EffectId::Fire => "Burning flame",
             EffectId::Dragon => "Celestial dragon",
             EffectId::Map => "World map",
-            EffectId::Matrix => "NASA intrusion",
+            EffectId::Matrix => "NASA login",
+            EffectId::BlackHole => "Black hole",
+            EffectId::Beams => "Light beams",
+            EffectId::Fireworks => "Fireworks",
+            EffectId::Solar => "Solar system",
+            EffectId::Galaxy => "Milky Way",
+            EffectId::Buddha => "Radiant Buddha",
+            EffectId::TomJerry => "Tom & Jerry",
         }
     }
 
@@ -50,6 +81,13 @@ impl EffectId {
             EffectId::Dragon => "巨龙盘旋",
             EffectId::Map => "世界地图",
             EffectId::Matrix => "黑客帝国",
+            EffectId::BlackHole => "黑洞",
+            EffectId::Beams => "光束",
+            EffectId::Fireworks => "烟花",
+            EffectId::Solar => "太阳系",
+            EffectId::Galaxy => "满天星河",
+            EffectId::Buddha => "佛光普照",
+            EffectId::TomJerry => "猫和老鼠",
         }
     }
 
@@ -59,9 +97,18 @@ impl EffectId {
             "fire" | "flame" | "firestorm" => Some(EffectId::Fire),
             "dragon" | "long" | "coil" | "orbit" => Some(EffectId::Dragon),
             "map" | "world" | "earth" | "globe" | "worldmap" => Some(EffectId::Map),
-            "matrix" | "neo" | "digitalrain" | "hack" | "nasa" | "intrusion" => {
+            "matrix" | "neo" | "digitalrain" | "hack" | "nasa" | "intrusion" | "login" => {
                 Some(EffectId::Matrix)
             }
+            "blackhole" | "bh" | "sagittarius" | "singularity" | "eventhorizon" => {
+                Some(EffectId::BlackHole)
+            }
+            "beams" | "beam" | "lightbeams" | "lasers" | "laser" => Some(EffectId::Beams),
+            "fireworks" | "firework" | "pyro" | "firecracker" => Some(EffectId::Fireworks),
+            "solar" | "solarsystem" | "planets" | "orrery" => Some(EffectId::Solar),
+            "galaxy" | "milkyway" | "stars" | "starfield" | "milky" => Some(EffectId::Galaxy),
+            "buddha" | "fo" | "lotus" | "halo" | "amitabha" => Some(EffectId::Buddha),
+            "tomjerry" | "tomandjerry" | "tom" | "jerry" | "chase" => Some(EffectId::TomJerry),
             _ => None,
         }
     }
@@ -89,6 +136,13 @@ impl EffectId {
             EffectId::Dragon => "aurora",
             EffectId::Map => "ice",
             EffectId::Matrix => "matrix",
+            EffectId::BlackHole => "plasma",
+            EffectId::Beams => "neon",
+            EffectId::Fireworks => "plasma",
+            EffectId::Solar => "ice",
+            EffectId::Galaxy => "ice",
+            EffectId::Buddha => "gold",
+            EffectId::TomJerry => "neon",
         })
         .unwrap_or(&theme::THEMES[0])
     }
@@ -107,6 +161,7 @@ pub struct Frame<'a> {
     pub theme: &'a Theme,
     pub charset: Charset,
     pub seed: u64,
+    pub speed: f32,
 }
 
 pub trait Scene {
@@ -122,6 +177,13 @@ pub fn build(id: EffectId, seed: u64) -> Box<dyn Scene> {
         EffectId::Dragon => Box::new(DragonScene::new(seed)),
         EffectId::Map => Box::new(MapScene::new(seed)),
         EffectId::Matrix => Box::new(MatrixScene::new(seed)),
+        EffectId::BlackHole => Box::new(BlackHoleScene::new(seed)),
+        EffectId::Beams => Box::new(BeamsScene::new(seed)),
+        EffectId::Fireworks => Box::new(FireworksScene::new(seed)),
+        EffectId::Solar => Box::new(SolarScene::new(seed)),
+        EffectId::Galaxy => Box::new(GalaxyScene::new(seed)),
+        EffectId::Buddha => Box::new(BuddhaScene::new(seed)),
+        EffectId::TomJerry => Box::new(TomJerryScene::new(seed)),
     }
 }
 
@@ -156,6 +218,7 @@ mod tests {
                     theme,
                     charset: id.default_charset(),
                     seed: 7,
+                    speed: 1.0,
                 };
                 scene.update(&frame);
                 scene.draw(&mut canvas, &frame);
@@ -183,6 +246,7 @@ mod tests {
                 theme,
                 charset: id.default_charset(),
                 seed: 3,
+                speed: 1.0,
             };
             scene.update(&frame);
             scene.draw(&mut canvas, &frame);

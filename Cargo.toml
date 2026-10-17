@@ -1,9 +1,9 @@
 [package]
 name = "texiao"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 rust-version = "1.70"
-description = "Fast, low-footprint sci-fi ASCII terminal effects: code rain, fire, dragon, world map, matrix"
+description = "Fast, low-footprint sci-fi ASCII terminal effects: 12 animated scenes from code rain to black holes"
 license = "MIT"
 readme = "README.md"
 keywords = ["terminal", "ascii", "animation", "fire", "matrix"]

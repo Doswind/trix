@@ -112,6 +112,7 @@ fn snapshot(opts: &Options, path: &Path) -> i32 {
             theme,
             charset,
             seed,
+            speed: opts.speed,
         };
         scene.update(&frame);
     }
@@ -124,6 +125,7 @@ fn snapshot(opts: &Options, path: &Path) -> i32 {
         theme,
         charset,
         seed,
+        speed: opts.speed,
     };
     canvas.clear();
     scene.draw(&mut canvas, &frame);
@@ -190,6 +192,7 @@ fn benchmark(opts: &Options) -> i32 {
             theme,
             charset,
             seed,
+            speed: opts.speed,
         };
         scene.update(&frame);
         canvas.clear();
@@ -210,6 +213,7 @@ fn benchmark(opts: &Options) -> i32 {
             theme,
             charset,
             seed,
+            speed: opts.speed,
         };
         let start = Instant::now();
         scene.update(&frame);
@@ -369,8 +373,13 @@ fn interactive(opts: Options) -> i32 {
                     t = 0.0;
                     flash = 0.3;
                 }
-                Key::Char(c @ '1'..='5') => {
-                    let idx = c as usize - '1' as usize;
+                Key::Char(c @ ('1'..='9' | '0' | '[' | ']')) => {
+                    let idx = match c {
+                        '0' => 9,
+                        '[' => 10,
+                        ']' => 11,
+                        _ => c as usize - '1' as usize,
+                    };
                     let target = EffectId::from_index(idx);
                     switch_effect(
                         &mut id,
@@ -410,6 +419,7 @@ fn interactive(opts: Options) -> i32 {
             theme: current_theme,
             charset,
             seed,
+            speed,
         };
 
         let render_start = Instant::now();
@@ -623,7 +633,7 @@ fn draw_help(
             },
         ),
         ("n / p", "next / previous effect".into()),
-        ("1 - 5", "jump to effect".into()),
+        ("1-9,0,[ ]", "jump to effect".into()),
         ("t", "cycle theme".into()),
         ("+ / -", format!("speed  {:.2}x", speed)),
         ("r", "restart current effect".into()),

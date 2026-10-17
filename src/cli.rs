@@ -312,10 +312,17 @@ USAGE
 
 EFFECTS
   rain      代码雨      cyan code rain with falling source tokens
-  fire      燃烧火焰    heat-diffusion fire with real flame colors
+  fire      燃烧火焰    multiple slender flame piles
   dragon    巨龙盘旋    Chinese celestial dragon flying across the sky
   map       世界地图    holographic Earth with live network arcs
-  matrix    黑客帝国    horizontal NASA/JPL intrusion console
+  matrix    黑客帝国    NASA backend login screen with a large logo
+  blackhole 黑洞        event horizon devouring stars
+  beams     光束        irregular horizontal neon light beams
+  fireworks 烟花        layered fireworks over a neon skyline
+  solar     太阳系      Sun + nine planets on a single line
+  galaxy    满天星河    full-screen Milky Way starfield
+  buddha    佛光普照    glowing Buddha, halo and lotus mandala
+  tomjerry  猫和老鼠    Tom chasing Jerry through a space station
 
 OPTIONS
   -e, --effect <name>     Effect to run (same as positional argument)
@@ -342,7 +349,7 @@ THEMES
 
 KEYS (interactive)
   q / Esc   quit            space   pause
-  n / p     next/prev      1-5     jump to effect
+  n / p     next/prev      1-9,0,[ ]  jump to effect
   t         next theme     + / -   speed
   r         restart        i       status line
   h         help overlay

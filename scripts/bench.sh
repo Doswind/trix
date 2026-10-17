@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 cargo build --release
 SIZE="${SIZE:-160x48}"
 FRAMES="${FRAMES:-300}"
-for effect in rain fire dragon map matrix; do
+for effect in rain fire dragon map matrix blackhole beams fireworks solar galaxy buddha tomjerry; do
     echo "================ $effect ================"
     ./target/release/texiao "$effect" --bench --size "$SIZE" --frames "$FRAMES" --fps 30
 done

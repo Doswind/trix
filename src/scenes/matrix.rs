@@ -91,12 +91,12 @@ const KANA_TOKENS: &[&str] = &[
 const STREAM_GLYPHS: &[u8] = b"0123456789ABCDEF#$%&*+=<>/\\|;:";
 
 const LOGS: &[(&str, f64)] = &[
-    ("target acquired: NASA / JPL", 0.6),
-    ("handshake TLS 1.3 ......... OK", 2.0),
-    ("exploit CVE-2026-1337 ..... OK", 4.0),
-    ("firewall bypass ........... 64%", 6.0),
+    ("verify credentials ......... OK", 0.6),
+    ("2FA challenge .............. OK", 2.0),
+    ("certificate chain .......... OK", 4.0),
+    ("firewall bypass ............ 64%", 6.0),
     ("root shell established", 8.5),
-    ("downlink telemetry ........ 81%", 11.0),
+    ("decrypting credentials ..... 81%", 11.0),
     ("ACCESS GRANTED", 14.0),
 ];
 
@@ -128,6 +128,30 @@ struct Panel {
 }
 
 impl Panel {
+    fn contains(&self, x: isize, y: isize) -> bool {
+        x >= self.x && x < self.x + self.w && y >= self.y && y < self.y + self.h
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum LogoKind {
+    Full,
+    Compact,
+    Tiny,
+}
+
+#[derive(Clone, Copy)]
+struct Logo {
+    x: isize,
+    y: isize,
+    w: isize,
+    h: isize,
+    sx: isize,
+    sy: isize,
+    kind: LogoKind,
+}
+
+impl Logo {
     fn contains(&self, x: isize, y: isize) -> bool {
         x >= self.x && x < self.x + self.w && y >= self.y && y < self.y + self.h
     }
@@ -312,6 +336,7 @@ impl Scene for MatrixScene {
         let w = self.w;
         let h = self.h;
         let panel = panel_rect(w, h);
+        let logo = logo_rect(w, h);
         let glitching = self.glitch_t > 0.0;
         let phase = self.phase(f.t);
         let progress = self.progress(f.t);
@@ -325,7 +350,9 @@ impl Scene for MatrixScene {
             let twinkle = 0.82 + 0.18 * (t * 2.3 + y as f32 * 0.7).sin();
             let col = theme.c(2).scale(row.dim * twinkle);
             for x in 0..w {
-                if panel.is_some_and(|p| p.contains(x as isize, y as isize)) {
+                if panel.is_some_and(|p| p.contains(x as isize, y as isize))
+                    || logo.contains(x as isize, y as isize)
+                {
                     continue;
                 }
                 let ch = row.tape[(start + x) % row.tape.len()];
@@ -342,7 +369,9 @@ impl Scene for MatrixScene {
                     if x < 0 || x >= w as isize {
                         continue;
                     }
-                    if panel.is_some_and(|p| p.contains(x, y as isize)) {
+                    if panel.is_some_and(|p| p.contains(x, y as isize))
+                        || logo.contains(x, y as isize)
+                    {
                         continue;
                     }
                     let idx = (stream.glyph + i * 7) % STREAM_GLYPHS.len();
@@ -375,7 +404,9 @@ impl Scene for MatrixScene {
         let scan_y = ((t * 3.0) as usize) % h.max(1);
         if scan_y > 0 && scan_y + 1 < h {
             for x in (0..w).step_by(2) {
-                if panel.is_some_and(|p| p.contains(x as isize, scan_y as isize)) {
+                if panel.is_some_and(|p| p.contains(x as isize, scan_y as isize))
+                    || logo.contains(x as isize, scan_y as isize)
+                {
                     continue;
                 }
                 if hash2(x as i64, scan_y as i64, self.seed) & 3 == 0 {
@@ -391,7 +422,9 @@ impl Scene for MatrixScene {
                     continue;
                 }
                 for x in (0..w).step_by(2) {
-                    if panel.is_some_and(|p| p.contains(x as isize, y as isize)) {
+                    if panel.is_some_and(|p| p.contains(x as isize, y as isize))
+                        || logo.contains(x as isize, y as isize)
+                    {
                         continue;
                     }
                     let hsh = hash2(x as i64, y as i64 ^ 0x51, self.seed ^ 7);
@@ -412,6 +445,8 @@ impl Scene for MatrixScene {
             }
         }
 
+        self.draw_nasa_logo(canvas, theme, &logo, t);
+
         if let Some(p) = panel {
             self.draw_console(canvas, theme, p, t, phase, progress, glitching);
         }
@@ -420,9 +455,9 @@ impl Scene for MatrixScene {
         canvas.clear_rect(0, 0, w as isize, 1);
         canvas.clear_rect(0, h as isize - 1, w as isize, 1);
         let title = if w >= 70 {
-            " DEEP SPACE NETWORK // UNAUTHORIZED ACCESS "
+            " NASA SECURE MAINFRAME // AUTHORIZED PERSONNEL ONLY "
         } else {
-            " NASA INTRUSION "
+            " NASA LOGIN "
         };
         canvas.put_str_gradient(0, 0, title, &[theme.c(2), theme.c(3), theme.hot()]);
         let right = "SESSION 0x7F3A-9C2B";
@@ -432,11 +467,14 @@ impl Scene for MatrixScene {
         }
 
         let status = if glitching {
-            " [ !! TRACE DETECTED !! ]  SIGNAL LOST  [ RECONNECTING ] "
+            " [ !! TRACE DETECTED !! ]  SIGNAL LOST  [ RECONNECTING ] ".to_string()
         } else if progress >= 100.0 {
-            " [ ACCESS GRANTED ]  UPLINK 98%  TRACE 00:00:00  [ NASA-JPL ] "
+            " [ ACCESS GRANTED ]  SESSION 0x7F3A-9C2B  [ NASA-JPL ] ".to_string()
         } else {
-            " [ LINK SECURE ]  UPLINK 98%  TRACE 00:00:00  [ NASA-JPL ] "
+            format!(
+                " [ SECURE LOGIN ]  AUTH {:3.0}%  TRACE 00:00:00  [ NASA-JPL ] ",
+                progress
+            )
         };
         let sc = if glitching {
             Rgb::hex(0xff5a5a)
@@ -445,11 +483,86 @@ impl Scene for MatrixScene {
         } else {
             theme.c(2)
         };
-        canvas.put_str(1, h as isize - 1, status, sc);
+        canvas.put_str(1, h as isize - 1, &status, sc);
     }
 }
 
 impl MatrixScene {
+    fn draw_nasa_logo(&self, canvas: &mut Canvas, theme: &Theme, logo: &Logo, t: f32) {
+        let full = [
+            "#   # ##### ##### #####",
+            "##  # #   # #     #   #",
+            "# # # ##### ##### #####",
+            "#  ## #   #     # #   #",
+            "#   # #   # ##### #   #",
+        ];
+        let compact = ["#  # ### ### ###", "## # # # #   # #", "# ## ### ### ###"];
+        canvas.clear_rect(logo.x - 2, logo.y - 1, logo.w + 4, logo.h + 2);
+        if logo.kind == LogoKind::Tiny {
+            let text = "N A S A";
+            for (i, ch) in text.chars().enumerate() {
+                if ch == ' ' {
+                    continue;
+                }
+                let x = logo.x + i as isize * 2;
+                for k in 0..2 {
+                    let sweep = ((t * 1.6 - i as f32 * 0.12).sin() * 0.5 + 0.5).powf(2.0);
+                    let col = Rgb::hex(0xffffff)
+                        .lerp(Rgb::hex(0x38bdf8), 0.18 + sweep * 0.32)
+                        .lerp(Rgb::hex(0xef4444), sweep * 0.16);
+                    canvas.set(x + k, logo.y, ch, col);
+                }
+            }
+            return;
+        }
+        let (art, rows) = if logo.kind == LogoKind::Full {
+            (&full[..], 5usize)
+        } else {
+            (&compact[..], 3usize)
+        };
+        let white = Rgb::hex(0xffffff);
+        let blue = Rgb::hex(0x38bdf8);
+        let red = Rgb::hex(0xef4444);
+        for (r, line) in art.iter().enumerate().take(rows) {
+            for (c, ch) in line.chars().enumerate() {
+                if ch != '#' {
+                    continue;
+                }
+                let sweep =
+                    ((t * 1.7 - c as f32 * 0.10 + r as f32 * 0.05).sin() * 0.5 + 0.5).powf(2.0);
+                let base = white
+                    .lerp(blue, 0.10 + sweep * 0.28)
+                    .lerp(red, sweep * 0.14);
+                let base = base.scale(0.84 + 0.16 * (t * 3.0 + c as f32 * 0.1).sin().abs());
+                for sy in 0..logo.sy {
+                    for sx in 0..logo.sx {
+                        let x = logo.x + c as isize * logo.sx + sx;
+                        let y = logo.y + r as isize * logo.sy + sy;
+                        canvas.set(x, y, '#', base);
+                        if (c + r) % 2 == 0 {
+                            canvas.add_light(x, y, base, 0.16, '.');
+                        }
+                    }
+                }
+            }
+        }
+        if logo.kind == LogoKind::Full {
+            let sub = "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION";
+            if (logo.w as usize) >= 20 && (self.w as isize) > 20 {
+                let sy = logo.y + logo.h;
+                canvas.clear_rect(0, sy, self.w as isize, 1);
+                let sx = ((self.w as isize - sub.len() as isize) / 2).max(1);
+                canvas.put_str_gradient(
+                    sx,
+                    sy,
+                    sub,
+                    &[Rgb::hex(0x38bdf8), Rgb::hex(0xe2e8f0), Rgb::hex(0xef4444)],
+                );
+            }
+        }
+        let _ = theme;
+    }
+
     #[allow(clippy::too_many_arguments)]
     fn draw_console(
         &self,
@@ -468,7 +581,7 @@ impl MatrixScene {
         };
         canvas.clear_rect(p.x, p.y, p.w, p.h);
         canvas.rect(p.x, p.y, p.w, p.h, border);
-        let title = " INTRUSION CONSOLE // NASA-JPL ";
+        let title = " NASA BACKEND // SECURE LOGIN ";
         canvas.put_str(p.x + 1, p.y, title, theme.hot());
         let right = "SESSION 0x7F3A-9C2B ";
         let rx = p.x + p.w - right.len() as isize - 2;
@@ -487,16 +600,21 @@ impl MatrixScene {
         let value = theme.c(3);
         let dim = theme.c(1).scale(1.8);
 
-        // Target block.
-        canvas.put_str(lx, top, "TARGET", label);
-        canvas.put_str(lx + 9, top, "NASA / JET PROPULSION LAB", value);
-        canvas.put_str(lx, top + 1, "NODE", label);
-        canvas.put_str(lx + 9, top + 1, "dsn.jpl.nasa.gov:443", value);
-        canvas.put_str(lx, top + 2, "CHANNEL", label);
-        canvas.put_str(lx + 9, top + 2, "0x7F3A-9C2B / TLS 1.3", value);
+        // Backend login fields.
+        canvas.put_str(lx, top, "OPERATOR", label);
+        canvas.put_str(lx + 10, top, "root@dsn.jpl.nasa.gov", value);
+        canvas.put_str(lx, top + 1, "PASSWORD", label);
+        canvas.put_str(
+            lx + 10,
+            top + 1,
+            "************************",
+            theme.c(1).scale(1.3),
+        );
+        canvas.put_str(lx, top + 2, "2FA", label);
+        canvas.put_str(lx + 10, top + 2, "739 204 // VERIFIED", value);
 
         let bar_y = top + 4;
-        self.draw_bar(canvas, theme, lx, bar_y, "FIREWALL", progress, 24);
+        self.draw_bar(canvas, theme, lx, bar_y, "AUTH", progress, 24);
         self.draw_bar(
             canvas,
             theme,
@@ -551,9 +669,9 @@ impl MatrixScene {
             let (cmd, col) = if progress >= 100.0 {
                 ("ACCESS GRANTED // root@dsn:~#", theme.hot())
             } else if phase > 6.0 {
-                ("download /deep-space/telemetry --all", theme.c(3))
+                ("unlock /nasa/backend --force", theme.c(3))
             } else {
-                ("ssh root@dsn.jpl.nasa.gov", theme.c(3))
+                ("login root@nasa.gov", theme.c(3))
             };
             canvas.put_str(lx, prompt_y, ">", theme.c(2));
             canvas.put_str(lx + 2, prompt_y, cmd, col);
@@ -563,7 +681,7 @@ impl MatrixScene {
         }
 
         // Right-hand radar / uplink panel.
-        canvas.put_str(rxx, top, "DSN UPLINK", label);
+        canvas.put_str(rxx, top, "NASA SSO / DSN", label);
         let info_y = if p.h >= 20 {
             self.draw_radar(canvas, theme, rxx, top + 2, t, p);
             p.y + p.h - 6
@@ -670,18 +788,93 @@ impl MatrixScene {
     }
 }
 
+fn logo_kind(w: usize, h: usize) -> LogoKind {
+    if w >= 96 && h >= 30 {
+        LogoKind::Full
+    } else if w >= 70 && h >= 24 {
+        LogoKind::Compact
+    } else {
+        LogoKind::Tiny
+    }
+}
+
+fn full_logo_sy(h: usize) -> isize {
+    if h >= 44 {
+        2
+    } else {
+        1
+    }
+}
+
+fn logo_rect(w: usize, h: usize) -> Logo {
+    let kind = logo_kind(w, h);
+    match kind {
+        LogoKind::Full => {
+            let sx = if w >= 140 { 3 } else { 2 };
+            let sy = full_logo_sy(h);
+            let lw = 23 * sx;
+            let lh = 5 * sy;
+            Logo {
+                x: (w as isize - lw) / 2,
+                y: 2,
+                w: lw,
+                h: lh,
+                sx,
+                sy,
+                kind,
+            }
+        }
+        LogoKind::Compact => {
+            let sx = 2;
+            let lw = 23 * sx;
+            Logo {
+                x: (w as isize - lw) / 2,
+                y: 1,
+                w: lw,
+                h: 3,
+                sx,
+                sy: 1,
+                kind,
+            }
+        }
+        LogoKind::Tiny => {
+            let text = "N A S A";
+            let lw = text.len() as isize * 2;
+            Logo {
+                x: (w as isize - lw) / 2,
+                y: 1,
+                w: lw,
+                h: 1,
+                sx: 2,
+                sy: 1,
+                kind,
+            }
+        }
+    }
+}
+
 fn panel_rect(w: usize, h: usize) -> Option<Panel> {
-    if w < 76 || h < 22 {
+    if w < 70 || h < 22 {
         return None;
     }
+    let kind = logo_kind(w, h);
+    let logo_h = match kind {
+        LogoKind::Full => 5 * full_logo_sy(h),
+        LogoKind::Compact => 3,
+        LogoKind::Tiny => 1,
+    };
+    let y = match kind {
+        LogoKind::Full => 2 + logo_h + 1,
+        LogoKind::Compact => 4,
+        LogoKind::Tiny => 3,
+    };
     let bw = (w as isize - 10).min(84);
-    let bh = (h as isize - 8).clamp(18, 20);
-    if bw < 66 || bh < 18 {
+    let bh = (h as isize - y - 2).clamp(14, 20);
+    if bw < 60 || bh < 14 {
         return None;
     }
     let x = (w as isize - bw) / 2;
-    let y = (h as isize - bh) / 2;
-    let left = (bw * 62 / 100).max(36);
+    let left = (bw * 62 / 100).max(34);
     Some(Panel {
         x,
         y,
@@ -726,6 +919,7 @@ mod tests {
                 theme,
                 charset: id.default_charset(),
                 seed: 7,
+                speed: 1.0,
             };
             scene.update(&frame);
             scene.draw(&mut canvas, &frame);
