@@ -9,6 +9,12 @@ use crate::theme;
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PlaylistMode {
+    Cycle,
+    Random,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Charset {
     Kana,
     Ascii,
@@ -29,6 +35,8 @@ impl Charset {
 #[derive(Clone, Debug)]
 pub struct Options {
     pub effect: Option<String>,
+    pub playlist: PlaylistMode,
+    pub switch_secs: f32,
     pub fps: u32,
     pub speed: f32,
     pub theme: Option<String>,
@@ -43,6 +51,11 @@ pub struct Options {
     pub jump: bool,
     pub seed_count: u32,
     pub seed_speed: f32,
+    pub street_vertical: bool,
+    pub petal_count: u32,
+    pub petal_speed: f32,
+    pub tornado_count: u32,
+    pub tornado_speed: f32,
     pub seed: Option<u64>,
     pub size: Option<(usize, usize)>,
     pub no_alt: bool,
@@ -55,6 +68,8 @@ impl Default for Options {
     fn default() -> Self {
         Options {
             effect: None,
+            playlist: PlaylistMode::Cycle,
+            switch_secs: 12.0,
             fps: 30,
             speed: 1.0,
             theme: None,
@@ -69,6 +84,11 @@ impl Default for Options {
             jump: false,
             seed_count: 90,
             seed_speed: 1.0,
+            street_vertical: false,
+            petal_count: 80,
+            petal_speed: 1.0,
+            tornado_count: 3,
+            tornado_speed: 1.0,
             seed: None,
             size: None,
             no_alt: false,
@@ -80,6 +100,7 @@ impl Default for Options {
 }
 
 #[derive(Clone, Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum Parsed {
     Run(Options),
     List,
@@ -149,9 +170,46 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                     let v = take_value(args, &mut i, inline, "--seed-speed")?;
                     opts.seed_speed = parse_num(&v, "--seed-speed")?;
                 }
+                "street" => {
+                    let v = take_value(args, &mut i, inline, "--street")?;
+                    opts.street_vertical = match v.to_ascii_lowercase().as_str() {
+                        "horizontal" | "h" | "horiz" => false,
+                        "vertical" | "v" | "vert" => true,
+                        _ => return Err("--street must be 'horizontal' or 'vertical'".into()),
+                    };
+                }
+                "vertical" => opts.street_vertical = true,
+                "petal-count" | "petals" => {
+                    let v = take_value(args, &mut i, inline, "--petal-count")?;
+                    opts.petal_count = parse_num(&v, "--petal-count")?;
+                }
+                "petal-speed" | "fall-speed" => {
+                    let v = take_value(args, &mut i, inline, "--petal-speed")?;
+                    opts.petal_speed = parse_num(&v, "--petal-speed")?;
+                }
+                "tornado-count" => {
+                    let v = take_value(args, &mut i, inline, "--tornado-count")?;
+                    opts.tornado_count = parse_num(&v, "--tornado-count")?;
+                }
+                "tornado-speed" => {
+                    let v = take_value(args, &mut i, inline, "--tornado-speed")?;
+                    opts.tornado_speed = parse_num(&v, "--tornado-speed")?;
+                }
                 "beam-speed" => {
                     let v = take_value(args, &mut i, inline, "--beam-speed")?;
                     opts.beam_speed = parse_num(&v, "--beam-speed")?;
+                }
+                "playlist" | "mode" | "shuffle" => {
+                    let v = take_value(args, &mut i, inline, "--playlist")?;
+                    opts.playlist = match v.to_ascii_lowercase().as_str() {
+                        "cycle" | "loop" | "sequence" => PlaylistMode::Cycle,
+                        "random" | "shuffle" | "rand" => PlaylistMode::Random,
+                        _ => return Err("--playlist must be 'cycle' or 'random'".into()),
+                    };
+                }
+                "switch" | "interval" => {
+                    let v = take_value(args, &mut i, inline, "--switch")?;
+                    opts.switch_secs = parse_num(&v, "--switch")?;
                 }
                 "fps" => {
                     let v = take_value(args, &mut i, inline, "--fps")?;
@@ -365,6 +423,21 @@ fn validate(opts: &mut Options) -> Result<(), String> {
     if !opts.seed_speed.is_finite() || !(0.05..=4.0).contains(&opts.seed_speed) {
         return Err("--seed-speed must be between 0.05 and 4.0".into());
     }
+    if !opts.switch_secs.is_finite() || !(1.0..=600.0).contains(&opts.switch_secs) {
+        return Err("--switch must be between 1 and 600 seconds".into());
+    }
+    if !(1..=300).contains(&opts.petal_count) {
+        return Err("--petal-count must be between 1 and 300".into());
+    }
+    if !opts.petal_speed.is_finite() || !(0.05..=4.0).contains(&opts.petal_speed) {
+        return Err("--petal-speed must be between 0.05 and 4.0".into());
+    }
+    if !(1..=8).contains(&opts.tornado_count) {
+        return Err("--tornado-count must be between 1 and 8".into());
+    }
+    if !opts.tornado_speed.is_finite() || !(0.05..=4.0).contains(&opts.tornado_speed) {
+        return Err("--tornado-speed must be between 0.05 and 4.0".into());
+    }
     Ok(())
 }
 
@@ -376,7 +449,7 @@ pub fn help_text() -> String {
   Low-footprint, sci-fi ASCII effects for your terminal.
 
 USAGE
-  trix <effect> [options]
+  trix [effect] [options]
   trix --list
   trix <effect> --snapshot out.ans --size 120x36 --frames 180
 
@@ -396,14 +469,24 @@ EFFECTS
   mario     超级马里奥  mushroom-bumping platformer (Unicode / --ascii)
   ecg       心率跳动    glowing ECG monitor (Unicode / --ascii)
   dandelion 蒲公英      blooming dandelions with drifting seeds
+  fish      鱼缸        colorful aquarium fish in every direction
+  landscape 五光十色    mountains, lake, boat, geese and jungle
+  shanghai  东方明珠    Shanghai Bund and Oriental Pearl (ASCII default)
+  tiananmen 光芒万丈    Tiananmen gate radiating light
+  traffic   车水马龙    city street with cars; --street horizontal|vertical
+  fairy     仙女散花    flying fairy scattering petals
+  tornado   龙卷风      one or more tornadoes crossing left to right
+  storm     电闪雷鸣    rain, clouds and full-screen lightning flashes
 
 OPTIONS
-  -e, --effect <name>     Effect to run (same as positional argument)
+  -e, --effect <name>     Effect to run; omit to loop all effects
+      --playlist <mode>   cycle | random (default: cycle)  [no effect]
+      --switch <secs>     seconds per effect in playlist   [default: 12]
   -f, --fps <1-240>       Target frame rate                    [default: 30]
   -s, --speed <0.05-8>    Animation speed multiplier           [default: 1.0]
       --chase-speed <f>   Alias of --speed (Tom & Jerry chase)
   -t, --theme <name>      Color theme, see below               [effect default]
-      --charset <mode>    kana | ascii | unicode              [matrix/mario/ecg/dandelion: unicode]
+      --charset <mode>    kana | ascii | unicode              [see effect defaults]
       --unicode           Force Unicode single-cell glyphs
       --ascii             Force ASCII fallback
       --color <mode>      auto | truecolor | 256 | 16 | mono   [default: auto]
@@ -414,6 +497,11 @@ OPTIONS
       --beam-speed <f>    beams horizontal speed               [default: 1.0]
       --seed-count <n>    dandelion drifting seeds            [default: 90]
       --seed-speed <f>    dandelion seed drift speed          [default: 1.0]
+      --street <dir>      traffic street: horizontal|vertical [default: horizontal]
+      --petal-count <n>   fairy falling petals                [default: 80]
+      --petal-speed <f>   fairy petal fall speed              [default: 1.0]
+      --tornado-count <n> tornado count                        [default: 3]
+      --tornado-speed <f> tornado travel speed                 [default: 1.0]
       --jump              Tom & Jerry jumps (default: off)
       --no-jump           disable Tom & Jerry jumps
       --seed <u64>        Deterministic random seed
@@ -434,13 +522,17 @@ THEMES
 
 KEYS (interactive)
   q / Esc   quit            space   pause
-  n / p     next/prev      1-9,0,[ ]  first 12 effects
+  n / p     next/prev      1-9,0,[ ]  first 12 effects; m/e/d more
   m/e/d     Mario/ECG/Dandelion
+  f/l/b/j   Fish/Landscape/Bund/Gate
+  c/x/z/k   Traffic/Fairy/Tornado/Storm
   t         next theme     + / -   speed
   r         restart        i       status line
   h         help overlay
 
 EXAMPLES
+  trix
+  trix --playlist random --switch 8
   trix rain
   trix fire --fps 60 --theme ember
   trix dragon -f 45 -t gold
@@ -449,6 +541,9 @@ EXAMPLES
   trix map --snapshot earth.ans --size 120x36 --frames 150
   trix mario --ascii
   trix dandelion --seed-count 180 --seed-speed 1.4
+  trix traffic --street vertical
+  trix fairy --petal-count 160 --petal-speed 1.5
+  trix tornado --tornado-count 5 --tornado-speed 1.6
 "#,
         VERSION = VERSION,
         themes = theme::THEMES
@@ -516,6 +611,31 @@ mod tests {
         assert!((o.seed_speed - 1.4).abs() < f32::EPSILON);
         assert!(o.jump);
         assert_eq!(o.charset, Some(Charset::Unicode));
+    }
+
+    #[test]
+    fn parses_playlist_and_street() {
+        let Parsed::Run(o) = parse_args(&args(
+            "--playlist random --switch 8 --street vertical --petal-count 150 --petal-speed 1.5 --tornado-count 5 --tornado-speed 1.8",
+        ))
+        .unwrap()
+        else {
+            panic!()
+        };
+        assert_eq!(o.playlist, PlaylistMode::Random);
+        assert!((o.switch_secs - 8.0).abs() < f32::EPSILON);
+        assert!(o.street_vertical);
+        assert_eq!(o.petal_count, 150);
+        assert_eq!(o.tornado_count, 5);
+    }
+
+    #[test]
+    fn rejects_bad_playlist_values() {
+        assert!(parse_args(&args("--playlist sideways")).is_err());
+        assert!(parse_args(&args("--switch 0")).is_err());
+        assert!(parse_args(&args("traffic --street diagonal")).is_err());
+        assert!(parse_args(&args("fairy --petal-count 0")).is_err());
+        assert!(parse_args(&args("tornado --tornado-count 9")).is_err());
     }
 
     #[test]

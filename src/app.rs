@@ -5,7 +5,7 @@ use std::path::Path;
 use std::time::{Duration, Instant};
 
 use crate::canvas::Canvas;
-use crate::cli::{self, Options, Parsed};
+use crate::cli::{self, Options, Parsed, PlaylistMode};
 use crate::color::ColorMode;
 use crate::rng::Rng;
 use crate::scene::{self, EffectId, Frame, Scene, Tune};
@@ -90,6 +90,11 @@ fn tune_for(opts: &Options) -> Tune {
         jump: opts.jump,
         seed_count: opts.seed_count,
         seed_speed: opts.seed_speed,
+        street_vertical: opts.street_vertical,
+        petal_count: opts.petal_count,
+        petal_speed: opts.petal_speed,
+        tornado_count: opts.tornado_count,
+        tornado_speed: opts.tornado_speed,
     }
 }
 
@@ -270,11 +275,21 @@ fn benchmark(opts: &Options) -> i32 {
 }
 
 fn interactive(opts: Options) -> i32 {
-    let (mut id, mut seed) = match resolve_effect(&opts, false) {
-        Ok(v) => v,
-        Err(e) => {
-            eprintln!("trix: {e}");
-            return 2;
+    let playlist = opts.effect.is_none();
+    let (mut id, mut seed) = if playlist {
+        let start = if opts.playlist == PlaylistMode::Random {
+            Rng::from_entropy().below(EffectId::ALL.len())
+        } else {
+            0
+        };
+        (EffectId::from_index(start), Rng::from_entropy().next_u64())
+    } else {
+        match resolve_effect(&opts, false) {
+            Ok(v) => v,
+            Err(e) => {
+                eprintln!("trix: {e}");
+                return 2;
+            }
         }
     };
     let mut explicit_theme = opts.theme.is_some();
@@ -310,6 +325,7 @@ fn interactive(opts: Options) -> i32 {
     let mut fps_smooth = opts.fps as f32;
     let mut frame_ms = 0.0f32;
     let hint_until = 6.0f32;
+    let mut auto_clock = 0.0f32;
 
     loop {
         let now = Instant::now();
@@ -368,6 +384,7 @@ fn interactive(opts: Options) -> i32 {
                         w,
                         h,
                     );
+                    auto_clock = 0.0;
                 }
                 Key::Char('p') | Key::Left | Key::Up => {
                     let target = id.prev();
@@ -385,6 +402,7 @@ fn interactive(opts: Options) -> i32 {
                         w,
                         h,
                     );
+                    auto_clock = 0.0;
                 }
                 Key::Char('r') => {
                     seed = Rng::from_entropy().next_u64();
@@ -392,8 +410,25 @@ fn interactive(opts: Options) -> i32 {
                     scene.resize(w, h);
                     t = 0.0;
                     flash = 0.3;
+                    auto_clock = 0.0;
                 }
-                Key::Char(c @ ('1'..='9' | '0' | '[' | ']' | 'm' | 'e' | 'd')) => {
+                Key::Char(
+                    c @ ('1'..='9'
+                    | '0'
+                    | '['
+                    | ']'
+                    | 'm'
+                    | 'e'
+                    | 'd'
+                    | 'f'
+                    | 'l'
+                    | 'b'
+                    | 'j'
+                    | 'c'
+                    | 'x'
+                    | 'z'
+                    | 'k'),
+                ) => {
                     let idx = match c {
                         '0' => 9,
                         '[' => 10,
@@ -401,6 +436,14 @@ fn interactive(opts: Options) -> i32 {
                         'm' => 12,
                         'e' => 13,
                         'd' => 14,
+                        'f' => 15,
+                        'l' => 16,
+                        'b' => 17,
+                        'j' => 18,
+                        'c' => 19,
+                        'x' => 20,
+                        'z' => 21,
+                        'k' => 22,
                         _ => c as usize - '1' as usize,
                     };
                     let target = EffectId::from_index(idx);
@@ -418,6 +461,7 @@ fn interactive(opts: Options) -> i32 {
                         w,
                         h,
                     );
+                    auto_clock = 0.0;
                 }
                 _ => {}
             }
@@ -427,6 +471,41 @@ fn interactive(opts: Options) -> i32 {
         }
         if term::quit_requested() {
             return 0;
+        }
+
+        if playlist && !paused {
+            auto_clock += real_dt;
+            if auto_clock >= opts.switch_secs {
+                auto_clock = 0.0;
+                let target = if opts.playlist == PlaylistMode::Random {
+                    let mut rng = Rng::from_entropy();
+                    let mut target = id;
+                    for _ in 0..8 {
+                        let cand = EffectId::from_index(rng.below(EffectId::ALL.len()));
+                        if cand != id {
+                            target = cand;
+                            break;
+                        }
+                    }
+                    target
+                } else {
+                    id.next()
+                };
+                switch_effect(
+                    &mut id,
+                    &mut seed,
+                    target,
+                    &mut scene,
+                    &mut t,
+                    &mut flash,
+                    &mut explicit_theme,
+                    &mut current_theme,
+                    &mut charset,
+                    explicit_charset,
+                    w,
+                    h,
+                );
+            }
         }
 
         if !paused {
@@ -456,6 +535,9 @@ fn interactive(opts: Options) -> i32 {
         let elapsed = started.elapsed().as_secs_f32();
         if !show_help && elapsed < hint_until {
             draw_hint(&mut canvas, &frame, elapsed, hint_until);
+        }
+        if playlist && !show_help {
+            draw_playlist(&mut canvas, &frame, id, opts.switch_secs, auto_clock);
         }
         if show_help {
             draw_help(&mut canvas, &frame, id, current_theme, speed, paused);
@@ -537,6 +619,25 @@ fn switch_effect(
 fn centered_x(w: usize, text: &str) -> isize {
     let tw = text.chars().count();
     ((w as isize - tw as isize) / 2).max(0)
+}
+
+fn draw_playlist(canvas: &mut Canvas, frame: &Frame, id: EffectId, switch_secs: f32, elapsed: f32) {
+    if frame.h < 3 || frame.w < 36 {
+        return;
+    }
+    let total = EffectId::ALL.len();
+    let left = (switch_secs - elapsed).max(0.0) as u32;
+    let text = format!(
+        "PLAYLIST {:02}/{}  {}  next {}s",
+        id.index() + 1,
+        total,
+        id.title_en(),
+        left
+    );
+    let y = frame.h as isize - 1;
+    let x = (frame.w as isize - text.chars().count() as isize - 1).max(1);
+    canvas.clear_rect(x - 1, y, frame.w as isize - x + 1, 1);
+    canvas.put_str(x, y, &text, frame.theme.c(2).scale(0.55));
 }
 
 fn draw_hint(canvas: &mut Canvas, frame: &Frame, elapsed: f32, hint_until: f32) {
@@ -638,7 +739,7 @@ fn draw_help(
         canvas.put_str(0, 0, " h/q close help  n/p next effect ", theme.c(2));
         return;
     }
-    let bw = 62.min(w - 4).max(32);
+    let bw = 76.min(w - 4).max(32);
     let bh = 20.min(h - 2).max(11);
     let x = (w - bw) / 2;
     let y = (h - bh) / 2;
@@ -659,6 +760,8 @@ fn draw_help(
         ("n / p", "next / previous effect".into()),
         ("1-9,0,[ ]", "first 12 effects".into()),
         ("m / e / d", "Mario / ECG / Dandelion".into()),
+        ("f l b j", "Fish / Landscape / Bund / Gate".into()),
+        ("c x z k", "Traffic / Fairy / Tornado / Storm".into()),
         ("t", "cycle theme".into()),
         ("+ / -", format!("speed  {:.2}x", speed)),
         ("r", "restart current effect".into()),
@@ -673,11 +776,14 @@ fn draw_help(
         canvas.put_str(x + 2, line, key, theme.c(3));
         canvas.put_str(x + 12, line, desc, theme.c(2).scale(0.95));
     }
-    // Current effect list on the right half when there's room.
-    if bw >= 56 {
-        canvas.put_str(x + 36, y + 2, "EFFECTS", theme.c(1).scale(1.5));
+    // Effect list, two compact columns.
+    if bw >= 60 {
+        canvas.put_str(x + 38, y + 2, "EFFECTS", theme.c(1).scale(1.5));
+        let half = (EffectId::ALL.len() + 1) / 2;
         for (i, e) in EffectId::ALL.iter().enumerate() {
-            let ey = y + 3 + i as isize;
+            let (col, row) = if i < half { (0, i) } else { (1, i - half) };
+            let ex = x + 38 + col as isize * 18;
+            let ey = y + 3 + row as isize;
             if ey >= y + bh - 2 {
                 break;
             }
@@ -687,8 +793,8 @@ fn draw_help(
             } else {
                 theme.c(2).scale(0.8)
             };
-            canvas.put_str(x + 36, ey, marker, color);
-            canvas.put_str(x + 38, ey, e.key(), color);
+            canvas.put_str(ex, ey, marker, color);
+            canvas.put_str(ex + 2, ey, e.key(), color);
         }
     }
     let footer = "space pauses, all effects animate in real time";

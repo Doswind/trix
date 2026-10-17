@@ -3,9 +3,10 @@
 use crate::canvas::Canvas;
 use crate::cli::Charset;
 use crate::scenes::{
-    BeamsScene, BlackHoleScene, BuddhaScene, DandelionScene, DragonScene, EcgScene, FireScene,
-    FireworksScene, GalaxyScene, MapScene, MarioScene, MatrixScene, RainScene, SolarScene,
-    TomJerryScene,
+    BeamsScene, BlackHoleScene, BuddhaScene, DandelionScene, DragonScene, EcgScene, FairyScene,
+    FireScene, FireworksScene, FishScene, GalaxyScene, LandscapeScene, MapScene, MarioScene,
+    MatrixScene, RainScene, ShanghaiScene, SolarScene, StormScene, TiananmenScene, TomJerryScene,
+    TornadoScene, TrafficScene,
 };
 use crate::theme::{self, Theme};
 
@@ -26,10 +27,18 @@ pub enum EffectId {
     Mario,
     Ecg,
     Dandelion,
+    FishTank,
+    Landscape,
+    Shanghai,
+    Tiananmen,
+    Traffic,
+    Fairy,
+    Tornado,
+    Storm,
 }
 
 impl EffectId {
-    pub const ALL: [EffectId; 15] = [
+    pub const ALL: [EffectId; 23] = [
         EffectId::Rain,
         EffectId::Fire,
         EffectId::Dragon,
@@ -45,6 +54,14 @@ impl EffectId {
         EffectId::Mario,
         EffectId::Ecg,
         EffectId::Dandelion,
+        EffectId::FishTank,
+        EffectId::Landscape,
+        EffectId::Shanghai,
+        EffectId::Tiananmen,
+        EffectId::Traffic,
+        EffectId::Fairy,
+        EffectId::Tornado,
+        EffectId::Storm,
     ];
 
     pub fn key(self) -> &'static str {
@@ -64,6 +81,14 @@ impl EffectId {
             EffectId::Mario => "mario",
             EffectId::Ecg => "ecg",
             EffectId::Dandelion => "dandelion",
+            EffectId::FishTank => "fish",
+            EffectId::Landscape => "landscape",
+            EffectId::Shanghai => "shanghai",
+            EffectId::Tiananmen => "tiananmen",
+            EffectId::Traffic => "traffic",
+            EffectId::Fairy => "fairy",
+            EffectId::Tornado => "tornado",
+            EffectId::Storm => "storm",
         }
     }
 
@@ -84,6 +109,14 @@ impl EffectId {
             EffectId::Mario => "Super Mario",
             EffectId::Ecg => "Heart monitor",
             EffectId::Dandelion => "Dandelion field",
+            EffectId::FishTank => "Aquarium",
+            EffectId::Landscape => "Shan shui",
+            EffectId::Shanghai => "Shanghai Bund",
+            EffectId::Tiananmen => "Tiananmen light",
+            EffectId::Traffic => "City traffic",
+            EffectId::Fairy => "Fairy petals",
+            EffectId::Tornado => "Tornado",
+            EffectId::Storm => "Thunderstorm",
         }
     }
 
@@ -104,6 +137,14 @@ impl EffectId {
             EffectId::Mario => "超级马里奥",
             EffectId::Ecg => "心率跳动",
             EffectId::Dandelion => "蒲公英",
+            EffectId::FishTank => "鱼缸",
+            EffectId::Landscape => "五光十色",
+            EffectId::Shanghai => "东方明珠",
+            EffectId::Tiananmen => "光芒万丈",
+            EffectId::Traffic => "车水马龙",
+            EffectId::Fairy => "仙女散花",
+            EffectId::Tornado => "龙卷风",
+            EffectId::Storm => "电闪雷鸣",
         }
     }
 
@@ -130,6 +171,16 @@ impl EffectId {
             }
             "ecg" | "ekg" | "heart" | "heartbeat" | "heartrate" | "pulse" => Some(EffectId::Ecg),
             "dandelion" | "dandy" | "seeds" | "wind" | "dandelions" => Some(EffectId::Dandelion),
+            "fish" | "fishtank" | "aquarium" | "tank" => Some(EffectId::FishTank),
+            "landscape" | "shanshui" | "mountain" | "lake" | "painting" => {
+                Some(EffectId::Landscape)
+            }
+            "shanghai" | "bund" | "orientalpearl" | "pearl" => Some(EffectId::Shanghai),
+            "tiananmen" | "gate" | "radiance" | "light" => Some(EffectId::Tiananmen),
+            "traffic" | "street" | "city" | "cars" => Some(EffectId::Traffic),
+            "fairy" | "apsara" | "petals" | "flowerfall" => Some(EffectId::Fairy),
+            "tornado" | "twister" | "cyclone" => Some(EffectId::Tornado),
+            "storm" | "thunder" | "lightning" | "rainstorm" => Some(EffectId::Storm),
             _ => None,
         }
     }
@@ -167,15 +218,31 @@ impl EffectId {
             EffectId::Mario => "gold",
             EffectId::Ecg => "matrix",
             EffectId::Dandelion => "gold",
+            EffectId::FishTank => "aurora",
+            EffectId::Landscape => "aurora",
+            EffectId::Shanghai => "neon",
+            EffectId::Tiananmen => "gold",
+            EffectId::Traffic => "neon",
+            EffectId::Fairy => "plasma",
+            EffectId::Tornado => "ice",
+            EffectId::Storm => "ice",
         })
         .unwrap_or(&theme::THEMES[0])
     }
 
     pub fn default_charset(self) -> Charset {
         match self {
-            EffectId::Matrix | EffectId::Mario | EffectId::Ecg | EffectId::Dandelion => {
-                Charset::Unicode
-            }
+            EffectId::Matrix
+            | EffectId::Mario
+            | EffectId::Ecg
+            | EffectId::Dandelion
+            | EffectId::FishTank
+            | EffectId::Landscape
+            | EffectId::Tiananmen
+            | EffectId::Fairy
+            | EffectId::Tornado
+            | EffectId::Storm => Charset::Unicode,
+            EffectId::Shanghai | EffectId::Traffic => Charset::Ascii,
             _ => Charset::Ascii,
         }
     }
@@ -192,6 +259,11 @@ pub struct Tune {
     pub jump: bool,
     pub seed_count: u32,
     pub seed_speed: f32,
+    pub street_vertical: bool,
+    pub petal_count: u32,
+    pub petal_speed: f32,
+    pub tornado_count: u32,
+    pub tornado_speed: f32,
 }
 
 impl Default for Tune {
@@ -205,6 +277,11 @@ impl Default for Tune {
             jump: false,
             seed_count: 90,
             seed_speed: 1.0,
+            street_vertical: false,
+            petal_count: 80,
+            petal_speed: 1.0,
+            tornado_count: 3,
+            tornado_speed: 1.0,
         }
     }
 }
@@ -245,6 +322,14 @@ pub fn build(id: EffectId, seed: u64) -> Box<dyn Scene> {
         EffectId::Mario => Box::new(MarioScene::new(seed)),
         EffectId::Ecg => Box::new(EcgScene::new(seed)),
         EffectId::Dandelion => Box::new(DandelionScene::new(seed)),
+        EffectId::FishTank => Box::new(FishScene::new(seed)),
+        EffectId::Landscape => Box::new(LandscapeScene::new(seed)),
+        EffectId::Shanghai => Box::new(ShanghaiScene::new(seed)),
+        EffectId::Tiananmen => Box::new(TiananmenScene::new(seed)),
+        EffectId::Traffic => Box::new(TrafficScene::new(seed)),
+        EffectId::Fairy => Box::new(FairyScene::new(seed)),
+        EffectId::Tornado => Box::new(TornadoScene::new(seed)),
+        EffectId::Storm => Box::new(StormScene::new(seed)),
     }
 }
 

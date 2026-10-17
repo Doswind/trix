@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0 — 2026-10-18
+
+- 新增 8 个场景：`fish` 鱼缸、`landscape` 五光十色山水、`shanghai` 东方明珠、`tiananmen` 光芒万丈、`traffic` 车水马龙、`fairy` 仙女散花、`tornado` 龙卷风、`storm` 电闪雷鸣。
+- `shanghai` / `traffic` 默认 ASCII，`--unicode` 切换 Unicode；`traffic` 支持 `--street horizontal|vertical`。
+- `fairy` 支持 `--petal-count` / `--petal-speed`；`tornado` 支持 `--tornado-count` / `--tornado-speed`。
+- `storm` 落雷时全屏亮白闪屏；`fish` 大小鱼随机方向/姿态。
+- 直接运行 `trix` 自动循环全部 23 个特效；支持 `--playlist cycle|random` 与 `--switch <秒>`。
+- 帮助面板改为双列，支持 23 个特效与新快捷键 `f/l/b/j/c/x/z/k`。
+- 代码雨蓝/绿双色；火焰底部加宽连接、火苗分开。
+- 版本提升到 `0.7.0`；自动发布 macOS universal + Linux static。
+
 ## 0.6.0 — 2026-10-17
 
 - 新增 `mario` 超级马里奥：自动闯关、顶问号砖块、蘑菇弹出与金币收集；Unicode 实心精灵 + `--ascii` 两版。
