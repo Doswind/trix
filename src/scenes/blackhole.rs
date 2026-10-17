@@ -35,6 +35,16 @@ struct Infall {
     color: Rgb,
 }
 
+struct Meteor {
+    x: f32,
+    y: f32,
+    vx: f32,
+    vy: f32,
+    life: f32,
+    max_life: f32,
+    color: Rgb,
+}
+
 pub struct BlackHoleScene {
     rng: Rng,
     w: usize,
@@ -43,6 +53,8 @@ pub struct BlackHoleScene {
     dust: Vec<Disk>,
     stars: Vec<Star>,
     infall: Vec<Infall>,
+    meteors: Vec<Meteor>,
+    next_meteor: f32,
     cx: f32,
     cy: f32,
     radius: f32,
@@ -60,6 +72,8 @@ impl BlackHoleScene {
             dust: Vec::new(),
             stars: Vec::new(),
             infall: Vec::new(),
+            meteors: Vec::new(),
+            next_meteor: 1.0,
             cx: 0.0,
             cy: 0.0,
             radius: 4.0,
@@ -78,6 +92,8 @@ impl BlackHoleScene {
         self.dust.clear();
         self.stars.clear();
         self.infall.clear();
+        self.meteors.clear();
+        self.next_meteor = 1.0;
         let n = (self.w * self.h / 15).clamp(120, 380);
         for _ in 0..n {
             let r = self.radius * self.rng.range(1.15, 4.6);
@@ -127,6 +143,36 @@ impl BlackHoleScene {
                 Rgb::hex(0xffe3a3)
             },
         }
+    }
+
+    fn spawn_meteor(&mut self) {
+        let edge = self.rng.below(4);
+        let (x, y) = match edge {
+            0 => (self.rng.range(0.0, self.w as f32), -2.0),
+            1 => (self.w as f32 + 2.0, self.rng.range(0.0, self.h as f32)),
+            2 => (self.rng.range(0.0, self.w as f32), self.h as f32 + 2.0),
+            _ => (-2.0, self.rng.range(0.0, self.h as f32)),
+        };
+        let target_x = self.rng.range(0.1, 0.9) * self.w as f32;
+        let target_y = self.rng.range(0.1, 0.8) * self.h as f32;
+        let dx = target_x - x;
+        let dy = target_y - y;
+        let len = (dx * dx + dy * dy).sqrt().max(1.0);
+        let speed = self.rng.range(18.0, 42.0);
+        let color = match self.rng.below(3) {
+            0 => Rgb::hex(0xbfd7ff),
+            1 => Rgb::hex(0xfff3c4),
+            _ => Rgb::hex(0x9be7ff),
+        };
+        self.meteors.push(Meteor {
+            x,
+            y,
+            vx: dx / len * speed,
+            vy: dy / len * speed,
+            life: self.rng.range(0.8, 1.8),
+            max_life: 1.8,
+            color,
+        });
     }
 
     fn disk_color(&self, r: f32, hue: u8) -> Rgb {
@@ -307,10 +353,29 @@ impl Scene for BlackHoleScene {
     fn update(&mut self, f: &Frame) {
         let dt = f.dt.clamp(0.0, 0.1);
         let t = f.t as f32;
+        let spin = f.tune.spin.clamp(0.05, 4.0);
+        if f.t as f32 > self.next_meteor {
+            if self.meteors.len() < f.tune.meteors as usize {
+                self.spawn_meteor();
+            }
+            self.next_meteor = f.t as f32 + self.rng.range(0.7, 2.2);
+        }
+        for m in self.meteors.iter_mut() {
+            m.x += m.vx * dt;
+            m.y += m.vy * dt;
+            m.life -= dt;
+        }
+        self.meteors.retain(|m| {
+            m.life > 0.0
+                && m.x > -12.0
+                && m.x < self.w as f32 + 12.0
+                && m.y > -12.0
+                && m.y < self.h as f32 + 12.0
+        });
         let mut respawn_disk = Vec::new();
         for (i, p) in self.disk.iter_mut().enumerate() {
             p.r -= dt * (0.25 + 0.9 * self.radius / p.r.max(0.3));
-            p.a += dt * p.speed * 3.0;
+            p.a += dt * p.speed * 3.0 * spin;
             if p.r <= self.radius * 0.95 {
                 self.consumed += 1;
                 self.flash = 1.0;
@@ -323,13 +388,13 @@ impl Scene for BlackHoleScene {
             self.disk[i] = p;
         }
         for p in self.dust.iter_mut() {
-            p.a += dt * p.speed * 0.7;
+            p.a += dt * p.speed * 0.7 * spin;
         }
         let mut respawn_infall = Vec::new();
         for (i, p) in self.infall.iter_mut().enumerate() {
             p.life -= dt;
             p.r -= dt * (1.0 + 2.0 * self.radius / p.r.max(0.3));
-            p.a += dt * p.speed;
+            p.a += dt * p.speed * spin;
             if p.r <= self.radius || p.life <= 0.0 {
                 self.consumed += 1;
                 self.flash = 1.0;
@@ -404,6 +469,25 @@ impl Scene for BlackHoleScene {
                 let x = (self.cx + a.cos() * self.radius * 1.3) as isize;
                 let y = (self.cy + a.sin() * self.radius * 1.3) as isize;
                 canvas.add_light(x, y, Rgb::hex(0xffffff), self.flash * 0.35, '.');
+            }
+        }
+
+        // random-direction meteors across the sky
+        for m in &self.meteors {
+            let fade = (m.life / m.max_life).clamp(0.0, 1.0);
+            let head_x = m.x.round() as isize;
+            let head_y = m.y.round() as isize;
+            canvas.set(head_x, head_y, '*', m.color.lerp(Rgb::hex(0xffffff), 0.6));
+            canvas.add_light(head_x, head_y, m.color, 0.7, '.');
+            for i in 1..=10 {
+                let x = (m.x - m.vx * (i as f32 * 0.035)).round() as isize;
+                let y = (m.y - m.vy * (i as f32 * 0.035)).round() as isize;
+                canvas.set(
+                    x,
+                    y,
+                    if i < 3 { '=' } else { '.' },
+                    m.color.scale(fade * (1.0 - i as f32 / 12.0)),
+                );
             }
         }
 

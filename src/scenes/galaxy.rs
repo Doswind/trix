@@ -52,6 +52,7 @@ pub struct GalaxyScene {
     dust: Vec<Dust>,
     meteors: Vec<Meteor>,
     next_meteor: f32,
+    density: f32,
 }
 
 impl GalaxyScene {
@@ -65,6 +66,7 @@ impl GalaxyScene {
             dust: Vec::new(),
             meteors: Vec::new(),
             next_meteor: 1.0,
+            density: 1.0,
         }
     }
 
@@ -75,7 +77,7 @@ impl GalaxyScene {
         self.dust.clear();
         self.meteors.clear();
         let cells = self.w * self.h;
-        let n = (cells / 2).clamp(700, 2400);
+        let n = ((cells as f32 / 2.0 * self.density).round() as usize).clamp(300, 6800);
         let warm = [
             Rgb::hex(0xffffff),
             Rgb::hex(0xcfe8ff),
@@ -140,7 +142,7 @@ impl GalaxyScene {
             });
         }
         // Dust / faint nebula patches along the band.
-        let dn = (cells / 12).clamp(100, 420);
+        let dn = ((cells as f32 / 12.0 * self.density) as usize).clamp(40, 900);
         for _ in 0..dn {
             let x = self.rng.range(0.0, self.w as f32);
             let center = 0.64 - (x / self.w as f32) * 0.30;
@@ -200,10 +202,16 @@ impl Scene for GalaxyScene {
     }
 
     fn update(&mut self, f: &Frame) {
+        if (f.tune.density - self.density).abs() > 0.01 {
+            self.density = f.tune.density.clamp(0.05, 4.0);
+            self.rebuild(self.w, self.h);
+        }
         let dt = f.dt.clamp(0.0, 0.1);
         if f.t as f32 > self.next_meteor {
-            self.meteor();
-            self.next_meteor = f.t as f32 + self.rng.range(3.0, 7.0);
+            if self.meteors.len() < f.tune.meteors as usize {
+                self.meteor();
+            }
+            self.next_meteor = f.t as f32 + self.rng.range(1.5, 4.5);
         }
         for m in self.meteors.iter_mut() {
             m.x += m.vx * dt;
@@ -217,9 +225,10 @@ impl Scene for GalaxyScene {
     fn draw(&mut self, canvas: &mut Canvas, f: &Frame) {
         let theme = f.theme;
         let t = f.t as f32;
+        let twinkle = f.tune.twinkle.clamp(0.05, 8.0);
         // faint dust
         for d in &self.dust {
-            let tw = 0.7 + 0.3 * (t * 0.7 + d.x * 0.2).sin();
+            let tw = 0.7 + 0.3 * (t * 0.7 * twinkle + d.x * 0.2).sin();
             canvas.set_if_blank(
                 d.x as isize,
                 d.y as isize,
@@ -253,12 +262,13 @@ impl Scene for GalaxyScene {
 
         // Draw brighter stars first so dim ones do not overwrite them.
         for s in &self.stars {
-            let tw = 0.62 + 0.38 * (t * s.speed + s.phase).sin().abs();
+            let tw = 0.62 + 0.38 * (t * s.speed * twinkle + s.phase).sin().abs();
             let col = s.color.scale(s.base * tw);
             if col.luminance() < 0.015 {
                 continue;
             }
-            canvas.set(s.x as isize, s.y as isize, s.ch as char, col);
+            let sway = (t * 0.12 + s.y * 0.08).sin() * 0.7;
+            canvas.set((s.x + sway) as isize, s.y as isize, s.ch as char, col);
             if s.base > 0.9 {
                 canvas.add_light(s.x as isize, s.y as isize, s.color, 0.22, '.');
             }
@@ -273,6 +283,23 @@ impl Scene for GalaxyScene {
                 let x = cx + (a.cos() * r as f32 * 1.4).round() as isize;
                 let y = cy + (a.sin() * r as f32 * 0.55).round() as isize;
                 canvas.add_light(x, y, theme.c(2), 0.05, '.');
+            }
+        }
+
+        // slowly turning galactic arcs
+        for ring in 0..3 {
+            let rr = (self.h as f32 * 0.10 + ring as f32 * 2.5).min(self.w as f32 * 0.30);
+            let n = 90usize;
+            for k in 0..n {
+                let a = k as f32 / n as f32 * TAU + t * (0.06 + ring as f32 * 0.02);
+                let x = cx + (a.cos() * rr * 1.7).round() as isize;
+                let y = cy + (a.sin() * rr * 0.55).round() as isize;
+                canvas.set(
+                    x,
+                    y,
+                    if k % 4 == 0 { '+' } else { '.' },
+                    theme.c(2).scale(0.15),
+                );
             }
         }
 

@@ -79,11 +79,22 @@ impl FireScene {
             self.piles.push(Pile {
                 x: (slot + jitter).clamp(3.0, self.w as f32 - 4.0),
                 width: self.rng.range(3.0, 5.5) * unit,
-                heat: self.rng.range(46.0, 60.0),
+                heat: self.rng.range(42.0, 55.0),
                 phase: self.rng.range(0.0, std::f32::consts::TAU),
                 drift: self.rng.range(1.5, 4.5) * unit,
                 rate: self.rng.range(0.6, 1.4),
             });
+        }
+        // The middle pile is always the tallest; the others surround it.
+        if let Some(center) = self.piles.iter_mut().min_by(|a, b| {
+            (a.x - self.w as f32 * 0.5)
+                .abs()
+                .partial_cmp(&(b.x - self.w as f32 * 0.5).abs())
+                .unwrap_or(std::cmp::Ordering::Equal)
+        }) {
+            center.x = self.w as f32 * 0.5;
+            center.heat = 60.0;
+            center.width = 5.8 * unit;
         }
         // Warm start: a soft column of heat so the first frame already glows
         // instead of fading in from black.
@@ -110,7 +121,7 @@ impl FireScene {
         // instead of one central bonfire.
         for x in 0..w {
             let xf = x as f32;
-            let mut v = 4.0;
+            let mut v = 12.0;
             for pile in &self.piles {
                 let cx = pile.x + (t * pile.rate + pile.phase).sin() * pile.drift;
                 let d = (xf - cx) / pile.width;
@@ -233,6 +244,10 @@ impl Scene for FireScene {
                     env = env.max(e);
                 }
                 env = env * 0.95 + 0.04;
+                // Bottom bed: the piles merge into one continuous fire line,
+                // while the tops above remain separate tongues.
+                let bed = 0.78 * depth.powf(7.0);
+                env = env.max(bed);
                 let top_fade = (y as f32 / 1.5).clamp(0.0, 1.0) * 0.25 + 0.75;
                 raw *= env * top_fade;
                 if raw < 0.03 {

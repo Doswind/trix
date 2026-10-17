@@ -50,6 +50,7 @@ pub struct BeamsScene {
     beams: Vec<Beam>,
     sparks: Vec<Spark>,
     grid: Vec<(f32, f32)>,
+    density: f32,
 }
 
 impl BeamsScene {
@@ -61,6 +62,7 @@ impl BeamsScene {
             beams: Vec::new(),
             sparks: Vec::new(),
             grid: Vec::new(),
+            density: 1.0,
         }
     }
 
@@ -70,7 +72,7 @@ impl BeamsScene {
         self.beams.clear();
         self.sparks.clear();
         self.grid.clear();
-        let n = (h / 2).clamp(10, 15);
+        let n = ((h as f32 * 0.5 * self.density).round() as usize).clamp(4, 28);
         for _ in 0..n {
             let b = self.make_beam(true);
             self.beams.push(b);
@@ -83,15 +85,13 @@ impl BeamsScene {
     }
 
     fn make_beam(&mut self, initial: bool) -> Beam {
-        let dir = if self.rng.chance(0.5) { 1.0 } else { -1.0 };
+        let dir = 1.0;
         let len = self.rng.range(22.0, self.w as f32 * 0.62);
         let speed = self.rng.range(32.0, 110.0);
         let x = if initial {
             self.rng.range(-len, self.w as f32)
-        } else if dir > 0.0 {
-            -len
         } else {
-            self.w as f32 + 2.0
+            -len
         };
         Beam {
             y: self.rng.range(2.0, self.h as f32 - 2.0),
@@ -120,13 +120,18 @@ impl Scene for BeamsScene {
     }
 
     fn update(&mut self, f: &Frame) {
+        if (f.tune.density - self.density).abs() > 0.01 {
+            self.density = f.tune.density.clamp(0.05, 4.0);
+            self.rebuild(self.w, self.h);
+        }
         let dt = f.dt.clamp(0.0, 0.1);
+        let speed_mul = f.tune.beam_speed.clamp(0.05, 4.0);
         let mut reset = Vec::new();
         let mut spawn = Vec::new();
         for i in 0..self.beams.len() {
             let (x, y, dir, color, speed, len) = {
                 let b = &mut self.beams[i];
-                b.x += b.dir * b.speed * dt;
+                b.x += b.dir * b.speed * speed_mul * dt;
                 (b.x, b.y, b.dir, b.color, b.speed, b.len)
             };
             let _ = (speed, len);
@@ -136,7 +141,7 @@ impl Scene for BeamsScene {
                 spawn.push((
                     x,
                     y + self.rng.range(-1.0, 1.0),
-                    dir * self.rng.range(6.0, 24.0),
+                    self.rng.range(6.0, 24.0) * speed_mul,
                     self.rng.range(-4.0, 4.0),
                     self.rng.range(0.25, 0.8),
                     color,

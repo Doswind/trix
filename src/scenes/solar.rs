@@ -123,7 +123,9 @@ impl SolarScene {
         let cx = p.x.round() as isize;
         let cy = self.baseline.round() as isize;
         let r = p.r.max(0.7);
+        let ry = (r * 0.78).max(0.55);
         let ri = r.ceil() as isize;
+        let ryi = ry.ceil() as isize;
         // Saturn rings behind/around the disc.
         if p.kind == 3 {
             let rr = r * 1.9;
@@ -139,10 +141,10 @@ impl SolarScene {
                 }
             }
         }
-        for dy in -ri..=ri {
+        for dy in -ryi..=ryi {
             for dx in -ri..=ri {
                 let nx = dx as f32 / r;
-                let ny = dy as f32 / r;
+                let ny = dy as f32 / ry;
                 let d2 = nx * nx + ny * ny;
                 if d2 > 1.0 {
                     continue;
@@ -214,11 +216,13 @@ impl SolarScene {
         let cx = self.sun_x.round() as isize;
         let cy = self.baseline.round() as isize;
         let r = self.sun_r;
+        let ry = (r * 0.78).max(0.6);
         let ri = r.ceil() as isize;
-        for dy in -ri..=ri {
+        let ryi = ry.ceil() as isize;
+        for dy in -ryi..=ryi {
             for dx in -ri..=ri {
                 let nx = dx as f32 / r;
-                let ny = dy as f32 / r;
+                let ny = dy as f32 / ry;
                 let d2 = nx * nx + ny * ny;
                 if d2 > 1.0 {
                     continue;
@@ -257,10 +261,55 @@ impl SolarScene {
         }
         canvas.put_str(
             cx - 2,
-            (cy as f32 + r + 2.0) as isize,
+            (cy as f32 + ry + 2.0) as isize,
             "SOL",
             theme.c(3).scale(0.9),
         );
+    }
+    fn draw_sunburst(&self, canvas: &mut Canvas, theme: &Theme, t: f32) {
+        let ox = 1.0f32;
+        let oy = 1.0f32;
+        // a golden fan of light spilling in from the upper-left
+        for k in 0..12 {
+            let a = 0.10 + k as f32 / 12.0 * 1.30;
+            let len = (self.w as f32 * 0.34).min(self.baseline * 0.92);
+            let x = ox + a.cos() * len;
+            let y = oy + a.sin() * len * 0.55;
+            canvas.line(
+                ox as isize,
+                oy as isize,
+                x as isize,
+                (y as isize).min(self.baseline as isize - 1),
+                '-',
+                Rgb::hex(0xfbbf24).scale(0.22),
+            );
+        }
+        for k in 0..18 {
+            let a = 0.08 + k as f32 / 18.0 * 1.35;
+            let len = (self.w as f32 * 0.32 + (t * 1.3 + k as f32).sin().abs() * 4.0)
+                .min(self.w as f32 * 0.62);
+            for s in (2..len as isize).step_by(2) {
+                let x = (ox + a.cos() * s as f32).round() as isize;
+                let y = (oy + a.sin() * s as f32 * 0.55).round() as isize;
+                if x < 0 || y < 0 || x >= self.w as isize || y >= self.baseline as isize {
+                    continue;
+                }
+                let col = Rgb::hex(0xfbbf24)
+                    .lerp(Rgb::hex(0xfff7d6), (s as f32 / len).min(1.0))
+                    .scale(0.55 - s as f32 / len * 0.35);
+                canvas.set(x, y, if s % 6 == 0 { '*' } else { '.' }, col);
+            }
+        }
+        for (dx, dy) in [(0, 0), (1, 0), (0, 1), (2, 0), (0, 2)] {
+            canvas.add_light(
+                ox as isize + dx,
+                oy as isize + dy,
+                Rgb::hex(0xfbbf24),
+                0.6,
+                '.',
+            );
+        }
+        let _ = theme;
     }
 }
 
@@ -304,6 +353,7 @@ impl Scene for SolarScene {
                 canvas.set(gx, gy, '.', grid);
             }
         }
+        self.draw_sunburst(canvas, theme, t);
         // orbital line
         for x in (self.sun_x + self.sun_r + 2.0) as isize..(self.w as isize - 2) {
             canvas.set(x, y, '-', theme.c(1).scale(0.55));

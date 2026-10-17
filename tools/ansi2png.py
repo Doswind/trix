@@ -91,7 +91,7 @@ def render(ansi_path: str, out_path: str, size: tuple[int, int] | None, label: s
         for x, (ch, fg) in enumerate(row):
             if ch == " ":
                 continue
-            use_kana = ord(ch) > 127
+            use_kana = 0x3000 <= ord(ch) or 0xFF61 <= ord(ch) <= 0xFF9F
             font = kana_font if use_kana else ascii_font
             color = fg if isinstance(fg, tuple) else DEFAULT_FG
             px = PAD + x * cell_w

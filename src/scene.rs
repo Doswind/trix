@@ -148,7 +148,34 @@ impl EffectId {
     }
 
     pub fn default_charset(self) -> Charset {
-        Charset::Ascii
+        match self {
+            EffectId::Matrix => Charset::Unicode,
+            _ => Charset::Ascii,
+        }
+    }
+}
+
+/// Per-run tuning knobs exposed on the command line.
+#[derive(Clone, Copy, Debug)]
+pub struct Tune {
+    pub density: f32,
+    pub spin: f32,
+    pub twinkle: f32,
+    pub meteors: u32,
+    pub beam_speed: f32,
+    pub jump: bool,
+}
+
+impl Default for Tune {
+    fn default() -> Self {
+        Tune {
+            density: 1.0,
+            spin: 0.5,
+            twinkle: 1.0,
+            meteors: 3,
+            beam_speed: 1.0,
+            jump: false,
+        }
     }
 }
 
@@ -162,6 +189,7 @@ pub struct Frame<'a> {
     pub charset: Charset,
     pub seed: u64,
     pub speed: f32,
+    pub tune: Tune,
 }
 
 pub trait Scene {
@@ -219,6 +247,7 @@ mod tests {
                     charset: id.default_charset(),
                     seed: 7,
                     speed: 1.0,
+                    tune: Tune::default(),
                 };
                 scene.update(&frame);
                 scene.draw(&mut canvas, &frame);
@@ -247,6 +276,7 @@ mod tests {
                 charset: id.default_charset(),
                 seed: 3,
                 speed: 1.0,
+                tune: Tune::default(),
             };
             scene.update(&frame);
             scene.draw(&mut canvas, &frame);

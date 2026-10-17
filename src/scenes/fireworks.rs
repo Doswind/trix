@@ -144,8 +144,8 @@ impl FireworksScene {
         }
     }
 
-    fn launch(&mut self) {
-        if self.rockets.len() >= 4 {
+    fn launch(&mut self, max_rockets: usize) {
+        if self.rockets.len() >= max_rockets {
             return;
         }
         let x = self.rng.range(self.w as f32 * 0.08, self.w as f32 * 0.92);
@@ -164,7 +164,7 @@ impl FireworksScene {
         });
     }
 
-    fn burst(&mut self, x: f32, y: f32, color: Rgb) {
+    fn burst(&mut self, x: f32, y: f32, color: Rgb, density: f32) {
         self.burst_count += 1;
         self.next_flash = 0.16;
         self.rings.push(Burst {
@@ -174,9 +174,10 @@ impl FireworksScene {
             age: 0.0,
             max_age: 0.9,
         });
-        let outer = 74;
-        let inner = 52;
-        let core = self.rng.below(10) + 28;
+        let scale = density.sqrt().clamp(0.25, 2.4);
+        let outer = (74.0 * scale) as usize;
+        let inner = (52.0 * scale) as usize;
+        let core = ((self.rng.below(10) + 28) as f32 * scale) as usize;
         let n = outer + inner + core;
         let second = PALETTE[self.rng.below(PALETTE.len())];
         for i in 0..n {
@@ -254,9 +255,11 @@ impl Scene for FireworksScene {
 
     fn update(&mut self, f: &Frame) {
         let dt = f.dt.clamp(0.0, 0.1);
+        let density = f.tune.density.clamp(0.05, 4.0);
         if f.t as f32 > self.next_launch {
-            self.launch();
-            self.next_launch = f.t as f32 + self.rng.range(0.55, 1.15);
+            let max_rockets = (4.0 * density).round().clamp(1.0, 12.0) as usize;
+            self.launch(max_rockets);
+            self.next_launch = f.t as f32 + self.rng.range(0.55, 1.15) / density.sqrt();
         }
         self.next_flash = (self.next_flash - dt).max(0.0);
         for b in self.rings.iter_mut() {
@@ -274,7 +277,7 @@ impl Scene for FireworksScene {
             }
         }
         for (x, y, c) in explosions {
-            self.burst(x, y, c);
+            self.burst(x, y, c, density);
         }
         self.rockets.retain(|r| r.fuse > 0.0 && r.vy < -2.0);
         for p in self.particles.iter_mut() {
@@ -437,9 +440,9 @@ mod tests {
     fn launches_and_bursts() {
         let mut s = FireworksScene::new(6);
         s.resize(100, 30);
-        s.launch();
+        s.launch(4);
         assert!(!s.rockets.is_empty());
-        s.burst(50.0, 15.0, PALETTE[0]);
+        s.burst(50.0, 15.0, PALETTE[0], 1.0);
         assert!(s.particles.len() > 40);
     }
 }

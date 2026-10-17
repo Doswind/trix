@@ -8,7 +8,7 @@ use crate::canvas::Canvas;
 use crate::cli::{self, Options, Parsed};
 use crate::color::ColorMode;
 use crate::rng::Rng;
-use crate::scene::{self, EffectId, Frame, Scene};
+use crate::scene::{self, EffectId, Frame, Scene, Tune};
 use crate::term::{self, Key, Terminal};
 use crate::theme::{self, Theme};
 
@@ -80,6 +80,17 @@ fn charset_for(opts: &Options, id: EffectId) -> cli::Charset {
     opts.charset.unwrap_or_else(|| id.default_charset())
 }
 
+fn tune_for(opts: &Options) -> Tune {
+    Tune {
+        density: opts.density,
+        spin: opts.spin,
+        twinkle: opts.twinkle,
+        meteors: opts.meteors,
+        beam_speed: opts.beam_speed,
+        jump: opts.jump,
+    }
+}
+
 fn snapshot(opts: &Options, path: &Path) -> i32 {
     let (id, seed) = match resolve_effect(opts, true) {
         Ok(v) => v,
@@ -90,6 +101,7 @@ fn snapshot(opts: &Options, path: &Path) -> i32 {
     };
     let theme = theme_for(opts, id);
     let charset = charset_for(opts, id);
+    let tune = tune_for(opts);
     let mode = opts.color.unwrap_or(ColorMode::True);
     let (w, h) = opts.size.unwrap_or((120, 36));
     let frames = opts.frames.unwrap_or(180);
@@ -113,6 +125,7 @@ fn snapshot(opts: &Options, path: &Path) -> i32 {
             charset,
             seed,
             speed: opts.speed,
+            tune,
         };
         scene.update(&frame);
     }
@@ -126,6 +139,7 @@ fn snapshot(opts: &Options, path: &Path) -> i32 {
         charset,
         seed,
         speed: opts.speed,
+        tune,
     };
     canvas.clear();
     scene.draw(&mut canvas, &frame);
@@ -167,6 +181,7 @@ fn benchmark(opts: &Options) -> i32 {
     };
     let theme = theme_for(opts, id);
     let charset = charset_for(opts, id);
+    let tune = tune_for(opts);
     let mode = opts.color.unwrap_or(ColorMode::True);
     let (w, h) = opts.size.unwrap_or((160, 48));
     let frames = opts.frames.unwrap_or(240);
@@ -193,6 +208,7 @@ fn benchmark(opts: &Options) -> i32 {
             charset,
             seed,
             speed: opts.speed,
+            tune,
         };
         scene.update(&frame);
         canvas.clear();
@@ -214,6 +230,7 @@ fn benchmark(opts: &Options) -> i32 {
             charset,
             seed,
             speed: opts.speed,
+            tune,
         };
         let start = Instant::now();
         scene.update(&frame);
@@ -276,6 +293,7 @@ fn interactive(opts: Options) -> i32 {
     let mut canvas = Canvas::new(w, h);
     let mut scene = scene::build(id, seed);
     scene.resize(w, h);
+    let tune = tune_for(&opts);
 
     let started = Instant::now();
     let frame_dur = Duration::from_secs_f64(1.0 / opts.fps as f64);
@@ -420,6 +438,7 @@ fn interactive(opts: Options) -> i32 {
             charset,
             seed,
             speed,
+            tune,
         };
 
         let render_start = Instant::now();

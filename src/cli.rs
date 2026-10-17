@@ -12,6 +12,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub enum Charset {
     Kana,
     Ascii,
+    Unicode,
 }
 
 impl Charset {
@@ -19,6 +20,7 @@ impl Charset {
         match s.to_ascii_lowercase().as_str() {
             "kana" | "katakana" | "matrix" => Some(Charset::Kana),
             "ascii" | "latin" => Some(Charset::Ascii),
+            "unicode" | "utf8" | "utf-8" => Some(Charset::Unicode),
             _ => None,
         }
     }
@@ -33,6 +35,12 @@ pub struct Options {
     pub charset: Option<Charset>,
     pub color: Option<ColorMode>,
     pub duration: Option<f64>,
+    pub density: f32,
+    pub spin: f32,
+    pub twinkle: f32,
+    pub meteors: u32,
+    pub beam_speed: f32,
+    pub jump: bool,
     pub seed: Option<u64>,
     pub size: Option<(usize, usize)>,
     pub no_alt: bool,
@@ -51,6 +59,12 @@ impl Default for Options {
             charset: None,
             color: None,
             duration: None,
+            density: 1.0,
+            spin: 0.5,
+            twinkle: 1.0,
+            meteors: 3,
+            beam_speed: 1.0,
+            jump: false,
             seed: None,
             size: None,
             no_alt: false,
@@ -101,14 +115,37 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                 "no-color" => opts.color = Some(ColorMode::Mono),
                 "ascii" => opts.charset = Some(Charset::Ascii),
                 "kana" => opts.charset = Some(Charset::Kana),
+                "unicode" | "utf8" => opts.charset = Some(Charset::Unicode),
+                "jump" => opts.jump = true,
+                "no-jump" => opts.jump = false,
                 "effect" => {
                     opts.effect = Some(take_value(args, &mut i, inline, "--effect")?);
+                }
+                "density" => {
+                    let v = take_value(args, &mut i, inline, "--density")?;
+                    opts.density = parse_num(&v, "--density")?;
+                }
+                "spin" | "orbit-speed" | "rotation" => {
+                    let v = take_value(args, &mut i, inline, "--spin")?;
+                    opts.spin = parse_num(&v, "--spin")?;
+                }
+                "twinkle" => {
+                    let v = take_value(args, &mut i, inline, "--twinkle")?;
+                    opts.twinkle = parse_num(&v, "--twinkle")?;
+                }
+                "meteors" => {
+                    let v = take_value(args, &mut i, inline, "--meteors")?;
+                    opts.meteors = parse_num(&v, "--meteors")?;
+                }
+                "beam-speed" => {
+                    let v = take_value(args, &mut i, inline, "--beam-speed")?;
+                    opts.beam_speed = parse_num(&v, "--beam-speed")?;
                 }
                 "fps" => {
                     let v = take_value(args, &mut i, inline, "--fps")?;
                     opts.fps = parse_num(&v, "--fps")?;
                 }
-                "speed" => {
+                "speed" | "chase-speed" => {
                     let v = take_value(args, &mut i, inline, "--speed")?;
                     opts.speed = parse_num(&v, "--speed")?;
                 }
@@ -295,6 +332,21 @@ fn validate(opts: &mut Options) -> Result<(), String> {
     if opts.duration.is_some() && opts.snapshot.is_some() {
         return Err("--duration does not apply to --snapshot".into());
     }
+    if !opts.density.is_finite() || !(0.05..=4.0).contains(&opts.density) {
+        return Err("--density must be between 0.05 and 4.0".into());
+    }
+    if !opts.spin.is_finite() || !(0.05..=4.0).contains(&opts.spin) {
+        return Err("--spin must be between 0.05 and 4.0".into());
+    }
+    if !opts.twinkle.is_finite() || !(0.05..=8.0).contains(&opts.twinkle) {
+        return Err("--twinkle must be between 0.05 and 8.0".into());
+    }
+    if opts.meteors > 30 {
+        return Err("--meteors must be between 0 and 30".into());
+    }
+    if !opts.beam_speed.is_finite() || !(0.05..=4.0).contains(&opts.beam_speed) {
+        return Err("--beam-speed must be between 0.05 and 4.0".into());
+    }
     Ok(())
 }
 
@@ -328,9 +380,19 @@ OPTIONS
   -e, --effect <name>     Effect to run (same as positional argument)
   -f, --fps <1-240>       Target frame rate                    [default: 30]
   -s, --speed <0.05-8>    Animation speed multiplier           [default: 1.0]
+      --chase-speed <f>   Alias of --speed (Tom & Jerry chase)
   -t, --theme <name>      Color theme, see below               [effect default]
-      --charset <mode>    kana | ascii                        [matrix: ascii]
+      --charset <mode>    kana | ascii | unicode              [matrix: unicode]
+      --unicode           Force Unicode single-cell glyphs
+      --ascii             Force ASCII fallback
       --color <mode>      auto | truecolor | 256 | 16 | mono   [default: auto]
+      --density <f>       beams/fireworks/galaxy density      [default: 1.0]
+      --spin <f>          black hole rotation speed            [default: 0.5]
+      --twinkle <f>       galaxy twinkle rate                  [default: 1.0]
+      --meteors <n>       black hole / galaxy meteors          [default: 3]
+      --beam-speed <f>    beams horizontal speed               [default: 1.0]
+      --jump              Tom & Jerry jumps (default: off)
+      --no-jump           disable Tom & Jerry jumps
       --seed <u64>        Deterministic random seed
       --duration <secs>   Exit automatically after N seconds
       --no-alt            Do not use the alternate screen
@@ -359,7 +421,7 @@ EXAMPLES
   texiao fire --fps 60 --theme ember
   texiao dragon -f 45 -t gold
   texiao map --theme ice
-  texiao matrix --charset ascii
+  texiao matrix --ascii
   texiao map --snapshot earth.ans --size 120x36 --frames 150
 "#,
         VERSION = VERSION,
@@ -408,6 +470,31 @@ mod tests {
         assert_eq!(o.fps, 60);
         assert!((o.speed - 1.5).abs() < f32::EPSILON);
         assert_eq!(o.theme.as_deref(), Some("ember"));
+    }
+
+    #[test]
+    fn parses_tuning_options() {
+        let Parsed::Run(o) = parse_args(&args(
+            "galaxy --density 2 --twinkle 3.5 --meteors 8 --spin 0.25 --beam-speed 1.5 --jump --unicode",
+        ))
+        .unwrap()
+        else {
+            panic!()
+        };
+        assert!((o.density - 2.0).abs() < f32::EPSILON);
+        assert!((o.twinkle - 3.5).abs() < f32::EPSILON);
+        assert_eq!(o.meteors, 8);
+        assert!((o.spin - 0.25).abs() < f32::EPSILON);
+        assert!((o.beam_speed - 1.5).abs() < f32::EPSILON);
+        assert!(o.jump);
+        assert_eq!(o.charset, Some(Charset::Unicode));
+    }
+
+    #[test]
+    fn rejects_bad_tuning() {
+        assert!(parse_args(&args("fire --density 9")).is_err());
+        assert!(parse_args(&args("fire --meteors 99")).is_err());
+        assert!(parse_args(&args("fire --beam-speed 0")).is_err());
     }
 
     #[test]

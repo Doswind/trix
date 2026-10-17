@@ -5,6 +5,8 @@
 //! scroll across the screen, while a live intrusion console tracks firewall
 //! and decryption progress against a NASA/JPL target.
 
+use std::f32::consts::TAU;
+
 use crate::canvas::Canvas;
 use crate::cli::Charset;
 use crate::color::Rgb;
@@ -138,6 +140,8 @@ enum LogoKind {
     Full,
     Compact,
     Tiny,
+    UnicodeFull,
+    UnicodeCompact,
 }
 
 #[derive(Clone, Copy)]
@@ -335,8 +339,8 @@ impl Scene for MatrixScene {
         let t = f.t as f32;
         let w = self.w;
         let h = self.h;
-        let panel = panel_rect(w, h);
-        let logo = logo_rect(w, h);
+        let unicode = f.charset == Charset::Unicode;
+        let (logo, panel) = layout(w, h, unicode);
         let glitching = self.glitch_t > 0.0;
         let phase = self.phase(f.t);
         let progress = self.progress(f.t);
@@ -445,10 +449,10 @@ impl Scene for MatrixScene {
             }
         }
 
-        self.draw_nasa_logo(canvas, theme, &logo, t);
+        self.draw_nasa_logo(canvas, theme, &logo, t, unicode);
 
         if let Some(p) = panel {
-            self.draw_console(canvas, theme, p, t, phase, progress, glitching);
+            self.draw_console(canvas, theme, p, t, phase, progress, glitching, unicode);
         }
 
         // HUD strips.
@@ -483,12 +487,174 @@ impl Scene for MatrixScene {
         } else {
             theme.c(2)
         };
-        canvas.put_str(1, h as isize - 1, &status, sc);
+        canvas.put_str(1, h as isize - 1, if unicode { "●" } else { " " }, sc);
+        canvas.put_str(3, h as isize - 1, &status, sc);
     }
 }
 
 impl MatrixScene {
-    fn draw_nasa_logo(&self, canvas: &mut Canvas, theme: &Theme, logo: &Logo, t: f32) {
+    fn draw_nasa_disc(&self, canvas: &mut Canvas, logo: &Logo, t: f32) {
+        let cx = logo.x as f32 + logo.w as f32 * 0.5;
+        let cy = logo.y as f32 + logo.h as f32 * 0.5;
+        let rx = logo.w as f32 * 0.5;
+        let ry = logo.h as f32 * 0.5;
+        canvas.clear_rect(logo.x - 2, logo.y - 1, logo.w + 4, logo.h + 2);
+        let navy = Rgb::hex(0x071a4a);
+        let blue = Rgb::hex(0x0b3d91);
+        let sky = Rgb::hex(0x1e40af);
+        // A clean blue NASA banner is more legible than a noisy disc.
+        for y in logo.y..(logo.y + logo.h) {
+            for x in logo.x..(logo.x + logo.w) {
+                let edge = x == logo.x
+                    || x == logo.x + logo.w - 1
+                    || y == logo.y
+                    || y == logo.y + logo.h - 1;
+                if edge {
+                    let (ch, col) = if x == logo.x && y == logo.y {
+                        ('╔', Rgb::hex(0xbfdbfe))
+                    } else if x == logo.x + logo.w - 1 && y == logo.y {
+                        ('╗', Rgb::hex(0xbfdbfe))
+                    } else if x == logo.x && y == logo.y + logo.h - 1 {
+                        ('╚', Rgb::hex(0xbfdbfe))
+                    } else if x == logo.x + logo.w - 1 && y == logo.y + logo.h - 1 {
+                        ('╝', Rgb::hex(0xbfdbfe))
+                    } else if y == logo.y || y == logo.y + logo.h - 1 {
+                        ('═', Rgb::hex(0x93c5fd))
+                    } else {
+                        ('║', Rgb::hex(0x93c5fd))
+                    };
+                    canvas.set(x, y, ch, col);
+                    continue;
+                }
+                let v = (y - logo.y) as f32 / (logo.h - 1).max(1) as f32;
+                let shimmer = 0.5 + 0.5 * (t * 1.4 + x as f32 * 0.08 - y as f32 * 0.05).sin();
+                let col = navy
+                    .lerp(blue, 0.45 + v * 0.30)
+                    .lerp(sky, 0.12 * shimmer)
+                    .scale(0.74 + 0.12 * shimmer);
+                canvas.set(x, y, '█', col);
+            }
+        }
+        for x in logo.x..(logo.x + logo.w) {
+            canvas.add_light(x, logo.y - 1, sky, 0.20, '.');
+            canvas.add_light(x, logo.y + logo.h, sky, 0.16, '.');
+        }
+
+        let x0 = logo.x + 2;
+        let x1 = logo.x + logo.w - 3;
+        for x in x0..=x1 {
+            let base = cy + 0.8 - (x as f32 - cx) * 0.10;
+            for dy in -1..=0 {
+                let y = base.round() as isize + dy;
+                if y < logo.y || y >= logo.y + logo.h {
+                    continue;
+                }
+                let shine = 0.5 + 0.5 * (t * 2.2 + x as f32 * 0.12).sin();
+                let col = Rgb::hex(0xef4444)
+                    .lerp(Rgb::hex(0xff8a3d), shine * 0.45)
+                    .scale(0.8 + 0.2 * shine);
+                canvas.set(x, y, if dy == 0 { '█' } else { '▓' }, col);
+                if dy == -1 {
+                    canvas.set(x, y, '-', Rgb::hex(0xffe4e6).scale(0.75));
+                }
+            }
+        }
+        for y in logo.y..(logo.y + logo.h) {
+            for x in logo.x..(logo.x + logo.w) {
+                let h = hash2(x as i64, y as i64, 0x4e415341);
+                if h % 101 != 0 {
+                    continue;
+                }
+                if (y as f32 - cy).abs() < 5.0 {
+                    continue;
+                }
+                let nx = (x as f32 + 0.5 - cx) / rx;
+                let ny = (y as f32 + 0.5 - cy) / ry;
+                if nx * nx + ny * ny > 0.92 {
+                    continue;
+                }
+                canvas.set(
+                    x,
+                    y,
+                    if h & 1 == 0 { '✦' } else { '✧' },
+                    Rgb::hex(0xffffff).scale(0.65 + 0.3 * (t * 2.0 + x as f32).sin().abs()),
+                );
+            }
+        }
+        let art7 = [
+            "#   # ##### ##### #####",
+            "##  # #   # #     #   #",
+            "# # # #   # #     #   #",
+            "#  ## ##### ##### #####",
+            "#   # #   #     # #   #",
+            "#   # #   #     # #   #",
+            "#   # #   # ##### #   #",
+        ];
+        let art5 = [
+            "#   # ##### ##### #####",
+            "##  # #   # #     #   #",
+            "# # # ##### ##### #####",
+            "#  ## #   #     # #   #",
+            "#   # #   # ##### #   #",
+        ];
+        let (art, sx, sy): (&[&str], isize, isize) = if logo.h >= 9 {
+            (&art7, 2, 1)
+        } else {
+            (&art5, 1, 1)
+        };
+        let art_w = 23 * sx;
+        let art_h = art.len() as isize * sy;
+        let ox = logo.x + (logo.w - art_w) / 2;
+        let oy = logo.y + (logo.h - art_h) / 2;
+        // dark drop shadow separates the wordmark from the blue field
+        for (r, line) in art.iter().enumerate() {
+            for (c, ch) in line.chars().enumerate() {
+                if ch != '#' {
+                    continue;
+                }
+                for yy in 0..sy {
+                    for xx in 0..sx {
+                        let x = ox + c as isize * sx + xx + 1;
+                        let y = oy + r as isize * sy + yy + 1;
+                        canvas.set(x, y, '█', Rgb::hex(0x03102b));
+                    }
+                }
+            }
+        }
+        for (r, line) in art.iter().enumerate() {
+            for (c, ch) in line.chars().enumerate() {
+                if ch != '#' {
+                    continue;
+                }
+                let shine = 0.5 + 0.5 * (t * 2.6 - c as f32 * 0.18 + r as f32 * 0.12).sin();
+                let col = Rgb::hex(0xffffff)
+                    .lerp(Rgb::hex(0x93c5fd), 0.10 + 0.22 * shine)
+                    .scale(0.90 + 0.10 * shine);
+                for yy in 0..sy {
+                    for xx in 0..sx {
+                        let x = ox + c as isize * sx + xx;
+                        let y = oy + r as isize * sy + yy;
+                        canvas.set(x, y, '█', col);
+                    }
+                }
+            }
+        }
+        for k in 0..120 {
+            let a = k as f32 / 120.0 * TAU + t * 0.05;
+            let x = (cx + a.cos() * (rx - 0.4)).round() as isize;
+            let y = (cy + a.sin() * (ry - 0.3)).round() as isize;
+            canvas.set(x, y, '░', Rgb::hex(0xbfdbfe).scale(0.55));
+        }
+    }
+
+    fn draw_nasa_logo(
+        &self,
+        canvas: &mut Canvas,
+        theme: &Theme,
+        logo: &Logo,
+        t: f32,
+        unicode: bool,
+    ) {
         let full = [
             "#   # ##### ##### #####",
             "##  # #   # #     #   #",
@@ -497,6 +663,22 @@ impl MatrixScene {
             "#   # #   # ##### #   #",
         ];
         let compact = ["#  # ### ### ###", "## # # # #   # #", "# ## ### ### ###"];
+        if unicode && matches!(logo.kind, LogoKind::UnicodeFull | LogoKind::UnicodeCompact) {
+            self.draw_nasa_disc(canvas, logo, t);
+            let sub = "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION";
+            let sy = logo.y + logo.h;
+            if sy < self.h as isize - 1 && self.w > 50 {
+                canvas.clear_rect(0, sy, self.w as isize, 1);
+                let sx = ((self.w as isize - sub.len() as isize) / 2).max(1);
+                canvas.put_str_gradient(
+                    sx,
+                    sy,
+                    sub,
+                    &[Rgb::hex(0x93c5fd), Rgb::hex(0xffffff), Rgb::hex(0xfca5a5)],
+                );
+            }
+            return;
+        }
         canvas.clear_rect(logo.x - 2, logo.y - 1, logo.w + 4, logo.h + 2);
         if logo.kind == LogoKind::Tiny {
             let text = "N A S A";
@@ -573,6 +755,7 @@ impl MatrixScene {
         phase: f64,
         progress: f32,
         glitching: bool,
+        unicode: bool,
     ) {
         let border = if glitching {
             Rgb::hex(0xff4d4d)
@@ -580,8 +763,23 @@ impl MatrixScene {
             theme.c(2).scale(0.75)
         };
         canvas.clear_rect(p.x, p.y, p.w, p.h);
-        canvas.rect(p.x, p.y, p.w, p.h, border);
-        let title = " NASA BACKEND // SECURE LOGIN ";
+        if unicode {
+            canvas.hline(p.x + 1, p.x + p.w - 2, p.y, '═', border);
+            canvas.hline(p.x + 1, p.x + p.w - 2, p.y + p.h - 1, '═', border);
+            canvas.vline(p.x, p.y + 1, p.y + p.h - 2, '║', border);
+            canvas.vline(p.x + p.w - 1, p.y + 1, p.y + p.h - 2, '║', border);
+            canvas.set(p.x, p.y, '╔', border);
+            canvas.set(p.x + p.w - 1, p.y, '╗', border);
+            canvas.set(p.x, p.y + p.h - 1, '╚', border);
+            canvas.set(p.x + p.w - 1, p.y + p.h - 1, '╝', border);
+        } else {
+            canvas.rect(p.x, p.y, p.w, p.h, border);
+        }
+        let title = if unicode {
+            "╡ NASA BACKEND // SECURE LOGIN ╞"
+        } else {
+            " NASA BACKEND // SECURE LOGIN "
+        };
         canvas.put_str(p.x + 1, p.y, title, theme.hot());
         let right = "SESSION 0x7F3A-9C2B ";
         let rx = p.x + p.w - right.len() as isize - 2;
@@ -591,7 +789,13 @@ impl MatrixScene {
 
         // left / right column divider
         let mid = p.x + p.left;
-        canvas.vline(mid, p.y + 1, p.y + p.h - 2, '|', border);
+        canvas.vline(
+            mid,
+            p.y + 1,
+            p.y + p.h - 2,
+            if unicode { '║' } else { '|' },
+            border,
+        );
 
         let lx = p.x + 2;
         let rxx = mid + 2;
@@ -614,7 +818,7 @@ impl MatrixScene {
         canvas.put_str(lx + 10, top + 2, "739 204 // VERIFIED", value);
 
         let bar_y = top + 4;
-        self.draw_bar(canvas, theme, lx, bar_y, "AUTH", progress, 24);
+        self.draw_bar(canvas, theme, lx, bar_y, "AUTH", progress, 24, unicode);
         self.draw_bar(
             canvas,
             theme,
@@ -623,6 +827,7 @@ impl MatrixScene {
             "DECRYPT",
             (progress * 1.18).min(100.0),
             24,
+            unicode,
         );
 
         // separator
@@ -683,7 +888,7 @@ impl MatrixScene {
         // Right-hand radar / uplink panel.
         canvas.put_str(rxx, top, "NASA SSO / DSN", label);
         let info_y = if p.h >= 20 {
-            self.draw_radar(canvas, theme, rxx, top + 2, t, p);
+            self.draw_radar(canvas, theme, rxx, top + 2, t, p, unicode);
             p.y + p.h - 6
         } else {
             canvas.put_str(rxx, top + 2, "[ DSN 70M ]", theme.c(3));
@@ -729,14 +934,30 @@ impl MatrixScene {
         label: &str,
         percent: f32,
         width: usize,
+        unicode: bool,
     ) {
         canvas.put_str(x, y, label, theme.c(2).scale(0.8));
         let bx = x + 10;
         let pct = percent.clamp(0.0, 100.0);
         let filled = ((pct / 100.0) * width as f32).round() as usize;
-        canvas.set(bx, y, '[', theme.c(2).scale(0.8));
+        canvas.set(
+            bx,
+            y,
+            if unicode { '▕' } else { '[' },
+            theme.c(2).scale(0.8),
+        );
         for i in 0..width {
-            let ch = if i < filled { '#' } else { '.' };
+            let ch = if unicode {
+                if i < filled {
+                    '▰'
+                } else {
+                    '▱'
+                }
+            } else if i < filled {
+                '#'
+            } else {
+                '.'
+            };
             let col = if i < filled {
                 theme.c(3)
             } else {
@@ -744,7 +965,12 @@ impl MatrixScene {
             };
             canvas.set(bx + 1 + i as isize, y, ch, col);
         }
-        canvas.set(bx + 1 + width as isize, y, ']', theme.c(2).scale(0.8));
+        canvas.set(
+            bx + 1 + width as isize,
+            y,
+            if unicode { '▏' } else { ']' },
+            theme.c(2).scale(0.8),
+        );
         canvas.put_str(
             bx + width as isize + 3,
             y,
@@ -753,7 +979,17 @@ impl MatrixScene {
         );
     }
 
-    fn draw_radar(&self, canvas: &mut Canvas, theme: &Theme, x: isize, y: isize, t: f32, p: Panel) {
+    #[allow(clippy::too_many_arguments)]
+    fn draw_radar(
+        &self,
+        canvas: &mut Canvas,
+        theme: &Theme,
+        x: isize,
+        y: isize,
+        t: f32,
+        p: Panel,
+        unicode: bool,
+    ) {
         let cx = x + 8;
         let cy = y + 3;
         let color = theme.c(2).scale(0.65);
@@ -766,7 +1002,7 @@ impl MatrixScene {
                 canvas.set(px, py, '.', color);
             }
         }
-        canvas.set(cx, cy, '+', theme.c(3));
+        canvas.set(cx, cy, if unicode { '◉' } else { '+' }, theme.c(3));
         // sweep line
         let a = t * 1.8;
         for r in 1..=7 {
@@ -782,14 +1018,33 @@ impl MatrixScene {
             let a = a0 + t * 0.05;
             let px = cx + (a.cos() * r).round() as isize;
             let py = cy + (a.sin() * r * 0.43).round() as isize;
-            canvas.set(px, py, if i % 2 == 0 { '*' } else { 'o' }, theme.c(3));
+            canvas.set(
+                px,
+                py,
+                if unicode {
+                    if i % 2 == 0 {
+                        '●'
+                    } else {
+                        '○'
+                    }
+                } else if i % 2 == 0 {
+                    '*'
+                } else {
+                    'o'
+                },
+                theme.c(3),
+            );
         }
         canvas.put_str(x, cy + 4, "DSN 70M", theme.c(1).scale(1.8));
     }
 }
 
-fn logo_kind(w: usize, h: usize) -> LogoKind {
-    if w >= 96 && h >= 30 {
+fn logo_kind(w: usize, h: usize, unicode: bool) -> LogoKind {
+    if unicode && w >= 100 && h >= 32 {
+        LogoKind::UnicodeFull
+    } else if unicode && w >= 90 && h >= 28 {
+        LogoKind::UnicodeCompact
+    } else if w >= 96 && h >= 30 {
         LogoKind::Full
     } else if w >= 70 && h >= 24 {
         LogoKind::Compact
@@ -806,9 +1061,37 @@ fn full_logo_sy(h: usize) -> isize {
     }
 }
 
-fn logo_rect(w: usize, h: usize) -> Logo {
-    let kind = logo_kind(w, h);
+fn logo_rect(w: usize, h: usize, unicode: bool) -> Logo {
+    let kind = logo_kind(w, h, unicode);
     match kind {
+        LogoKind::UnicodeFull => {
+            let (lw, lh, sy) = if w >= 140 && h >= 44 {
+                (72, 13, 2)
+            } else {
+                (58, 11, 2)
+            };
+            Logo {
+                x: (w as isize - lw) / 2,
+                y: 2,
+                w: lw,
+                h: lh,
+                sx: 2,
+                sy,
+                kind,
+            }
+        }
+        LogoKind::UnicodeCompact => {
+            let lw = 42;
+            Logo {
+                x: (w as isize - lw) / 2,
+                y: 2,
+                w: lw,
+                h: 6,
+                sx: 2,
+                sy: 1,
+                kind,
+            }
+        }
         LogoKind::Full => {
             let sx = if w >= 140 { 3 } else { 2 };
             let sy = full_logo_sy(h);
@@ -853,17 +1136,26 @@ fn logo_rect(w: usize, h: usize) -> Logo {
     }
 }
 
-fn panel_rect(w: usize, h: usize) -> Option<Panel> {
+fn panel_rect(w: usize, h: usize, unicode: bool) -> Option<Panel> {
     if w < 70 || h < 22 {
         return None;
     }
-    let kind = logo_kind(w, h);
+    let kind = logo_kind(w, h, unicode);
     let logo_h = match kind {
+        LogoKind::UnicodeFull => {
+            if w >= 140 && h >= 44 {
+                13
+            } else {
+                11
+            }
+        }
+        LogoKind::UnicodeCompact => 6,
         LogoKind::Full => 5 * full_logo_sy(h),
         LogoKind::Compact => 3,
         LogoKind::Tiny => 1,
     };
     let y = match kind {
+        LogoKind::UnicodeFull | LogoKind::UnicodeCompact => 2 + logo_h + 1,
         LogoKind::Full => 2 + logo_h + 1,
         LogoKind::Compact => 4,
         LogoKind::Tiny => 3,
@@ -884,6 +1176,23 @@ fn panel_rect(w: usize, h: usize) -> Option<Panel> {
     })
 }
 
+fn layout(w: usize, h: usize, unicode: bool) -> (Logo, Option<Panel>) {
+    let mut logo = logo_rect(w, h, unicode);
+    let mut panel = panel_rect(w, h, unicode);
+    let top = logo.y;
+    let bottom = panel.map(|p| p.y + p.h).unwrap_or(logo.y + logo.h);
+    let group_h = bottom - top;
+    let desired = (h as isize - group_h) / 2;
+    let min_shift = 1 - top;
+    let max_shift = (h as isize - 2) - bottom;
+    let shift = (desired - top).clamp(min_shift, max_shift.max(min_shift));
+    logo.y += shift;
+    if let Some(p) = panel.as_mut() {
+        p.y += shift;
+    }
+    (logo, panel)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -892,10 +1201,16 @@ mod tests {
     #[test]
     fn panel_fits() {
         for (w, h) in [(80, 24), (120, 36), (160, 48)] {
-            if let Some(p) = panel_rect(w, h) {
-                assert!(p.x >= 0 && p.y >= 0);
-                assert!(p.x + p.w <= w as isize);
-                assert!(p.y + p.h <= h as isize);
+            for unicode in [false, true] {
+                let (logo, panel) = layout(w, h, unicode);
+                assert!(logo.x >= 0 && logo.y >= 0);
+                assert!(logo.x + logo.w <= w as isize);
+                assert!(logo.y + logo.h <= h as isize);
+                if let Some(p) = panel {
+                    assert!(p.x >= 0 && p.y >= 0);
+                    assert!(p.x + p.w <= w as isize);
+                    assert!(p.y + p.h <= h as isize);
+                }
             }
         }
     }
@@ -920,6 +1235,7 @@ mod tests {
                 charset: id.default_charset(),
                 seed: 7,
                 speed: 1.0,
+                tune: crate::scene::Tune::default(),
             };
             scene.update(&frame);
             scene.draw(&mut canvas, &frame);

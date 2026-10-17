@@ -278,17 +278,31 @@ impl Scene for TomJerryScene {
             );
         }
 
-        // chase positions
+        // chase positions: deliberately slower than the old default
+        let chase = 0.55;
+        let tt = t * chase;
+        let jumping = f.tune.jump;
         let track = (w - 20.0).max(18.0);
-        let jerry_x = 6.0 + (t * 32.0 + 60.0) % track;
-        let jumps = ((t * 4.0).sin().max(0.0)).powf(2.0) * 3.0 * scale as f32;
-        let jerry_y = (ground - jerry_art_h as isize) as f32 - jumps;
+        let jerry_x = 6.0 + (tt * 32.0 + 60.0) % track;
+        let jump = if jumping {
+            ((tt * 4.0).sin().max(0.0)).powf(2.0) * 3.0 * scale as f32
+        } else {
+            0.0
+        };
+        let jerry_y = (ground - jerry_art_h as isize) as f32 - jump;
         let gap = 22.0 + 8.0 * scale as f32;
-        let tom_x =
-            (jerry_x - gap + (t * 1.7).sin() * 2.0 + ((t * 4.0).sin().max(0.0)).powf(2.0) * 4.0)
-                .max(2.0);
+        let pounce = if jumping {
+            ((tt * 4.0).sin().max(0.0)).powf(2.0) * 4.0
+        } else {
+            0.0
+        };
+        let tom_x = (jerry_x - gap + (tt * 1.7).sin() * 2.0 + pounce).max(2.0);
         let tom_y = (ground - tom_art_h as isize) as f32
-            - ((t * 3.8 + 0.7).sin().max(0.0)).powf(2.0) * 2.0 * scale as f32;
+            - if jumping {
+                ((tt * 3.8 + 0.7).sin().max(0.0)).powf(2.0) * 2.0 * scale as f32
+            } else {
+                0.0
+            };
 
         // shadows and motion lines
         for (x, size) in [(jerry_x, 3.0), (tom_x, 5.0)] {
@@ -317,7 +331,7 @@ impl Scene for TomJerryScene {
         }
 
         // sprites
-        let frame = ((t * 8.0) as usize) % 2;
+        let frame = ((tt * 8.0) as usize) % 2;
         let tom = if frame == 0 { TOM_A } else { TOM_B };
         let jerry = if frame == 0 { JERRY_A } else { JERRY_B };
         self.draw_sprite(canvas, tom, tom_x, tom_y, scale, true);
@@ -345,7 +359,7 @@ impl Scene for TomJerryScene {
         if self.w >= title.len() + 4 {
             canvas.put_str_gradient(2, 0, title, &[theme.c(2), theme.c(3), theme.c(4)]);
         }
-        let right = format!("SPEED x{:.1}  (+/-)", f.speed);
+        let right = format!("SPEED x{:.1}  (+/-)", chase * f.speed);
         if self.w >= right.len() + 10 {
             canvas.put_str(
                 self.w as isize - right.len() as isize - 2,

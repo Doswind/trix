@@ -137,7 +137,7 @@ impl BuddhaScene {
         let art_h = lines.len() as isize;
         let max_x = self.w as isize - 2;
         let x = ((max_x - art_w) / 2).max(0);
-        let y = if self.h >= 30 { 6 } else { 2 };
+        let y = ((self.h as isize - art_h) / 2).max(1);
         let head_x = x + art_w / 2;
         let head_y = y + 4;
         // tight, unmistakable halo directly around the head
@@ -305,7 +305,7 @@ impl Scene for BuddhaScene {
         }
         // large mandala rings
         let cx = self.cx;
-        let cy = self.head_y;
+        let cy = self.h as f32 * 0.5;
         for ring in 0..3 {
             let r = self.w as f32 * (0.18 + ring as f32 * 0.12);
             let n = (r * 3.0) as usize + 24;
