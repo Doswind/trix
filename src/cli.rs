@@ -313,16 +313,16 @@ USAGE
 EFFECTS
   rain      代码雨      cyan code rain with falling source tokens
   fire      燃烧火焰    heat-diffusion fire with real flame colors
-  dragon    巨龙盘旋    dragon coiling around a plasma core
+  dragon    巨龙盘旋    Chinese celestial dragon flying across the sky
   map       世界地图    holographic Earth with live network arcs
-  matrix    黑客帝国    green digital rain, katakana and ghosts
+  matrix    黑客帝国    horizontal NASA/JPL intrusion console
 
 OPTIONS
   -e, --effect <name>     Effect to run (same as positional argument)
   -f, --fps <1-240>       Target frame rate                    [default: 30]
   -s, --speed <0.05-8>    Animation speed multiplier           [default: 1.0]
   -t, --theme <name>      Color theme, see below               [effect default]
-      --charset <mode>    kana | ascii                        [matrix: kana]
+      --charset <mode>    kana | ascii                        [matrix: ascii]
       --color <mode>      auto | truecolor | 256 | 16 | mono   [default: auto]
       --seed <u64>        Deterministic random seed
       --duration <secs>   Exit automatically after N seconds

@@ -1,79 +1,241 @@
-//! 黑客帝国 — green digital rain with katakana, glitches and a typewriter.
+//! 黑客帝国 — a horizontal NASA/JPL intrusion console.
+//!
+//! Instead of vertical digital rain, this scene is built like a 90s movie
+//! hacking terminal: horizontal tapes of hex, shell commands and telemetry
+//! scroll across the screen, while a live intrusion console tracks firewall
+//! and decryption progress against a NASA/JPL target.
 
 use crate::canvas::Canvas;
 use crate::cli::Charset;
 use crate::color::Rgb;
-use crate::rng::Rng;
+use crate::rng::{hash2, Rng};
 use crate::scene::{Frame, Scene};
 use crate::theme::Theme;
 
-static KANA: &[char] = &[
-    'ｱ', 'ｲ', 'ｳ', 'ｴ', 'ｵ', 'ｶ', 'ｷ', 'ｹ', 'ｺ', 'ｻ', 'ｼ', 'ｽ', 'ｾ', 'ｿ', 'ﾀ', 'ﾂ', 'ﾃ', 'ﾅ', 'ﾆ',
-    'ﾇ', 'ﾈ', 'ﾊ', 'ﾋ', 'ﾎ', 'ﾏ', 'ﾐ', 'ﾑ', 'ﾒ', 'ﾓ', 'ﾔ', 'ﾕ', 'ﾗ', 'ﾘ', 'ﾜ', 'ﾝ', '0', '1', '2',
-    '3', '4', '5', '6', '7', '8', '9', ':', '.', '"', '=', '*', '+', '-', '<', '>',
+const TOKENS: &[&str] = &[
+    "0x7F3A",
+    "A4:2B",
+    "DEADBEEF",
+    "0xC0FFEE",
+    "sudo",
+    "root@dsn",
+    "nmap",
+    "-sS",
+    "ssh",
+    "decrypt",
+    "auth",
+    "bypass",
+    "payload",
+    "kernel",
+    "trace",
+    "NULL",
+    "0x00",
+    "::",
+    "[]",
+    "{}",
+    "->",
+    "if(auth)",
+    "for(i=0;",
+    "while(1)",
+    "ret",
+    "shell",
+    "node",
+    "TLS1.3",
+    "GPS",
+    "DSN",
+    "JPL",
+    "NASA",
+    "VOYAGER",
+    "ARTEMIS",
+    "TELEMETRY",
+    "UPLINK",
+    "DOWNLINK",
+    "SATCOM",
+    "ORBIT",
+    "APOLLO",
+    "HUBBLE",
+    "CASSINI",
+    "0xDEAD",
+    "0xBEEF",
+    "chmod",
+    "inject",
+    "access",
+    "mainframe",
+    "handshake",
+    "firewall",
+    "rootkit",
+    "packet",
+    "socket",
+    "buffer",
+    "overflow",
+    "exploit",
+    "proxy",
+    "tunnel",
 ];
 
-static ASCII: &[char] = &[
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
-    'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ':', '.',
-    '"', '=', '*', '+', '-', '<', '>', '|', '/', '\\', '$', '@', '#', '%', '&', '?', '!',
+const KANA_TOKENS: &[&str] = &[
+    "ｱｸｾｽ",
+    "ﾃﾞｰﾀ",
+    "ﾊﾞｲﾊﾟｽ",
+    "ﾈｯﾄﾜｰｸ",
+    "ｼｽﾃﾑ",
+    "ﾃﾚﾒﾄﾘ",
+    "ﾊﾟｽﾜｰﾄﾞ",
+    "ｱｰｶｲﾌﾞ",
+    "ｼｸﾞﾅﾙ",
+    "ｵﾝﾗｲﾝ",
+    "ﾒｲﾝﾌﾚｰﾑ",
+    "ｾｷｭﾘﾃｨ",
 ];
 
-const MESSAGES: &[&str] = &[
-    "Wake up, Neo...",
-    "The Matrix has you...",
-    "Follow the white rabbit.",
-    "Knock, knock, Neo.",
+const STREAM_GLYPHS: &[u8] = b"0123456789ABCDEF#$%&*+=<>/\\|;:";
+
+const LOGS: &[(&str, f64)] = &[
+    ("target acquired: NASA / JPL", 0.6),
+    ("handshake TLS 1.3 ......... OK", 2.0),
+    ("exploit CVE-2026-1337 ..... OK", 4.0),
+    ("firewall bypass ........... 64%", 6.0),
+    ("root shell established", 8.5),
+    ("downlink telemetry ........ 81%", 11.0),
+    ("ACCESS GRANTED", 14.0),
 ];
 
-struct Column {
-    head: f32,
+const CYCLE: f64 = 24.0;
+
+struct Stream {
+    x: f32,
     speed: f32,
     len: usize,
+    glyph: usize,
     bright: f32,
-    depth: f32,
+}
+
+struct Row {
+    tape: Vec<char>,
+    offset: f32,
+    speed: f32,
+    dim: f32,
+    streams: Vec<Stream>,
+}
+
+#[derive(Clone, Copy)]
+struct Panel {
+    x: isize,
+    y: isize,
+    w: isize,
+    h: isize,
+    left: isize,
+}
+
+impl Panel {
+    fn contains(&self, x: isize, y: isize) -> bool {
+        x >= self.x && x < self.x + self.w && y >= self.y && y < self.y + self.h
+    }
 }
 
 pub struct MatrixScene {
     rng: Rng,
+    seed: u64,
     w: usize,
     h: usize,
-    cols: Vec<Column>,
-    glyphs: Vec<char>,
-    font: Vec<u8>,
+    rows: Vec<Row>,
     charset: Option<Charset>,
     glitch_t: f32,
     next_glitch: f64,
     glitch_rows: Vec<bool>,
-    glitch_off: Vec<i8>,
-    msg_active: bool,
-    msg_index: usize,
-    msg_typed: usize,
-    msg_next_char: f64,
-    msg_until: f64,
-    msg_next: f64,
 }
 
 impl MatrixScene {
     pub fn new(seed: u64) -> Self {
         MatrixScene {
             rng: Rng::new(seed ^ 0x0bad_c0de),
+            seed,
             w: 0,
             h: 0,
-            cols: Vec::new(),
-            glyphs: KANA.to_vec(),
-            font: Vec::new(),
+            rows: Vec::new(),
             charset: None,
             glitch_t: 0.0,
             next_glitch: 8.0,
             glitch_rows: Vec::new(),
-            glitch_off: Vec::new(),
-            msg_active: false,
-            msg_index: 0,
-            msg_typed: 0,
-            msg_next_char: 0.0,
-            msg_until: 0.0,
-            msg_next: 5.0,
+        }
+    }
+
+    fn rebuild(&mut self, w: usize, h: usize) {
+        self.w = w.max(1);
+        self.h = h.max(1);
+        let kana = self.charset == Some(Charset::Kana);
+        self.rows.clear();
+        for y in 0..self.h {
+            let tape = self.make_tape(y, kana);
+            let mut streams = Vec::new();
+            let count = if y % 6 == 0 { 2 } else { 1 };
+            for _ in 0..count {
+                streams.push(self.make_stream(tape.len()));
+            }
+            let dim = if y % 7 == 3 {
+                self.rng.range(0.11, 0.20)
+            } else {
+                self.rng.range(0.06, 0.15)
+            };
+            self.rows.push(Row {
+                tape,
+                offset: self.rng.range(0.0, 180.0),
+                speed: self.rng.range(1.2, 6.5),
+                dim,
+                streams,
+            });
+        }
+        self.glitch_rows = vec![false; self.h];
+    }
+
+    fn make_tape(&mut self, y: usize, kana: bool) -> Vec<char> {
+        let mut tape = Vec::with_capacity(self.w * 2 + 80);
+        let target = self.w * 2 + 60;
+        let log_row = y % 7 == 3;
+        while tape.len() < target {
+            if log_row {
+                let node = (self.rng.next_u32() & 0xffff) as u16;
+                let line = format!(
+                    "[ OK ] ACCESS NODE 0x{:04X} :: TELEMETRY STREAM {} :: ",
+                    node,
+                    self.rng.below(9) + 1
+                );
+                for ch in line.chars() {
+                    if tape.len() < target {
+                        tape.push(ch);
+                    }
+                }
+                for ch in "PAYLOAD 0xDEADBEEF :: ".chars() {
+                    if tape.len() < target {
+                        tape.push(ch);
+                    }
+                }
+            } else {
+                let token = if kana && self.rng.chance(0.08) {
+                    KANA_TOKENS[self.rng.below(KANA_TOKENS.len())]
+                } else {
+                    TOKENS[self.rng.below(TOKENS.len())]
+                };
+                for ch in token.chars() {
+                    if tape.len() < target {
+                        tape.push(ch);
+                    }
+                }
+                if tape.len() < target {
+                    tape.push(' ');
+                }
+            }
+        }
+        tape
+    }
+
+    fn make_stream(&mut self, tape_len: usize) -> Stream {
+        Stream {
+            x: self.rng.range(0.0, self.w as f32),
+            speed: self.rng.range(5.0, 17.0),
+            len: (self.rng.below(16) + 10).min(self.w.max(8)),
+            glyph: self.rng.below(tape_len.max(1)),
+            bright: self.rng.range(0.55, 1.0),
         }
     }
 
@@ -82,70 +244,20 @@ impl MatrixScene {
             return;
         }
         self.charset = Some(charset);
-        self.glyphs = match charset {
-            Charset::Kana => KANA.to_vec(),
-            Charset::Ascii => ASCII.to_vec(),
-        };
         self.rebuild(self.w.max(1), self.h.max(1));
     }
 
-    fn rebuild(&mut self, w: usize, h: usize) {
-        self.w = w.max(1);
-        self.h = h.max(1);
-        self.font = vec![0; self.w * self.h];
-        for cell in self.font.iter_mut() {
-            *cell = self.rng.below(self.glyphs.len()) as u8;
-        }
-        self.cols.clear();
-        for _ in 0..self.w {
-            let depth = self.rng.f32();
-            let len = (self.h as f32 * (0.35 + depth * 0.55)).max(6.0) as usize;
-            self.cols.push(Column {
-                head: self.rng.range(-(len as f32), h as f32),
-                speed: self.rng.range(3.0, 14.0) * (0.65 + depth * 0.6),
-                len: len.min(self.h),
-                bright: 0.35 + depth * 0.75,
-                depth,
-            });
-        }
-        self.glitch_rows = vec![false; self.h];
-        self.glitch_off = vec![0; self.h];
-    }
-
-    fn trigger_glitch(&mut self, t: f64) {
-        self.glitch_t = self.rng.range(0.22, 0.42);
-        self.next_glitch = t + self.rng.range(9.0, 19.0) as f64;
-        for i in 0..self.h {
-            self.glitch_rows[i] = false;
-            self.glitch_off[i] = 0;
-        }
-        let bands = 1 + self.rng.below(3);
-        for _ in 0..bands {
-            let y = self.rng.below(self.h);
-            let off = self.rng.range(-4.0, 4.0) as i8;
-            for dy in 0..self.rng.below(3) + 1 {
-                let yy = (y + dy).min(self.h - 1);
-                self.glitch_rows[yy] = true;
-                self.glitch_off[yy] = off;
-            }
+    fn phase(&self, t: f64) -> f64 {
+        let p = t % CYCLE;
+        if p < 0.0 {
+            p + CYCLE
+        } else {
+            p
         }
     }
 
-    fn glyph(&self, x: usize, y: usize) -> char {
-        self.glyphs[self.font[y * self.w + x] as usize % self.glyphs.len()]
-    }
-}
-
-fn matrix_color(theme: &Theme, f: f32) -> Rgb {
-    // f: 0 at the tail, 1 at the head.
-    if f > 0.9 {
-        theme.c(4)
-    } else if f > 0.55 {
-        theme.c(3).lerp(theme.c(4), (f - 0.55) / 0.35)
-    } else if f > 0.2 {
-        theme.c(2).lerp(theme.c(3), (f - 0.2) / 0.35)
-    } else {
-        theme.c(1).lerp(theme.c(2), f / 0.2)
+    fn progress(&self, t: f64) -> f32 {
+        ((self.phase(t) / 14.0) * 100.0).clamp(0.0, 100.0) as f32
     }
 }
 
@@ -160,148 +272,464 @@ impl Scene for MatrixScene {
         if self.charset != Some(f.charset) {
             self.set_charset(f.charset);
         }
-        let dt = f.dt.clamp(0.0, 0.1).min(0.1);
-        let hf = self.h as f32;
-        for col in self.cols.iter_mut() {
-            col.head += col.speed * dt;
-            // Mutate a glyph in the visible trail now and then.
-            if self.rng.chance(0.18) {
-                let y = self.rng.below(self.h);
-                let x = self.rng.below(self.w);
-                self.font[y * self.w + x] = self.rng.below(self.glyphs.len()) as u8;
+        let dt = f.dt.clamp(0.0, 0.1);
+        for row in self.rows.iter_mut() {
+            row.offset += row.speed * dt;
+            if row.offset >= row.tape.len() as f32 {
+                row.offset -= row.tape.len() as f32;
             }
-            if col.head - col.len as f32 > hf {
-                let depth = self.rng.f32();
-                col.head = self.rng.range(-(col.len as f32) * 1.5, -1.0);
-                col.speed = self.rng.range(3.0, 14.0) * (0.65 + depth * 0.6);
-                col.depth = depth;
-                col.bright = 0.35 + depth * 0.75;
-                col.len = (self.h as f32 * (0.35 + depth * 0.55)).max(6.0) as usize;
-                col.len = col.len.min(self.h);
+            for stream in row.streams.iter_mut() {
+                stream.x -= stream.speed * dt;
+                if stream.x + (stream.len as f32) < 0.0 {
+                    let s = self.rng.range(6.0, 19.0);
+                    let len = self.rng.below(16) + 10;
+                    stream.x = self.w as f32 + self.rng.range(0.0, 24.0);
+                    stream.speed = s;
+                    stream.len = len.min(self.w.max(8));
+                    stream.glyph = self.rng.below(row.tape.len().max(1));
+                    stream.bright = self.rng.range(0.55, 1.0);
+                }
             }
         }
 
         if f.t > self.next_glitch {
-            self.trigger_glitch(f.t);
+            self.glitch_t = self.rng.range(0.22, 0.4);
+            self.next_glitch = f.t + self.rng.range(8.0, 15.0) as f64;
+            for g in self.glitch_rows.iter_mut() {
+                *g = false;
+            }
+            for _ in 0..(1 + self.rng.below(3)) {
+                let y = self.rng.below(self.h);
+                self.glitch_rows[y] = true;
+            }
         }
         self.glitch_t = (self.glitch_t - dt).max(0.0);
-
-        // Typewriter message.
-        if self.msg_active {
-            if self.msg_typed < MESSAGES[self.msg_index].len() && f.t >= self.msg_next_char {
-                self.msg_typed += 1;
-                self.msg_next_char = f.t + 0.055;
-            }
-            if self.msg_typed >= MESSAGES[self.msg_index].len() && f.t > self.msg_until {
-                self.msg_active = false;
-                self.msg_next = f.t + 10.0;
-            }
-        } else if f.t >= self.msg_next {
-            self.msg_active = true;
-            self.msg_index = (self.msg_index + 1) % MESSAGES.len();
-            self.msg_typed = 0;
-            self.msg_next_char = f.t;
-            self.msg_until = f.t + 3.5;
-        }
     }
 
     fn draw(&mut self, canvas: &mut Canvas, f: &Frame) {
         let theme = f.theme;
         let t = f.t as f32;
+        let w = self.w;
+        let h = self.h;
+        let panel = panel_rect(w, h);
         let glitching = self.glitch_t > 0.0;
+        let phase = self.phase(f.t);
+        let progress = self.progress(f.t);
 
-        for (x, col) in self.cols.iter().enumerate() {
-            let head_y = col.head.floor() as isize;
-            let mut x_draw = x as isize;
-            if glitching
-                && self
-                    .glitch_rows
-                    .get(head_y.max(0) as usize)
-                    .copied()
-                    .unwrap_or(false)
-            {
-                x_draw += self.glitch_off[(head_y.max(0) as usize).min(self.h - 1)] as isize;
+        // Horizontal background tapes.
+        for (y, row) in self.rows.iter().enumerate() {
+            if y == 0 || y + 1 == h {
+                continue;
             }
-            for d in 0..col.len {
-                let y = head_y - d as isize;
-                if y < 0 || y >= self.h as isize {
+            let start = (row.offset as usize) % row.tape.len().max(1);
+            let twinkle = 0.82 + 0.18 * (t * 2.3 + y as f32 * 0.7).sin();
+            let col = theme.c(2).scale(row.dim * twinkle);
+            for x in 0..w {
+                if panel.is_some_and(|p| p.contains(x as isize, y as isize)) {
                     continue;
                 }
-                let fade = 1.0 - d as f32 / col.len as f32;
-                let ch = self.glyph(x, y as usize);
-                let scan = if (y as usize + (t * 9.0) as usize) % 7 == 0 {
-                    0.82
-                } else {
-                    1.0
-                };
-                let mut color = if d == 0 {
-                    theme.c(4)
-                } else {
-                    matrix_color(theme, fade)
-                        .scale(fade.powf(1.35) * (0.62 + col.bright * 0.42) * scan)
-                };
-                if glitching && self.glitch_rows.get(y as usize).copied().unwrap_or(false) {
-                    color = color.lerp(Rgb::new(255, 80, 90), 0.45);
-                }
-                if color.luminance() < 0.02 {
-                    continue;
-                }
-                canvas.set(x_draw, y, ch, color);
-                if d == 0 {
-                    canvas.add_light(x_draw, y + 1, theme.c(2).scale(0.4), 0.8, ':');
-                    canvas.add_light(x_draw, y - 1, theme.c(3).scale(0.18), 0.5, '.');
+                let ch = row.tape[(start + x) % row.tape.len()];
+                if ch != ' ' {
+                    canvas.set(x as isize, y as isize, ch, col);
                 }
             }
-        }
 
-        if glitching {
-            // Sharp horizontal corruption bands.
-            let mut bands = 0;
-            for y in 0..self.h {
-                if !self.glitch_rows[y] || bands >= 4 {
-                    continue;
-                }
-                bands += 1;
-                for x in (0..self.w).step_by(3) {
-                    if (x + y) % 2 == 0 {
-                        let ch = if (x / 3) % 2 == 0 { '=' } else { '#' };
-                        canvas.set(
-                            x as isize,
-                            y as isize,
-                            ch,
-                            theme.c(4).lerp(Rgb::new(255, 50, 50), 0.35),
-                        );
+            // Bright horizontal data streams with a white head.
+            for stream in &row.streams {
+                let head = stream.x.floor() as isize;
+                for i in 0..stream.len {
+                    let x = head + i as isize;
+                    if x < 0 || x >= w as isize {
+                        continue;
+                    }
+                    if panel.is_some_and(|p| p.contains(x, y as isize)) {
+                        continue;
+                    }
+                    let idx = (stream.glyph + i * 7) % STREAM_GLYPHS.len();
+                    let ch = STREAM_GLYPHS[idx] as char;
+                    let fade = 1.0 - i as f32 / stream.len as f32;
+                    let color = if i == 0 {
+                        theme.c(4)
+                    } else if i < 3 {
+                        theme.hot()
+                    } else {
+                        theme
+                            .c(3)
+                            .lerp(theme.c(2), (i as f32 / stream.len as f32).min(1.0))
+                            .scale(fade.powf(1.9) * stream.bright * 0.9)
+                    };
+                    if color.luminance() < 0.02 {
+                        continue;
+                    }
+                    canvas.set(x, y as isize, ch, color);
+                    if i == 0 {
+                        canvas.add_light(x, y as isize, theme.c(3), 0.8, '.');
+                        canvas.add_light(x + 1, y as isize, theme.c(2), 0.45, ':');
+                        canvas.add_light(x + 2, y as isize, theme.c(2), 0.2, '.');
                     }
                 }
             }
         }
 
-        // Typewriter message in a small console.
-        if self.msg_active && self.w >= 36 && self.h >= 12 {
-            let text = MESSAGES[self.msg_index];
-            let shown = &text[..self.msg_typed.min(text.len())];
-            let bw = (text.len() + 8).min(self.w - 4) as isize;
-            let x = 2isize;
-            let y = self.h as isize - 5;
-            canvas.clear_rect(x, y, bw, 3);
-            let dim = theme.c(1);
-            canvas.hline(x, x + bw - 1, y, '-', dim);
-            canvas.hline(x, x + bw - 1, y + 2, '-', dim);
-            canvas.set(x, y, '+', dim);
-            canvas.set(x + bw - 1, y, '+', dim);
-            canvas.set(x, y + 2, '+', dim);
-            canvas.set(x + bw - 1, y + 2, '+', dim);
-            canvas.put_str(x + 2, y + 1, ">", theme.c(2));
-            canvas.put_str(x + 4, y + 1, shown, theme.c(4));
-            let cursor_on = (t * 2.0).fract() < 0.55;
-            if cursor_on {
-                canvas.set(
-                    x + 4 + shown.len() as isize,
-                    y + 1,
-                    if (t * 4.0).fract() < 0.5 { '#' } else { '_' },
-                    theme.c(3),
-                );
+        // A slow scanline sweeps down over the code.
+        let scan_y = ((t * 3.0) as usize) % h.max(1);
+        if scan_y > 0 && scan_y + 1 < h {
+            for x in (0..w).step_by(2) {
+                if panel.is_some_and(|p| p.contains(x as isize, scan_y as isize)) {
+                    continue;
+                }
+                if hash2(x as i64, scan_y as i64, self.seed) & 3 == 0 {
+                    canvas.add_light(x as isize, scan_y as isize, theme.c(2), 0.28, '-');
+                }
             }
         }
+
+        // Glitch bands outside the console.
+        if glitching {
+            for y in 0..h {
+                if !self.glitch_rows.get(y).copied().unwrap_or(false) || y == 0 || y + 1 == h {
+                    continue;
+                }
+                for x in (0..w).step_by(2) {
+                    if panel.is_some_and(|p| p.contains(x as isize, y as isize)) {
+                        continue;
+                    }
+                    let hsh = hash2(x as i64, y as i64 ^ 0x51, self.seed ^ 7);
+                    let ch = if hsh & 3 == 0 {
+                        '#'
+                    } else if hsh & 3 == 1 {
+                        '='
+                    } else {
+                        (b'0' + (hsh % 10) as u8) as char
+                    };
+                    let col = if hsh & 1 == 0 {
+                        theme.c(4)
+                    } else {
+                        Rgb::hex(0xff4d4d)
+                    };
+                    canvas.set(x as isize, y as isize, ch, col);
+                }
+            }
+        }
+
+        if let Some(p) = panel {
+            self.draw_console(canvas, theme, p, t, phase, progress, glitching);
+        }
+
+        // HUD strips.
+        canvas.clear_rect(0, 0, w as isize, 1);
+        canvas.clear_rect(0, h as isize - 1, w as isize, 1);
+        let title = if w >= 70 {
+            " DEEP SPACE NETWORK // UNAUTHORIZED ACCESS "
+        } else {
+            " NASA INTRUSION "
+        };
+        canvas.put_str_gradient(0, 0, title, &[theme.c(2), theme.c(3), theme.hot()]);
+        let right = "SESSION 0x7F3A-9C2B";
+        let rx = w as isize - right.len() as isize - 1;
+        if rx > title.len() as isize + 4 {
+            canvas.put_str(rx, 0, right, theme.c(2).scale(0.8));
+        }
+
+        let status = if glitching {
+            " [ !! TRACE DETECTED !! ]  SIGNAL LOST  [ RECONNECTING ] "
+        } else if progress >= 100.0 {
+            " [ ACCESS GRANTED ]  UPLINK 98%  TRACE 00:00:00  [ NASA-JPL ] "
+        } else {
+            " [ LINK SECURE ]  UPLINK 98%  TRACE 00:00:00  [ NASA-JPL ] "
+        };
+        let sc = if glitching {
+            Rgb::hex(0xff5a5a)
+        } else if progress >= 100.0 {
+            theme.hot()
+        } else {
+            theme.c(2)
+        };
+        canvas.put_str(1, h as isize - 1, status, sc);
+    }
+}
+
+impl MatrixScene {
+    #[allow(clippy::too_many_arguments)]
+    fn draw_console(
+        &self,
+        canvas: &mut Canvas,
+        theme: &Theme,
+        p: Panel,
+        t: f32,
+        phase: f64,
+        progress: f32,
+        glitching: bool,
+    ) {
+        let border = if glitching {
+            Rgb::hex(0xff4d4d)
+        } else {
+            theme.c(2).scale(0.75)
+        };
+        canvas.clear_rect(p.x, p.y, p.w, p.h);
+        canvas.rect(p.x, p.y, p.w, p.h, border);
+        let title = " INTRUSION CONSOLE // NASA-JPL ";
+        canvas.put_str(p.x + 1, p.y, title, theme.hot());
+        let right = "SESSION 0x7F3A-9C2B ";
+        let rx = p.x + p.w - right.len() as isize - 2;
+        if rx > p.x + title.len() as isize + 2 {
+            canvas.put_str(rx, p.y, right, theme.c(2).scale(0.8));
+        }
+
+        // left / right column divider
+        let mid = p.x + p.left;
+        canvas.vline(mid, p.y + 1, p.y + p.h - 2, '|', border);
+
+        let lx = p.x + 2;
+        let rxx = mid + 2;
+        let top = p.y + 2;
+        let label = theme.c(2).scale(0.75);
+        let value = theme.c(3);
+        let dim = theme.c(1).scale(1.8);
+
+        // Target block.
+        canvas.put_str(lx, top, "TARGET", label);
+        canvas.put_str(lx + 9, top, "NASA / JET PROPULSION LAB", value);
+        canvas.put_str(lx, top + 1, "NODE", label);
+        canvas.put_str(lx + 9, top + 1, "dsn.jpl.nasa.gov:443", value);
+        canvas.put_str(lx, top + 2, "CHANNEL", label);
+        canvas.put_str(lx + 9, top + 2, "0x7F3A-9C2B / TLS 1.3", value);
+
+        let bar_y = top + 4;
+        self.draw_bar(canvas, theme, lx, bar_y, "FIREWALL", progress, 24);
+        self.draw_bar(
+            canvas,
+            theme,
+            lx,
+            bar_y + 1,
+            "DECRYPT",
+            (progress * 1.18).min(100.0),
+            24,
+        );
+
+        // separator
+        let sep_y = bar_y + 3;
+        for x in lx..(mid - 1) {
+            canvas.set(x, sep_y, '-', dim);
+        }
+
+        // Revealed log lines.
+        let mut logs: Vec<(&str, usize)> = Vec::new();
+        for (text, at) in LOGS {
+            if phase + 0.001 >= *at {
+                let elapsed = (phase - at).max(0.0);
+                let typed = ((elapsed * 28.0) as usize).min(text.len());
+                logs.push((text, typed));
+            }
+        }
+        let show = if p.h >= 20 { 5 } else { 4 };
+        let start = logs.len().saturating_sub(show);
+        let log_y = sep_y + 1;
+        for (i, (text, typed)) in logs[start..].iter().enumerate() {
+            let y = log_y + i as isize;
+            if y >= p.y + p.h - 3 {
+                break;
+            }
+            let is_granted = text.contains("GRANTED");
+            let col = if is_granted { theme.hot() } else { theme.c(3) };
+            canvas.put_str(
+                lx,
+                y,
+                ">",
+                if is_granted { theme.hot() } else { theme.c(2) },
+            );
+            let shown: String = text.chars().take(*typed).collect();
+            canvas.put_str(lx + 2, y, &shown, col);
+            if *typed < text.len() {
+                canvas.set(lx + 2 + shown.len() as isize, y, '_', theme.c(3));
+            }
+        }
+
+        // Command prompt / status at the bottom of the left panel.
+        let prompt_y = p.y + p.h - 2;
+        if prompt_y > log_y {
+            let (cmd, col) = if progress >= 100.0 {
+                ("ACCESS GRANTED // root@dsn:~#", theme.hot())
+            } else if phase > 6.0 {
+                ("download /deep-space/telemetry --all", theme.c(3))
+            } else {
+                ("ssh root@dsn.jpl.nasa.gov", theme.c(3))
+            };
+            canvas.put_str(lx, prompt_y, ">", theme.c(2));
+            canvas.put_str(lx + 2, prompt_y, cmd, col);
+            if (t * 2.0).fract() < 0.5 {
+                canvas.set(lx + 2 + cmd.len() as isize, prompt_y, '#', theme.c(3));
+            }
+        }
+
+        // Right-hand radar / uplink panel.
+        canvas.put_str(rxx, top, "DSN UPLINK", label);
+        let info_y = if p.h >= 20 {
+            self.draw_radar(canvas, theme, rxx, top + 2, t, p);
+            p.y + p.h - 6
+        } else {
+            canvas.put_str(rxx, top + 2, "[ DSN 70M ]", theme.c(3));
+            top + 4
+        };
+        canvas.put_str(rxx, info_y, "SIGNAL 98%", theme.c(3));
+        canvas.put_str(rxx, info_y + 1, "TRACE 00:00:00", theme.c(2).scale(0.9));
+        canvas.put_str(
+            rxx,
+            info_y + 2,
+            if progress >= 100.0 {
+                "LOCK NASA-JPL"
+            } else {
+                "LOCK ACQUIRED"
+            },
+            if progress >= 100.0 {
+                theme.hot()
+            } else {
+                theme.c(3)
+            },
+        );
+        let bars: String = (0..(p.left.clamp(4, 20) - 2))
+            .map(|i| if (i as f32 / 18.0) < 0.9 { '#' } else { '-' })
+            .collect();
+        if info_y + 3 < p.y + p.h - 1 {
+            canvas.put_str(rxx, info_y + 3, &bars, theme.c(2).scale(0.8));
+        }
+
+        if glitching {
+            let msg = "!! PACKET LOSS !!";
+            let mx = p.x + p.w - msg.len() as isize - 2;
+            canvas.put_str(mx, p.y + p.h - 2, msg, Rgb::hex(0xff5a5a));
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn draw_bar(
+        &self,
+        canvas: &mut Canvas,
+        theme: &Theme,
+        x: isize,
+        y: isize,
+        label: &str,
+        percent: f32,
+        width: usize,
+    ) {
+        canvas.put_str(x, y, label, theme.c(2).scale(0.8));
+        let bx = x + 10;
+        let pct = percent.clamp(0.0, 100.0);
+        let filled = ((pct / 100.0) * width as f32).round() as usize;
+        canvas.set(bx, y, '[', theme.c(2).scale(0.8));
+        for i in 0..width {
+            let ch = if i < filled { '#' } else { '.' };
+            let col = if i < filled {
+                theme.c(3)
+            } else {
+                theme.c(1).scale(1.7)
+            };
+            canvas.set(bx + 1 + i as isize, y, ch, col);
+        }
+        canvas.set(bx + 1 + width as isize, y, ']', theme.c(2).scale(0.8));
+        canvas.put_str(
+            bx + width as isize + 3,
+            y,
+            &format!("{:3.0}%", pct),
+            theme.c(3),
+        );
+    }
+
+    fn draw_radar(&self, canvas: &mut Canvas, theme: &Theme, x: isize, y: isize, t: f32, p: Panel) {
+        let cx = x + 8;
+        let cy = y + 3;
+        let color = theme.c(2).scale(0.65);
+        // ellipse outline
+        for i in 0..48 {
+            let a = i as f32 / 48.0 * std::f32::consts::TAU;
+            let px = cx + (a.cos() * 7.0).round() as isize;
+            let py = cy + (a.sin() * 3.0).round() as isize;
+            if px > x && px < p.x + p.w - 2 {
+                canvas.set(px, py, '.', color);
+            }
+        }
+        canvas.set(cx, cy, '+', theme.c(3));
+        // sweep line
+        let a = t * 1.8;
+        for r in 1..=7 {
+            let px = cx + (a.cos() * r as f32).round() as isize;
+            let py = cy + (a.sin() * r as f32 * 0.43).round() as isize;
+            canvas.set(px, py, '-', theme.c(3).scale(0.8));
+        }
+        // blips
+        for (i, (a0, r)) in [(0.7, 5.0f32), (2.1, 3.5), (4.3, 6.0), (5.5, 2.5)]
+            .iter()
+            .enumerate()
+        {
+            let a = a0 + t * 0.05;
+            let px = cx + (a.cos() * r).round() as isize;
+            let py = cy + (a.sin() * r * 0.43).round() as isize;
+            canvas.set(px, py, if i % 2 == 0 { '*' } else { 'o' }, theme.c(3));
+        }
+        canvas.put_str(x, cy + 4, "DSN 70M", theme.c(1).scale(1.8));
+    }
+}
+
+fn panel_rect(w: usize, h: usize) -> Option<Panel> {
+    if w < 76 || h < 22 {
+        return None;
+    }
+    let bw = (w as isize - 10).min(84);
+    let bh = (h as isize - 8).clamp(18, 20);
+    if bw < 66 || bh < 18 {
+        return None;
+    }
+    let x = (w as isize - bw) / 2;
+    let y = (h as isize - bh) / 2;
+    let left = (bw * 62 / 100).max(36);
+    Some(Panel {
+        x,
+        y,
+        w: bw,
+        h: bh,
+        left,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::scene::EffectId;
+
+    #[test]
+    fn panel_fits() {
+        for (w, h) in [(80, 24), (120, 36), (160, 48)] {
+            if let Some(p) = panel_rect(w, h) {
+                assert!(p.x >= 0 && p.y >= 0);
+                assert!(p.x + p.w <= w as isize);
+                assert!(p.y + p.h <= h as isize);
+            }
+        }
+    }
+
+    #[test]
+    fn scene_has_horizontal_content() {
+        let id = EffectId::Matrix;
+        let mut scene = crate::scene::build(id, 7);
+        let (w, h) = (120, 36);
+        scene.resize(w, h);
+        let theme = id.default_theme();
+        let mut canvas = Canvas::new(w, h);
+        for step in 0..220 {
+            let t = step as f64 / 30.0;
+            let frame = Frame {
+                t,
+                dt: 1.0 / 30.0,
+                w,
+                h,
+                fps: 30,
+                theme,
+                charset: id.default_charset(),
+                seed: 7,
+            };
+            scene.update(&frame);
+            scene.draw(&mut canvas, &frame);
+        }
+        assert!(canvas.ink() > 1500);
     }
 }

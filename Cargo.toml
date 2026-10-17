@@ -1,6 +1,6 @@
 [package]
 name = "texiao"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.70"
 description = "Fast, low-footprint sci-fi ASCII terminal effects: code rain, fire, dragon, world map, matrix"

@@ -6,7 +6,7 @@
 
 use crate::canvas::Canvas;
 use crate::color::Rgb;
-use crate::rng::{hash2, Rng};
+use crate::rng::{hash2, value_noise, Rng};
 use crate::scene::{Frame, Scene};
 use crate::theme::Theme;
 
@@ -21,6 +21,10 @@ struct Spark {
     max_life: f32,
     heat: f32,
 }
+
+/// Maximum heat in the classic Doom-fire cellular grid.  Taller than the
+/// v0.1 value (36) so the central column of flame can reach the top rows.
+const FIRE_MAX: f32 = 54.0;
 
 pub struct FireScene {
     rng: Rng,
@@ -74,14 +78,24 @@ impl FireScene {
         if w == 0 || h < 2 {
             return;
         }
-        let max = (36.0 + self.flare * 5.0) as u8;
-        // A gently waving, uneven fuel bed.
+        let max = FIRE_MAX + self.flare * 8.0;
+        // A broad central fuel mound: the base still spans the screen, while
+        // the hottest core is wide and the shoulders are cooler.  This makes
+        // tall central tongues and a silhouette that is wide at the bottom
+        // and narrow at the top.
+        let cx = (w as f32 - 1.0) * 0.5;
         for x in 0..w {
             let xf = x as f32;
-            let wave = (xf * 0.055 + t * 1.1).sin() * 0.22
-                + (xf * 0.17 - t * 1.9).sin() * 0.12
-                + (hash2(x as i64, (t * 30.0) as i64, self.seed ^ 3) & 7) as f32 / 7.0 * 0.10;
-            self.heat[(h - 1) * w + x] = ((max as f32 * (0.78 + wave)).clamp(0.0, 39.0)) as u8;
+            let nx = (xf - cx) / (w as f32 * 0.5);
+            let mound = (1.0 - (nx.abs() / 0.88).powf(2.2)).max(0.0);
+            let core = (1.0 - (nx.abs() / 0.40).powf(2.0)).max(0.0);
+            let bed = 0.30 + 0.34 * mound + 0.36 * core;
+            let wave = (xf * 0.055 + t * 1.1).sin() * 0.12
+                + (xf * 0.17 - t * 1.9).sin() * 0.07
+                + ((hash2(x as i64, (t * 30.0) as i64, self.seed ^ 3) & 15) as f32 / 15.0 - 0.5)
+                    * 0.16;
+            let v = (max * bed * (0.92 + wave)).clamp(4.0, 60.0);
+            self.heat[(h - 1) * w + x] = v as u8;
         }
 
         for y in 0..h - 1 {
@@ -177,8 +191,23 @@ impl Scene for FireScene {
         let h = self.h;
         for y in 0..h {
             for x in 0..w {
-                let raw = self.heat[y * w + x] as f32 / 36.0;
-                if raw < 0.035 {
+                let mut raw = self.heat[y * w + x] as f32 / 46.0;
+                if raw < 0.03 {
+                    continue;
+                }
+                // Strong triangular envelope: a wide base that narrows into
+                // tall central tips, like a large bonfire rather than a wall.
+                let depth = y as f32 / (h as f32 - 1.0).max(1.0); // 0 at top, 1 at bottom
+                let wobble =
+                    (value_noise(x as f32 * 0.12, t * 1.1, self.seed ^ 0x44) - 0.5) * 0.045;
+                let half = 0.10 + 0.40 * depth.powf(0.85) + wobble;
+                let nx = (x as f32 - (w as f32 - 1.0) * 0.5) / w as f32;
+                let outside =
+                    ((nx.abs() - half * 0.66).max(0.0) / (half * 0.34).max(0.001)).clamp(0.0, 1.0);
+                let env = 1.0 - 0.88 * (outside * outside * (3.0 - 2.0 * outside));
+                let top_fade = (y as f32 / 1.5).clamp(0.0, 1.0) * 0.25 + 0.75;
+                raw *= env * top_fade;
+                if raw < 0.03 {
                     continue;
                 }
                 let flicker = 0.88

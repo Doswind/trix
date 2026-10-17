@@ -37,9 +37,9 @@ impl EffectId {
         match self {
             EffectId::Rain => "Code rain",
             EffectId::Fire => "Burning flame",
-            EffectId::Dragon => "Orbital dragon",
+            EffectId::Dragon => "Celestial dragon",
             EffectId::Map => "World map",
-            EffectId::Matrix => "Matrix rain",
+            EffectId::Matrix => "NASA intrusion",
         }
     }
 
@@ -59,7 +59,9 @@ impl EffectId {
             "fire" | "flame" | "firestorm" => Some(EffectId::Fire),
             "dragon" | "long" | "coil" | "orbit" => Some(EffectId::Dragon),
             "map" | "world" | "earth" | "globe" | "worldmap" => Some(EffectId::Map),
-            "matrix" | "neo" | "digitalrain" => Some(EffectId::Matrix),
+            "matrix" | "neo" | "digitalrain" | "hack" | "nasa" | "intrusion" => {
+                Some(EffectId::Matrix)
+            }
             _ => None,
         }
     }
@@ -92,10 +94,7 @@ impl EffectId {
     }
 
     pub fn default_charset(self) -> Charset {
-        match self {
-            EffectId::Matrix => Charset::Kana,
-            _ => Charset::Ascii,
-        }
+        Charset::Ascii
     }
 }
 

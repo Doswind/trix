@@ -1,7 +1,7 @@
 # texiao
 
 > 终端里的科幻 ASCII 特效引擎 — 代码雨、燃烧火焰、巨龙盘旋、世界地图、黑客帝国。
-> Rust 单线程、无异步运行时、diff 渲染，启动仅约 **2 ms**，常驻内存约 **2.1 MB**，30 FPS 下 CPU 约 **0.7–2.6%** 单核。
+> Rust 单线程、无异步运行时、diff 渲染，启动仅约 **2 ms**，常驻内存约 **2.1 MB**，30 FPS 下 CPU 约 **0.7–2.5%** 单核。当前 **v0.2.0**。
 
 ![texiao overview](docs/overview.png)
 
@@ -25,13 +25,13 @@
 
 ## 特性
 
-- **5 个可切换特效**：`rain` / `fire` / `dragon` / `map` / `matrix`，支持命令参数与运行时热切换。
+- **5 个可切换特效**：`rain` / `fire` / `dragon` / `map` / `matrix`；支持参数、运行时热切换与主题。
 - **低资源**：单线程、无 async、无事件循环框架；默认 30 FPS；仅依赖 `libc`。
-- **快速启动**：`--version` 中位数约 **2.0 ms**；发布版二进制约 **506 KB**。
+- **快速启动**：`--version` 中位数约 **2.0 ms**；发布版二进制约 **507 KB**。
 - **低内存**：交互模式 RSS 约 **2.05–2.20 MB**（120×36，truecolor）；160×48 离屏快照最大约 2.5 MB。
 - **diff 渲染**：双缓冲 Canvas，只重绘变化的单元格，并合并颜色序列，降低终端写入与 CPU。
 - **颜色动画**：24-bit truecolor；8 套主题；可降级到 256 色、16 色或单色。
-- **科幻感**：扫描波束、数据流、城市脉冲、轨道环、等离子核心、火焰呼吸。
+- **科幻感 / 中国风**：扫描波束、数据流、城市脉冲、NASA 入侵控制台、中国龙、龙鳞与龙须。
 - **可录制 / 可压测**：内置 `--snapshot` 与 `--bench`，方便生成文档、做 CI 性能回归。
 - **安全退出**：raw mode、备用屏幕、光标/自动换行在正常退出、Ctrl-C、SIGTERM 和 panic 时都会恢复。
 
@@ -58,8 +58,8 @@ texiao rain                          # 代码雨
 texiao fire --fps 60                 # 60 FPS 火焰
 texiao dragon --theme gold           # 金色巨龙
 texiao map --theme ice               # 全息世界地图
-texiao matrix                        # 黑客帝国（半角片假名）
-texiao matrix --charset ascii        # 字体不支持片假名时用 ASCII
+texiao matrix                        # 横向 NASA/JPL 入侵控制台
+texiao matrix --charset kana         # 混入半角片假名数据流
 texiao --list                        # 列出特效和主题
 ```
 
@@ -72,7 +72,7 @@ texiao <effect> [options]
   -f, --fps <1-240>       目标帧率                          [默认: 30]
   -s, --speed <0.05-8>    动画速度倍率                      [默认: 1.0]
   -t, --theme <name>      配色主题                          [特效默认]
-      --charset <mode>    kana | ascii                      [matrix: kana]
+      --charset <mode>    kana | ascii                      [matrix: ascii]
       --color <mode>      auto | truecolor | 256 | 16 | mono [默认: auto]
       --seed <u64>        固定随机种子（可复现）
       --duration <secs>   运行 N 秒后自动退出
@@ -124,26 +124,26 @@ texiao <effect> [options]
 
 | 特效 | 平均渲染 | p95 | diff 输出 |
 | --- | ---: | ---: | ---: |
-| rain | 0.146 ms | 0.244 ms | 15.1 KiB/帧 |
-| fire | 0.307 ms | 0.350 ms | 81.1 KiB/帧 |
-| dragon | 0.112 ms | 0.130 ms | 13.3 KiB/帧 |
-| map | 0.156 ms | 0.186 ms | 43.7 KiB/帧 |
-| matrix | 0.096 ms | 0.133 ms | 19.4 KiB/帧 |
+| rain | 0.092 ms | 0.133 ms | 15.1 KiB/帧 |
+| fire | 0.282 ms | 0.297 ms | 66.7 KiB/帧 |
+| dragon | 0.113 ms | 0.124 ms | 14.6 KiB/帧 |
+| map | 0.150 ms | 0.163 ms | 43.7 KiB/帧 |
+| matrix | 0.045 ms | 0.055 ms | 7.5 KiB/帧 |
 
 真实 PTY、truecolor、120×36、30 FPS、运行 5 秒（CPU = 子进程 `utime+stime / 5s`，含 PTY 写入，不含终端模拟器自身绘制）：
 
 | 特效 | CPU（单核） | RSS | 5 秒输出 |
 | --- | ---: | ---: | ---: |
-| rain | 0.73% | 2.05 MiB | 1.5 MiB |
-| fire | 2.59% | 2.12 MiB | 8.3 MiB |
-| dragon | 1.10% | 2.16 MiB | 1.3 MiB |
-| map | 1.47% | 2.20 MiB | 3.8 MiB |
-| matrix | 0.95% | 2.05 MiB | 1.7 MiB |
+| rain | 0.88% | 2.03 MiB | 1.5 MiB |
+| fire | 2.47% | 2.09 MiB | 6.1 MiB |
+| dragon | 1.12% | 2.22 MiB | 1.3 MiB |
+| map | 1.55% | 2.22 MiB | 3.8 MiB |
+| matrix | 0.71% | 2.20 MiB | 0.5 MiB |
 
-- 30 FPS 下约 33.3 ms/帧预算；最重的 `fire` 离屏渲染约 **0.9% 单核**（0.307 ms/帧），实际交互 truecolor 约 **2.6%**（含 PTY 写入）。
+- 30 FPS 下约 33.3 ms/帧预算；最重的 `fire` 离屏渲染约 **0.8% 单核**（0.282 ms/帧），实际交互 truecolor 约 **2.5%**（含 PTY 写入）。
 - 启动：`--version` 40 次中位数 **1.99 ms**；真实 PTY 中首屏字节中位 **1.6–2.4 ms**（不含终端模拟器自身绘制）。
-- 内存：真实 PTY 最大 RSS **2.05–2.20 MiB**；`/usr/bin/time -l` 160×48 离屏快照 **2.26–2.49 MiB**。
-- 二进制：**506 KiB**。
+- 内存：真实 PTY 最大 RSS **2.03–2.22 MiB**；160×48 离屏快照约 2.3–2.5 MiB。
+- 二进制：**507 KiB**。
 - 交互模式会遵守 `NO_COLOR`；离屏 `--snapshot` / `--bench` 默认 truecolor，可用 `--color` 覆盖。
 
 ```bash
@@ -158,10 +158,10 @@ scripts/bench.sh
 - **Canvas**（`src/canvas.rs`）：`Cell { char, fg }` 双缓冲；逐行找变化区间，移动光标一次后批量写字符；颜色变化才发 SGR；空格不参与颜色差分；支持 truecolor / 256 / 16 / mono 四级降级。
 - **零框架**：只有一个 crate 依赖 `libc`。没有 tokio、没有 crossterm、没有 per-frame 线程/任务。
 - **代码雨**：逐列头/尾、随机速度与深度、白热头、青紫尾、二进制雾、横向数据包、CRT 扫描。
-- **火焰**：经典 Doom-fire 元胞传播（每格复制下方邻居、随机衰减与横移），配 5 段火焰色板、火星粒子、周期爆燃；整屏更新 O(W×H)，极低开销。
-- **巨龙**：190 个采样点的 3D 螺旋路径，投影后 splat 到强度/深度缓冲，实现近大远小与核心遮挡；程序化头部（上下颚、嘴缝、牙、眼窝、龙角、龙须、鬃毛）、背鳍、爪足、尾鳍；头部朝向核心，周期性喷出火焰锥；中心为带环的等离子球。
+- **火焰**：经典 Doom-fire 元胞传播（每格复制下方邻居、随机衰减与横移），叠加中央高、两侧低的燃料床和下宽上窄的软包络，形成更高、更亮、下宽上窄的火焰；配 5 段火焰色板、火星与周期爆燃。
+- **巨龙**：按飞行轨迹弧长重采样的长蛇身（整屏 Lissajous 飞行），splat 到强度/深度缓冲；大型中国龙头（上下颚、嘴缝、獠牙、眼窝、鹿角、龙须、鬃毛）、四爪、背鳍、尾鳍、龙鳞与金色脊线；云海与星空。
 - **世界地图**：内嵌 Natural Earth 1:110m 陆地掩膜（720×360，1 bit/px），按终端尺寸用覆盖率采样生成等距圆柱投影；城市节点、脉冲环、大圆弧数据包、扫描波束、UTC 时钟、极区自动压暗。
-- **黑客帝国**：半角片假名+数字雨、白色头部、发光拖尾、随机 glitch 条带、打字机消息（“Wake up, Neo…”、“The Matrix has you…”）。
+- **黑客帝国**：横向代码/十六进制数据流（可混入半角片假名）；NASA/JPL 入侵控制台含 TARGET/NODE/CHANNEL、FIREWALL/DECRYPT 进度条、日志打字机、雷达扫描、ACCESS GRANTED 与 glitch 故障带。
 - **地图数据离线生成**：`tools/gen_land.py` 下载 Natural Earth GeoJSON 并栅格化为 `src/data/land_720x360.bin`，结果已内嵌；构建只需拉取 `libc`，运行时不访问网络。
 
 ## 录制与文档工具
@@ -181,7 +181,7 @@ python3 tools/render_gif.py dragon docs/dragon.gif --start 100 --frames 24 --ste
 
 - 支持 macOS、Linux、WSL（Unix termios）。原生 Windows 未实现。
 - 推荐 24-bit truecolor 终端；`--color auto` 会根据 `COLORTERM`/`TERM` 自动降级。
-- Matrix 的片假名需要终端字体包含半角片假名（大多数终端会用回退字体）。若出现方框，使用 `--charset ascii`。
+- `matrix` 默认使用 ASCII 数据流；`--charset kana` 会混入半角片假名（需要终端字体支持，否则会出现方框）。
 - 非 TTY（管道、CI）会提示使用 `--snapshot`。
 - 画布使用黑底；请在深色终端中使用，效果最佳。
 
@@ -193,9 +193,16 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-当前包含 28 个单元/集成测试：颜色转换、终端按键解析、CLI 校验、Canvas 裁剪与差分、地图掩膜地理坐标、5 个特效在多种尺寸下的稳定性、小终端不 panic、确定性种子等。
+当前包含 30 个单元/集成测试：颜色转换、终端按键解析、CLI 校验、Canvas 裁剪与差分、地图掩膜地理坐标、5 个特效在多种尺寸下的稳定性、小终端不 panic、确定性种子等。
 
 交互部分也在真实 PTY 中做了实测：`q` / `Esc` / `Ctrl-C` / `SIGTERM` 退出、暂停、帮助面板、特效切换、`i` 状态行、窗口缩放、`--no-alt`、颜色自动检测/256/单色/`NO_COLOR`，以及退出时的光标、自动换行和备用屏幕恢复。
+
+## 版本与回退
+
+- 当前版本：**0.2.0**（`texiao --version`），tag **`v0.2.0`**。
+- 修改前基线：git tag **`v0.1.0`**（commit `bb57b76`，tag 信息包含 “baseline snapshot”）。回退：`git checkout v0.1.0` 或 `git reset --hard v0.1.0`。
+- 额外备份（不进入 git）：`backups/texiao-v0.1.0-source.tar.gz` 与 `backups/texiao-v0.1.0-aarch64-apple-darwin`，附带 SHA-256 校验。
+- 本次改动记录在 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 数据来源、参考与许可
 
