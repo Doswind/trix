@@ -1,0 +1,14 @@
+//! texiao — fast, low-footprint sci-fi ASCII effects for the terminal.
+
+pub mod app;
+pub mod canvas;
+pub mod cli;
+pub mod color;
+pub mod rng;
+pub mod scene;
+pub mod scenes;
+pub mod term;
+pub mod theme;
+pub mod world;
+
+pub use app::run;
