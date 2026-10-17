@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.1 — 2026-10-17
+
+- 新增 GitHub Actions 自动构建/发布：`.github/workflows/release.yml`。
+- tag `v*` 自动生成 **macOS universal**（arm64 + x86_64）与 **Linux x86_64 static musl** 发布包，并创建 GitHub Release。
+- 版本号提升到 `0.5.1`。
+
 ## 0.5.0 — 2026-10-17
 
 - 项目正式从 `texiao` 更名为 **`trix`**；Rust package/binary、CLI 帮助、文档、脚本与工具全部同步改名。

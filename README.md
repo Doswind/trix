@@ -3,7 +3,9 @@
 > 前身：texiao（原项目名）；从 v0.5.0 起正式更名为 **trix**。
 
 > 终端里的科幻 ASCII 特效引擎 — 代码雨、火焰、巨龙、世界地图、NASA 登录、黑洞、光束、烟花、太阳系、银河、佛光、Tom & Jerry。
-> Rust 单线程、无异步运行时、diff 渲染，启动约 **2 ms**，常驻内存约 **2.1 MB**，30 FPS 下 CPU 约 **0.3–1.6%** 单核。当前 **v0.5.0**。
+> Rust 单线程、无异步运行时、diff 渲染，启动约 **2 ms**，常驻内存约 **2.1 MB**，30 FPS 下 CPU 约 **0.3–1.6%** 单核。当前 **v0.5.1**。
+
+![release](https://github.com/Doswind/trix/actions/workflows/release.yml/badge.svg)
 
 ![trix overview](docs/overview.png)
 
@@ -165,6 +167,29 @@ trix <effect> [options]
 
 `fire` 的火焰颜色来自主题调色板的 5 个锚点；`--theme ice` 会得到“冷焰”，`--theme ember` 是默认燃烧火焰。
 
+## 自动构建与发布
+
+仓库包含 [`.github/workflows/release.yml`](.github/workflows/release.yml)：
+
+- 推送 `v*` tag 时自动构建并创建 GitHub Release。
+- **macOS**：`aarch64-apple-darwin` + `x86_64-apple-darwin`，用 `lipo` 合并为 **universal** 二进制。
+- **Linux**：`x86_64-unknown-linux-musl` 静态二进制，不依赖目标机器的 glibc。
+- Release 资产：
+  - `trix-<version>-macos-universal.tar.gz`
+  - `trix-<version>-linux-x86_64.tar.gz`
+  - `SHA256SUMS`
+- 也可以在 GitHub Actions 页面手动 `Run workflow` 只构建 artifacts（不会创建 Release）。
+
+发布新版本：
+
+```bash
+git tag -a v0.5.1 -m "trix v0.5.1"
+git push origin master
+git push origin v0.5.1
+```
+
+> macOS 二进制未做 Apple Developer 签名/公证；首次下载如被 Gatekeeper 拦截，可右键打开，或 `xattr -d com.apple.quarantine trix`。
+
 ## 性能
 
 环境：Apple Silicon (ARM64)、macOS、Rust 1.96.1、`--release`（LTO + `codegen-units=1` + `panic=abort` + `strip`）。
@@ -262,16 +287,16 @@ cargo fmt --check
 
 ## 版本与回退
 
-- **当前版本：0.5.0**（`trix --version`），tag **`v0.5.0`**。
-- 上一版：tag **`v0.4.0`**（Unicode NASA 登录、连通火焰、可调参数）。
-- 更早：tag **`v0.3.0`**（多堆火焰、7 个新特效）；**`v0.2.0`**（中国龙、NASA 入侵）；**`v0.1.0`**（初始基线）。
+- **当前版本：0.5.1**（`trix --version`），tag **`v0.5.1`**。
+- 上一版：tag **`v0.5.0`**（项目更名为 trix）。
+- 更早：tag **`v0.4.0`**（Unicode NASA 登录、连通火焰、可调参数）；**`v0.3.0`**（多堆火焰、7 个新特效）；**`v0.2.0`**（中国龙、NASA 入侵）；**`v0.1.0`**（初始基线）。
 - 回退：
   ```bash
-  git checkout v0.4.0     # 只看上一版（detached HEAD）
+  git checkout v0.5.0     # 只看上一版（detached HEAD）
   git switch master
-  git reset --hard v0.4.0 # 彻底退回上一版
+  git reset --hard v0.5.0 # 彻底退回上一版
   ```
-- 额外备份（不进 git）：`backups/trix-v0.1.0-*` 到 `trix-v0.5.0-*`，含源码 tar 与 aarch64 macOS 二进制。
+- 额外备份（不进 git）：`backups/trix-v0.1.0-*` 到 `trix-v0.5.1-*`，含源码 tar 与 aarch64 macOS 二进制。
 - 改动记录：[CHANGELOG.md](CHANGELOG.md)。
 
 ## 数据来源、参考与许可
