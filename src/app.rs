@@ -88,6 +88,8 @@ fn tune_for(opts: &Options) -> Tune {
         meteors: opts.meteors,
         beam_speed: opts.beam_speed,
         jump: opts.jump,
+        seed_count: opts.seed_count,
+        seed_speed: opts.seed_speed,
     }
 }
 
@@ -391,11 +393,14 @@ fn interactive(opts: Options) -> i32 {
                     t = 0.0;
                     flash = 0.3;
                 }
-                Key::Char(c @ ('1'..='9' | '0' | '[' | ']')) => {
+                Key::Char(c @ ('1'..='9' | '0' | '[' | ']' | 'm' | 'e' | 'd')) => {
                     let idx = match c {
                         '0' => 9,
                         '[' => 10,
                         ']' => 11,
+                        'm' => 12,
+                        'e' => 13,
+                        'd' => 14,
                         _ => c as usize - '1' as usize,
                     };
                     let target = EffectId::from_index(idx);
@@ -634,7 +639,7 @@ fn draw_help(
         return;
     }
     let bw = 62.min(w - 4).max(32);
-    let bh = 18.min(h - 2).max(11);
+    let bh = 20.min(h - 2).max(11);
     let x = (w - bw) / 2;
     let y = (h - bh) / 2;
     canvas.clear_rect(x, y, bw, bh);
@@ -652,7 +657,8 @@ fn draw_help(
             },
         ),
         ("n / p", "next / previous effect".into()),
-        ("1-9,0,[ ]", "jump to effect".into()),
+        ("1-9,0,[ ]", "first 12 effects".into()),
+        ("m / e / d", "Mario / ECG / Dandelion".into()),
         ("t", "cycle theme".into()),
         ("+ / -", format!("speed  {:.2}x", speed)),
         ("r", "restart current effect".into()),

@@ -2,14 +2,14 @@
 
 > 前身：texiao（原项目名）；从 v0.5.0 起正式更名为 **trix**。
 
-> 终端里的科幻 ASCII 特效引擎 — 代码雨、火焰、巨龙、世界地图、NASA 登录、黑洞、光束、烟花、太阳系、银河、佛光、Tom & Jerry。
-> Rust 单线程、无异步运行时、diff 渲染，启动约 **2 ms**，常驻内存约 **2.1 MB**，30 FPS 下 CPU 约 **0.3–1.6%** 单核。当前 **v0.5.1**。
+> 终端里的科幻 ASCII / Unicode 特效引擎 — 代码雨、火焰、巨龙、世界地图、NASA 登录、黑洞、光束、烟花、太阳系、银河、佛光、Tom & Jerry、超级马里奥、心率跳动、蒲公英。
+> Rust 单线程、无异步运行时、diff 渲染，启动约 **2 ms**，常驻内存约 **2.0–2.3 MB**，30 FPS 下 CPU 约 **0.2–1.4%** 单核。当前 **v0.6.0**。
 
 ![release](https://github.com/Doswind/trix/actions/workflows/release.yml/badge.svg)
 
 ![trix overview](docs/overview.png)
 
-> 动图：[火焰](docs/fire.gif) · [巨龙](docs/dragon.gif) · [NASA 登录](docs/matrix.gif) · [黑洞](docs/blackhole.gif) · [光束](docs/beams.gif) · [烟花](docs/fireworks.gif) · [太阳系](docs/solar.gif) · [银河](docs/galaxy.gif) · [佛光](docs/buddha.gif) · [Tom & Jerry](docs/tomjerry.gif)
+> 动图：[代码雨](docs/rain.gif) · [火焰](docs/fire.gif) · [巨龙](docs/dragon.gif) · [NASA 登录](docs/matrix.gif) · [黑洞](docs/blackhole.gif) · [光束](docs/beams.gif) · [烟花](docs/fireworks.gif) · [太阳系](docs/solar.gif) · [银河](docs/galaxy.gif) · [佛光](docs/buddha.gif) · [Tom & Jerry](docs/tomjerry.gif) · [马里奥](docs/mario.gif) · [心电](docs/ecg.gif) · [蒲公英](docs/dandelion.gif)
 
 ## 特效
 
@@ -29,10 +29,14 @@
 | --- | --- | --- |
 | ![galaxy](docs/galaxy.png) | ![buddha](docs/buddha.png) | ![tomjerry](docs/tomjerry.png) |
 
+| 超级马里奥 `mario` | 心率跳动 `ecg` | 蒲公英 `dandelion` |
+| --- | --- | --- |
+| ![mario](docs/mario.png) | ![ecg](docs/ecg.png) | ![dandelion](docs/dandelion.png) |
+
 | 特效 | 说明 |
 | --- | --- |
-| `rain` 代码雨 | 逐列头/尾、随机速度与深度、白热头、青紫尾、二进制雾、横向数据包、CRT 扫描 |
-| `fire` 燃烧火焰 | Doom-fire 热扩散 + 连续底部火床 + 多个随机燃料堆；中间最高，顶部多股细长火舌；火星与爆燃 |
+| `rain` 代码雨 | 逐列头/尾、随机速度与深度、白热头、**蓝/绿双色尾**、二进制雾、横向数据包、CRT 扫描 |
+| `fire` 燃烧火焰 | Doom-fire 热扩散 + **更宽连续底部火床** + 多个随机燃料堆；中间最高，顶部多股细长分开火舌；火星与爆燃 |
 | `dragon` 巨龙盘旋 | 整屏 Lissajous 飞行的中国龙：弧长跟随龙身、鹿角、龙须、鬃毛、獠牙、四爪、背鳍、尾鳍、龙鳞 |
 | `map` 世界地图 | 内嵌 Natural Earth 陆地掩膜、城市节点、大圆弧数据包、扫描波束、UTC 时钟 |
 | `matrix` 黑客帝国 | **NASA 后台登录大屏**：Unicode 蓝色 NASA 横幅 + 白色大字 + 红色 swoosh、居中下移的登录框、OPERATOR/PASSWORD/2FA、AUTH/DECRYPT、雷达、ACCESS GRANTED |
@@ -43,15 +47,34 @@
 | `galaxy` 满天星河 | 满屏星海、中央稠密银河带；动态星团/暗尘/星座线；`--density`、`--twinkle`、`--meteors` 可调 |
 | `buddha` 佛光普照 | **垂直居中**的 ASCII 佛祖、大号头光/光环、莲花座、曼陀罗、金色粒子与飘落花瓣，全身发光 |
 | `tomjerry` 猫和老鼠 | Tom 追逐 Jerry 的太空站动画；默认放慢且不跳跃，`--speed` / `+` `-` 调速，`--jump` 开启跳跃 |
+| `mario` 超级马里奥 | 自动闯关：顶问号砖块、弹出蘑菇、吃金币；Unicode 实心精灵，`--ascii` 经典字符版 |
+| `ecg` 心率跳动 | 绿色心电监护仪：网格、P-QRS-T 波形、扫描线、HR/SpO2；Unicode / `--ascii` 两版 |
+| `dandelion` 蒲公英 | 左侧多株盛开蒲公英，白色种子向右飘散；`--seed-count` / `--seed-speed` 调数量和速度 |
 
 > 截图均为 120×36、truecolor、离屏渲染；动图见上。
 
+### ASCII / Unicode 双版本
+
+`mario` 和 `ecg` 默认 Unicode，`--ascii` 切换纯 ASCII：
+
+| Unicode | ASCII |
+| --- | --- |
+| ![mario unicode](docs/mario.png) | ![mario ascii](docs/mario-ascii.png) |
+| ![ecg unicode](docs/ecg.png) | ![ecg ascii](docs/ecg-ascii.png) |
+
+```bash
+trix mario            # Unicode 实心精灵
+trix mario --ascii    # ASCII 经典字符
+trix ecg              # Unicode 心电监护
+trix ecg --ascii      # ASCII 心电监护
+```
+
 ## 特性
 
-- **12 个可切换特效**：支持命令行参数、运行时热切换与主题。
+- **15 个可切换特效**：支持命令行参数、运行时热切换与主题。
 - **低资源**：单线程、无 async、无事件循环框架；默认 30 FPS；仅依赖 `libc`。
-- **快速启动**：`--version` 中位数约 **2.0 ms**；发布版二进制约 **603 KB**。
-- **低内存**：交互模式 RSS 约 **2.05–2.27 MB**（120×36，truecolor）。
+- **快速启动**：`--version` 中位数约 **2.0 ms**；发布版二进制约 **636 KB**。
+- **低内存**：交互模式 RSS 约 **2.00–2.25 MB**（120×36，truecolor）。
 - **diff 渲染**：双缓冲 Canvas，只重绘变化单元格并合并 SGR，降低终端写入与 CPU。
 - **颜色动画**：24-bit truecolor；8 套主题；可降级到 256 色、16 色或单色。
 - **满屏点缀**：每个场景都有星空、粒子、网格、光晕或城市/走廊背景，避免大面积空白。
@@ -90,7 +113,10 @@ trix solar                         # 太阳系九大行星一线
 trix galaxy                        # 满天星河 / 银河
 trix buddha --theme gold           # 佛光普照
 trix tomjerry --speed 0.8          # 默认 0.6x 左右，可调
- trix tomjerry --jump               # 开启跳跃
+trix mario                         # 超级马里奥（Unicode）
+trix ecg                           # 心率跳动（Unicode）
+trix dandelion                     # 蒲公英飘散
+trix tomjerry --jump               # 开启跳跃
 trix --list                        # 列出特效和主题
 
 # 参数示例
@@ -100,6 +126,9 @@ trix beams --density 1.5 --beam-speed 1.2   # 更密、更快
 trix fireworks --density 2                  # 更多烟花
 trix galaxy --density 1.5 --twinkle 2 --meteors 8
 trix tomjerry --chase-speed 0.8 --jump      # 追逐速度 / 跳跃
+trix mario --ascii                          # 马里奥 ASCII 版
+trix ecg --ascii                            # 心电 ASCII 版
+trix dandelion --seed-count 180 --seed-speed 1.4
 ```
 
 ## 命令行
@@ -112,7 +141,7 @@ trix <effect> [options]
   -s, --speed <0.05-8>    动画速度倍率                      [默认: 1.0]
       --chase-speed <f>   --speed 的别名（Tom & Jerry）
   -t, --theme <name>      配色主题                          [特效默认]
-      --charset <mode>    kana | ascii | unicode              [matrix: unicode]
+      --charset <mode>    kana | ascii | unicode              [matrix/mario/ecg/dandelion: unicode]
       --unicode           Force Unicode single-cell glyphs
       --ascii             Force ASCII fallback
       --color <mode>      auto | truecolor | 256 | 16 | mono [默认: auto]
@@ -121,6 +150,8 @@ trix <effect> [options]
       --twinkle <f>       galaxy twinkle rate                [默认: 1.0]
       --meteors <n>       black hole / galaxy meteors        [默认: 3]
       --beam-speed <f>    beams horizontal speed             [默认: 1.0]
+      --seed-count <n>    dandelion seed count                [默认: 90]
+      --seed-speed <f>    dandelion seed drift speed          [默认: 1.0]
       --jump              Tom & Jerry jumps                  [默认: off]
       --seed <u64>        固定随机种子（可复现）
       --duration <secs>   运行 N 秒后自动退出
@@ -143,14 +174,15 @@ trix <effect> [options]
 | `q` / `Esc` | 退出（帮助面板打开时 `Esc` 先关闭面板） |
 | `Space` | 暂停 / 继续 |
 | `n` / `p`、方向键 | 下一个 / 上一个特效 |
-| `1`–`9`、`0`、`[`、`]` | 依次跳到 12 个特效（见下） |
+| `1`–`9`、`0`、`[`、`]` | 前 12 个特效 |
+| `m` / `e` / `d` | 超级马里奥 / 心率跳动 / 蒲公英 |
 | `t` | 循环主题 |
 | `+` / `-` | 加速 / 减速（0.1×–8×），Tom & Jerry 同样生效 |
 | `r` | 用新种子重开当前特效 |
 | `i` | 显示 / 隐藏状态行（FPS、耗时、主题、尺寸、种子） |
 | `h` / `?` | 帮助面板 |
 
-数字键顺序：`1 rain`、`2 fire`、`3 dragon`、`4 map`、`5 matrix`、`6 blackhole`、`7 beams`、`8 fireworks`、`9 solar`、`0 galaxy`、`[ buddha`、`] tomjerry`。
+数字键顺序：`1 rain`、`2 fire`、`3 dragon`、`4 map`、`5 matrix`、`6 blackhole`、`7 beams`、`8 fireworks`、`9 solar`、`0 galaxy`、`[ buddha`、`] tomjerry`；新增 `m mario`、`e ecg`、`d dandelion`。
 
 ## 主题
 
@@ -183,9 +215,9 @@ trix <effect> [options]
 发布新版本：
 
 ```bash
-git tag -a v0.5.1 -m "trix v0.5.1"
+git tag -a v0.6.0 -m "trix v0.6.0"
 git push origin master
-git push origin v0.5.1
+git push origin v0.6.0
 ```
 
 > macOS 二进制未做 Apple Developer 签名/公证；首次下载如被 Gatekeeper 拦截，可右键打开，或 `xattr -d com.apple.quarantine trix`。
@@ -197,40 +229,46 @@ git push origin v0.5.1
 
 | 特效 | 平均渲染 | p95 | diff 输出 |
 | --- | ---: | ---: | ---: |
-| rain | 0.081 ms | 0.105 ms | 15.4 KiB/帧 |
-| fire | 0.390 ms | 0.439 ms | 58.8 KiB/帧 |
-| dragon | 0.119 ms | 0.141 ms | 15.0 KiB/帧 |
-| map | 0.155 ms | 0.172 ms | 43.6 KiB/帧 |
-| matrix | 0.068 ms | 0.080 ms | 12.0 KiB/帧 |
-| blackhole | 0.097 ms | 0.106 ms | 21.0 KiB/帧 |
-| beams | 0.083 ms | 0.103 ms | 24.9 KiB/帧 |
-| fireworks | 0.038 ms | 0.059 ms | 8.6 KiB/帧 |
-| solar | 0.037 ms | 0.041 ms | 7.6 KiB/帧 |
-| galaxy | 0.119 ms | 0.133 ms | 23.4 KiB/帧 |
-| buddha | 0.059 ms | 0.066 ms | 11.4 KiB/帧 |
-| tomjerry | 0.019 ms | 0.021 ms | 2.4 KiB/帧 |
+| rain | 0.080 ms | 0.101 ms | 14.3 KiB/帧 |
+| fire | 0.454 ms | 0.548 ms | 68.3 KiB/帧 |
+| dragon | 0.124 ms | 0.157 ms | 15.0 KiB/帧 |
+| map | 0.161 ms | 0.189 ms | 43.6 KiB/帧 |
+| matrix | 0.071 ms | 0.087 ms | 12.0 KiB/帧 |
+| blackhole | 0.100 ms | 0.118 ms | 21.0 KiB/帧 |
+| beams | 0.085 ms | 0.113 ms | 24.9 KiB/帧 |
+| fireworks | 0.040 ms | 0.064 ms | 8.6 KiB/帧 |
+| solar | 0.039 ms | 0.045 ms | 7.6 KiB/帧 |
+| galaxy | 0.129 ms | 0.163 ms | 23.4 KiB/帧 |
+| buddha | 0.061 ms | 0.072 ms | 11.4 KiB/帧 |
+| tomjerry | 0.019 ms | 0.022 ms | 2.4 KiB/帧 |
+| mario | 0.013 ms | 0.016 ms | 0.7 KiB/帧 |
+| ecg | 0.038 ms | 0.046 ms | 7.3 KiB/帧 |
+| dandelion | 0.025 ms | 0.030 ms | 4.0 KiB/帧 |
 
 真实 PTY、truecolor、120×36、30 FPS、运行 5 秒（CPU = 子进程 `utime+stime / 5s`，含 PTY 写入，不含终端模拟器自身绘制）：
 
 | 特效 | CPU（单核） | RSS | 5 秒输出 |
 | --- | ---: | ---: | ---: |
-| rain | 0.56% | 2.08 MiB | 1.5 MiB |
-| fire | 1.64% | 2.14 MiB | 5.4 MiB |
-| dragon | 0.80% | 2.27 MiB | 1.3 MiB |
-| map | 0.94% | 2.25 MiB | 3.8 MiB |
-| matrix | 0.51% | 2.28 MiB | 0.9 MiB |
-| blackhole | 0.74% | 2.12 MiB | 2.2 MiB |
-| beams | 0.63% | 2.08 MiB | 2.2 MiB |
-| fireworks | 0.42% | 2.17 MiB | 0.8 MiB |
-| solar | 0.44% | 2.08 MiB | 0.8 MiB |
-| galaxy | 0.71% | 2.25 MiB | 1.9 MiB |
-| buddha | 0.50% | 2.09 MiB | 1.0 MiB |
-| tomjerry | 0.33% | 2.05 MiB | 0.2 MiB |
+| rain | 0.46% | 2.06 MiB | 1.4 MiB |
+| fire | 1.38% | 2.09 MiB | 6.0 MiB |
+| dragon | 0.70% | 2.25 MiB | 1.3 MiB |
+| map | 0.67% | 2.22 MiB | 3.8 MiB |
+| matrix | 0.35% | 2.22 MiB | 0.9 MiB |
+| blackhole | 0.60% | 2.09 MiB | 2.2 MiB |
+| beams | 0.52% | 2.03 MiB | 2.1 MiB |
+| fireworks | 0.26% | 2.14 MiB | 0.7 MiB |
+| solar | 0.33% | 2.05 MiB | 0.8 MiB |
+| galaxy | 0.61% | 2.22 MiB | 1.9 MiB |
+| buddha | 0.34% | 2.05 MiB | 1.0 MiB |
+| tomjerry | 0.24% | 2.03 MiB | 0.2 MiB |
+| mario | 0.24% | 2.03 MiB | 0.1 MiB |
+| ecg | 0.28% | 2.05 MiB | 0.7 MiB |
+| dandelion | 0.25% | 2.00 MiB | 0.5 MiB |
 
-- 30 FPS 下约 33.3 ms/帧预算；最重的 `fire` 离屏渲染约 **1.2% 单核**（0.390 ms/帧），实际交互约 **1.6%**（含 PTY 写入）。
+- 30 FPS 下约 33.3 ms/帧预算；最重的 `fire` 离屏渲染约 **1.4% 单核**（0.454 ms/帧），实际交互约 **1.4%**（含 PTY 写入）。
 - 启动：`--version` 中位数约 **2.0 ms**；真实 PTY 首屏字节中位约 **1.6–2.4 ms**。
-- 内存：真实 PTY 最大 RSS **2.05–2.28 MiB**。
-- 二进制：**603 KiB**。
+- 内存：真实 PTY 最大 RSS **2.00–2.25 MiB**。
+- 二进制：**636 KiB**。
 - 交互模式会遵守 `NO_COLOR`；离屏 `--snapshot` / `--bench` 默认 truecolor，可用 `--color` 覆盖。
 
 ```bash
@@ -255,6 +293,9 @@ scripts/bench.sh
 - **银河**：预计算星点沿斜向银河带 + 中央核球；动态星团弧、暗尘、流星、星座线；`--density`/`--twinkle`/`--meteors` 可调。
 - **佛光**：垂直居中的 ASCII 佛祖（头光、面部、肩部、莲座）、多层光环/曼陀罗/射线、金色粒子与花瓣；逐字符发光。
 - **Tom & Jerry**：太空站走廊；运行帧动画；默认慢速、不跳跃；`--speed`/`+`/`-` 调速，`--jump` 开启跳跃；HUD 显示倍率。
+- **超级马里奥**：自动奔跑/跳跃，问号砖块顶出蘑菇、金币与分数；滚动天空/山丘/地面/板栗仔；Unicode 实心精灵与 `--ascii` 版本。
+- **心率跳动**：ECG 网格、P-QRS-T 波形、扫描线、HR/SpO2/SYS-DIA；Unicode 框线/实心波形与 `--ascii` 版本。
+- **蒲公英**：左侧 4 株蒲公英，白色种子向右飘散；`--seed-count`/`--seed-speed` 调种子数量/速度。
 - **地图数据离线生成**：`tools/gen_land.py` 下载 Natural Earth 并栅格化为 `src/data/land_720x360.bin`，运行时不访问网络。
 
 ## 录制与文档工具
@@ -269,7 +310,7 @@ python3 tools/render_gif.py dragon docs/dragon.gif --start 100 --frames 24 --ste
 
 - 支持 macOS、Linux、WSL（Unix termios）；原生 Windows 未实现。
 - 推荐 24-bit truecolor；`--color auto` 会自动降级。
-- `matrix` 默认 Unicode 单宽字符（蓝白大字、Unicode 边框/进度条）；`--ascii` 或 `--charset ascii` 回退；`--charset kana` 可混入半角片假名。
+- `matrix` 默认 Unicode 单宽字符（蓝白大字、Unicode 边框/进度条）；`--ascii` 或 `--charset ascii` 回退；`--charset kana` 可混入半角片假名；`mario`/`ecg`/`dandelion` 默认 Unicode，`--ascii` 切换 ASCII 版。
 - 非 TTY 会提示使用 `--snapshot`。
 - 画布黑底；建议深色终端。
 
@@ -281,22 +322,22 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-当前 **39 个**单元/集成测试：颜色转换、按键解析、CLI/新参数校验、Canvas 裁剪/差分、地图掩膜、12 个特效多尺寸/主题/颜色/Unicode 降级、小终端不 panic、确定性种子、Tom & Jerry 速度/跳跃等。
+当前 **42 个**单元/集成测试：颜色转换、按键解析、CLI/新参数校验、Canvas 裁剪/差分、地图掩膜、15 个特效多尺寸/主题/颜色/Unicode 降级、小终端不 panic、确定性种子、Tom & Jerry 速度/跳跃等。
 
 真实 PTY 实测：`q`/`Esc`/`Ctrl-C`/`SIGTERM`、暂停、帮助、数字/`[`/`]` 切换、`i` 状态、缩放、`--no-alt`、颜色降级、退出恢复。
 
 ## 版本与回退
 
-- **当前版本：0.5.1**（`trix --version`），tag **`v0.5.1`**。
-- 上一版：tag **`v0.5.0`**（项目更名为 trix）。
+- **当前版本：0.6.0**（`trix --version`），tag **`v0.6.0`**。
+- 上一版：tag **`v0.5.1`**（自动发布流水线）；**`v0.5.0`**（项目更名为 trix）。
 - 更早：tag **`v0.4.0`**（Unicode NASA 登录、连通火焰、可调参数）；**`v0.3.0`**（多堆火焰、7 个新特效）；**`v0.2.0`**（中国龙、NASA 入侵）；**`v0.1.0`**（初始基线）。
 - 回退：
   ```bash
-  git checkout v0.5.0     # 只看上一版（detached HEAD）
+  git checkout v0.5.1     # 只看上一版（detached HEAD）
   git switch master
-  git reset --hard v0.5.0 # 彻底退回上一版
+  git reset --hard v0.5.1 # 彻底退回上一版
   ```
-- 额外备份（不进 git）：`backups/trix-v0.1.0-*` 到 `trix-v0.5.1-*`，含源码 tar 与 aarch64 macOS 二进制。
+- 额外备份（不进 git）：`backups/trix-v0.1.0-*` 到 `trix-v0.6.0-*`，含源码 tar 与 aarch64 macOS 二进制。
 - 改动记录：[CHANGELOG.md](CHANGELOG.md)。
 
 ## 数据来源、参考与许可

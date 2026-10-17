@@ -121,7 +121,7 @@ impl FireScene {
         // instead of one central bonfire.
         for x in 0..w {
             let xf = x as f32;
-            let mut v = 12.0;
+            let mut v = 16.0;
             for pile in &self.piles {
                 let cx = pile.x + (t * pile.rate + pile.phase).sin() * pile.drift;
                 let d = (xf - cx) / pile.width;
@@ -246,7 +246,7 @@ impl Scene for FireScene {
                 env = env * 0.95 + 0.04;
                 // Bottom bed: the piles merge into one continuous fire line,
                 // while the tops above remain separate tongues.
-                let bed = 0.78 * depth.powf(7.0);
+                let bed = 0.98 * depth.powf(5.0);
                 env = env.max(bed);
                 let top_fade = (y as f32 / 1.5).clamp(0.0, 1.0) * 0.25 + 0.75;
                 raw *= env * top_fade;

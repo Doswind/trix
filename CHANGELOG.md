@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0 — 2026-10-17
+
+- 新增 `mario` 超级马里奥：自动闯关、顶问号砖块、蘑菇弹出与金币收集；Unicode 实心精灵 + `--ascii` 两版。
+- 新增 `ecg` 心率跳动：绿色心电网格、P-QRS-T 波形、扫描线、HR/SpO2 监护界面；Unicode + `--ascii` 两版。
+- 新增 `dandelion` 蒲公英：左侧多株盛开蒲公英、种子向右飘散；`--seed-count` / `--seed-speed` 控制数量和速度。
+- 代码雨改为 **蓝/绿双色**。
+- 火焰底部火床进一步加宽、连接；上方火苗保持分开，中间最高。
+- 帮助面板加入 `m/e/d` 快捷键，可显示 15 个特效。
+- 版本号提升到 `0.6.0`；推送 tag 自动发布 macOS universal + Linux static 包。
+
 ## 0.5.1 — 2026-10-17
 
 - 新增 GitHub Actions 自动构建/发布：`.github/workflows/release.yml`。

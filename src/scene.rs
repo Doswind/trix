@@ -3,8 +3,9 @@
 use crate::canvas::Canvas;
 use crate::cli::Charset;
 use crate::scenes::{
-    BeamsScene, BlackHoleScene, BuddhaScene, DragonScene, FireScene, FireworksScene, GalaxyScene,
-    MapScene, MatrixScene, RainScene, SolarScene, TomJerryScene,
+    BeamsScene, BlackHoleScene, BuddhaScene, DandelionScene, DragonScene, EcgScene, FireScene,
+    FireworksScene, GalaxyScene, MapScene, MarioScene, MatrixScene, RainScene, SolarScene,
+    TomJerryScene,
 };
 use crate::theme::{self, Theme};
 
@@ -22,10 +23,13 @@ pub enum EffectId {
     Galaxy,
     Buddha,
     TomJerry,
+    Mario,
+    Ecg,
+    Dandelion,
 }
 
 impl EffectId {
-    pub const ALL: [EffectId; 12] = [
+    pub const ALL: [EffectId; 15] = [
         EffectId::Rain,
         EffectId::Fire,
         EffectId::Dragon,
@@ -38,6 +42,9 @@ impl EffectId {
         EffectId::Galaxy,
         EffectId::Buddha,
         EffectId::TomJerry,
+        EffectId::Mario,
+        EffectId::Ecg,
+        EffectId::Dandelion,
     ];
 
     pub fn key(self) -> &'static str {
@@ -54,6 +61,9 @@ impl EffectId {
             EffectId::Galaxy => "galaxy",
             EffectId::Buddha => "buddha",
             EffectId::TomJerry => "tomjerry",
+            EffectId::Mario => "mario",
+            EffectId::Ecg => "ecg",
+            EffectId::Dandelion => "dandelion",
         }
     }
 
@@ -71,6 +81,9 @@ impl EffectId {
             EffectId::Galaxy => "Milky Way",
             EffectId::Buddha => "Radiant Buddha",
             EffectId::TomJerry => "Tom & Jerry",
+            EffectId::Mario => "Super Mario",
+            EffectId::Ecg => "Heart monitor",
+            EffectId::Dandelion => "Dandelion field",
         }
     }
 
@@ -88,6 +101,9 @@ impl EffectId {
             EffectId::Galaxy => "满天星河",
             EffectId::Buddha => "佛光普照",
             EffectId::TomJerry => "猫和老鼠",
+            EffectId::Mario => "超级马里奥",
+            EffectId::Ecg => "心率跳动",
+            EffectId::Dandelion => "蒲公英",
         }
     }
 
@@ -109,6 +125,11 @@ impl EffectId {
             "galaxy" | "milkyway" | "stars" | "starfield" | "milky" => Some(EffectId::Galaxy),
             "buddha" | "fo" | "lotus" | "halo" | "amitabha" => Some(EffectId::Buddha),
             "tomjerry" | "tomandjerry" | "tom" | "jerry" | "chase" => Some(EffectId::TomJerry),
+            "mario" | "supermario" | "plumber" | "mushroom" | "mushroomrun" => {
+                Some(EffectId::Mario)
+            }
+            "ecg" | "ekg" | "heart" | "heartbeat" | "heartrate" | "pulse" => Some(EffectId::Ecg),
+            "dandelion" | "dandy" | "seeds" | "wind" | "dandelions" => Some(EffectId::Dandelion),
             _ => None,
         }
     }
@@ -143,13 +164,18 @@ impl EffectId {
             EffectId::Galaxy => "ice",
             EffectId::Buddha => "gold",
             EffectId::TomJerry => "neon",
+            EffectId::Mario => "gold",
+            EffectId::Ecg => "matrix",
+            EffectId::Dandelion => "gold",
         })
         .unwrap_or(&theme::THEMES[0])
     }
 
     pub fn default_charset(self) -> Charset {
         match self {
-            EffectId::Matrix => Charset::Unicode,
+            EffectId::Matrix | EffectId::Mario | EffectId::Ecg | EffectId::Dandelion => {
+                Charset::Unicode
+            }
             _ => Charset::Ascii,
         }
     }
@@ -164,6 +190,8 @@ pub struct Tune {
     pub meteors: u32,
     pub beam_speed: f32,
     pub jump: bool,
+    pub seed_count: u32,
+    pub seed_speed: f32,
 }
 
 impl Default for Tune {
@@ -175,6 +203,8 @@ impl Default for Tune {
             meteors: 3,
             beam_speed: 1.0,
             jump: false,
+            seed_count: 90,
+            seed_speed: 1.0,
         }
     }
 }
@@ -212,6 +242,9 @@ pub fn build(id: EffectId, seed: u64) -> Box<dyn Scene> {
         EffectId::Galaxy => Box::new(GalaxyScene::new(seed)),
         EffectId::Buddha => Box::new(BuddhaScene::new(seed)),
         EffectId::TomJerry => Box::new(TomJerryScene::new(seed)),
+        EffectId::Mario => Box::new(MarioScene::new(seed)),
+        EffectId::Ecg => Box::new(EcgScene::new(seed)),
+        EffectId::Dandelion => Box::new(DandelionScene::new(seed)),
     }
 }
 
@@ -225,6 +258,9 @@ mod tests {
         assert_eq!(EffectId::parse("code-rain"), Some(EffectId::Rain));
         assert_eq!(EffectId::parse("MAtrix"), Some(EffectId::Matrix));
         assert_eq!(EffectId::parse("world"), Some(EffectId::Map));
+        assert_eq!(EffectId::parse("supermario"), Some(EffectId::Mario));
+        assert_eq!(EffectId::parse("heartbeat"), Some(EffectId::Ecg));
+        assert_eq!(EffectId::parse("dandy"), Some(EffectId::Dandelion));
         assert_eq!(EffectId::parse("nope"), None);
     }
 

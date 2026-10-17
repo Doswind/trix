@@ -8,7 +8,6 @@ use crate::canvas::Canvas;
 use crate::color::Rgb;
 use crate::rng::{hash01, Rng};
 use crate::scene::{Frame, Scene};
-use crate::theme::Theme;
 
 const GLYPHS: &[u8] = b"01{}[]()<>/\\=+-*&%$#@!?;:|^~01abcdefnrtu";
 
@@ -16,12 +15,23 @@ fn pick_glyph(rng: &mut Rng) -> u8 {
     GLYPHS[rng.below(GLYPHS.len())]
 }
 
-fn trail_color(theme: &Theme, p: f32) -> Rgb {
+const BLUE_DEEP: Rgb = Rgb::hex(0x075985);
+const BLUE: Rgb = Rgb::hex(0x38bdf8);
+const BLUE_PALE: Rgb = Rgb::hex(0xbfefff);
+const GREEN_DEEP: Rgb = Rgb::hex(0x14532d);
+const GREEN: Rgb = Rgb::hex(0x22c55e);
+const GREEN_PALE: Rgb = Rgb::hex(0xd9fbe5);
+
+fn trail_color(tint: u8, p: f32) -> Rgb {
     let p = p.rem_euclid(1.0);
-    if p < 0.5 {
-        theme.c(1).lerp(theme.c(2), p * 2.0)
+    if tint % 2 == 0 {
+        BLUE_DEEP
+            .lerp(BLUE, p.min(1.0))
+            .lerp(BLUE_PALE, p.powi(2) * 0.55)
     } else {
-        theme.c(2).lerp(theme.c(3), (p - 0.5) * 2.0)
+        GREEN_DEEP
+            .lerp(GREEN, p.min(1.0))
+            .lerp(GREEN_PALE, p.powi(2) * 0.55)
     }
 }
 
@@ -32,6 +42,7 @@ struct Column {
     phase: f32,
     depth: f32,
     flicker: f32,
+    tint: u8,
     glyphs: Vec<u8>,
 }
 
@@ -42,6 +53,7 @@ impl Column {
         self.phase = rng.f32();
         self.depth = rng.f32();
         self.flicker = rng.range(0.8, 1.15);
+        self.tint = rng.below(2) as u8;
         self.head = if initial {
             rng.range(-(self.len as f32), h as f32)
         } else {
@@ -62,6 +74,7 @@ struct Backdrop {
     glyph: u8,
     phase: f32,
     bright: f32,
+    tint: u8,
 }
 
 struct Streak {
@@ -112,6 +125,7 @@ impl RainScene {
                 phase: 0.0,
                 depth: 0.5,
                 flicker: 1.0,
+                tint: 0,
                 glyphs: vec![b'0'; self.h],
             };
             c.spawn(&mut self.rng, self.h, true);
@@ -127,6 +141,7 @@ impl RainScene {
                 glyph: pick_glyph(&mut self.rng),
                 phase: self.rng.range(0.0, std::f32::consts::TAU),
                 bright: self.rng.range(0.08, 0.28),
+                tint: (self.rng.below(2)) as u8,
             });
         }
         self.streaks.clear();
@@ -196,7 +211,11 @@ impl Scene for RainScene {
         // Binary mist in the background.
         for b in &self.backdrop {
             let tw = 0.65 + 0.35 * (t * 1.7 + b.phase).sin();
-            let col = theme.c(1).scale(b.bright * tw);
+            let col = if b.tint % 2 == 0 {
+                BLUE.scale(b.bright * tw)
+            } else {
+                GREEN.scale(b.bright * tw)
+            };
             canvas.set(b.x as isize, b.y as isize, b.glyph as char, col);
         }
 
@@ -212,9 +231,13 @@ impl Scene for RainScene {
                 let fade = 1.0 - (d as f32 / col.len as f32);
                 let p = 0.05 + col.phase * 0.55 + t * 0.013 + d as f32 * 0.008;
                 let mut color = if d == 0 {
-                    theme.hot()
+                    if col.tint % 2 == 0 {
+                        BLUE_PALE
+                    } else {
+                        GREEN_PALE
+                    }
                 } else {
-                    trail_color(theme, p)
+                    trail_color(col.tint, p)
                 };
                 let lum = fade.powf(1.8) * depth_mul * col.flicker;
                 color = color.scale(lum);
@@ -224,7 +247,8 @@ impl Scene for RainScene {
                 canvas.set(x as isize, y, glyph, color);
                 if d == 0 {
                     // A one-cell halo under the head.
-                    let halo = theme.c(2).scale(0.32 * depth_mul);
+                    let halo =
+                        (if col.tint % 2 == 0 { BLUE } else { GREEN }).scale(0.32 * depth_mul);
                     canvas.add_light(x as isize, y + 1, halo, 0.7, ':');
                     canvas.add_light(x as isize, y - 1, halo.scale(0.5), 0.4, '.');
                 }
@@ -249,16 +273,21 @@ impl Scene for RainScene {
                 } else {
                     '.'
                 };
-                let col = if i == 0 {
-                    theme.hot()
+                let base = if (s.y + s.dir as usize) % 2 == 0 {
+                    BLUE
                 } else {
-                    theme.c(3).lerp(theme.c(2), 1.0 - f2)
+                    GREEN
+                };
+                let col = if i == 0 {
+                    base.lerp(Rgb::hex(0xffffff), 0.7)
+                } else {
+                    base.lerp(BLUE_PALE, 0.15 * f2)
                 }
                 .scale(f2.powf(1.4) * fade * 0.9);
                 canvas.set(x as isize, s.y as isize, ch, col);
                 if i == 0 {
-                    canvas.add_light(x as isize, s.y as isize, theme.c(2), 0.35, '*');
-                    canvas.add_light(x as isize, s.y as isize - 1, theme.c(2), 0.15, '.');
+                    canvas.add_light(x as isize, s.y as isize, BLUE, 0.35, '*');
+                    canvas.add_light(x as isize, s.y as isize - 1, GREEN, 0.15, '.');
                 }
             }
         }

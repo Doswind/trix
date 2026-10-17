@@ -41,6 +41,8 @@ pub struct Options {
     pub meteors: u32,
     pub beam_speed: f32,
     pub jump: bool,
+    pub seed_count: u32,
+    pub seed_speed: f32,
     pub seed: Option<u64>,
     pub size: Option<(usize, usize)>,
     pub no_alt: bool,
@@ -65,6 +67,8 @@ impl Default for Options {
             meteors: 3,
             beam_speed: 1.0,
             jump: false,
+            seed_count: 90,
+            seed_speed: 1.0,
             seed: None,
             size: None,
             no_alt: false,
@@ -136,6 +140,14 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                 "meteors" => {
                     let v = take_value(args, &mut i, inline, "--meteors")?;
                     opts.meteors = parse_num(&v, "--meteors")?;
+                }
+                "seed-count" | "seeds" => {
+                    let v = take_value(args, &mut i, inline, "--seed-count")?;
+                    opts.seed_count = parse_num(&v, "--seed-count")?;
+                }
+                "seed-speed" => {
+                    let v = take_value(args, &mut i, inline, "--seed-speed")?;
+                    opts.seed_speed = parse_num(&v, "--seed-speed")?;
                 }
                 "beam-speed" => {
                     let v = take_value(args, &mut i, inline, "--beam-speed")?;
@@ -347,6 +359,12 @@ fn validate(opts: &mut Options) -> Result<(), String> {
     if !opts.beam_speed.is_finite() || !(0.05..=4.0).contains(&opts.beam_speed) {
         return Err("--beam-speed must be between 0.05 and 4.0".into());
     }
+    if !(1..=400).contains(&opts.seed_count) {
+        return Err("--seed-count must be between 1 and 400".into());
+    }
+    if !opts.seed_speed.is_finite() || !(0.05..=4.0).contains(&opts.seed_speed) {
+        return Err("--seed-speed must be between 0.05 and 4.0".into());
+    }
     Ok(())
 }
 
@@ -363,8 +381,8 @@ USAGE
   trix <effect> --snapshot out.ans --size 120x36 --frames 180
 
 EFFECTS
-  rain      代码雨      cyan code rain with falling source tokens
-  fire      燃烧火焰    multiple slender flame piles
+  rain      代码雨      blue/green code rain with falling source tokens
+  fire      燃烧火焰    connected fire bed, separate slender tips
   dragon    巨龙盘旋    Chinese celestial dragon flying across the sky
   map       世界地图    holographic Earth with live network arcs
   matrix    黑客帝国    NASA backend login screen with a large logo
@@ -375,6 +393,9 @@ EFFECTS
   galaxy    满天星河    full-screen Milky Way starfield
   buddha    佛光普照    glowing Buddha, halo and lotus mandala
   tomjerry  猫和老鼠    Tom chasing Jerry through a space station
+  mario     超级马里奥  mushroom-bumping platformer (Unicode / --ascii)
+  ecg       心率跳动    glowing ECG monitor (Unicode / --ascii)
+  dandelion 蒲公英      blooming dandelions with drifting seeds
 
 OPTIONS
   -e, --effect <name>     Effect to run (same as positional argument)
@@ -382,7 +403,7 @@ OPTIONS
   -s, --speed <0.05-8>    Animation speed multiplier           [default: 1.0]
       --chase-speed <f>   Alias of --speed (Tom & Jerry chase)
   -t, --theme <name>      Color theme, see below               [effect default]
-      --charset <mode>    kana | ascii | unicode              [matrix: unicode]
+      --charset <mode>    kana | ascii | unicode              [matrix/mario/ecg/dandelion: unicode]
       --unicode           Force Unicode single-cell glyphs
       --ascii             Force ASCII fallback
       --color <mode>      auto | truecolor | 256 | 16 | mono   [default: auto]
@@ -391,6 +412,8 @@ OPTIONS
       --twinkle <f>       galaxy twinkle rate                  [default: 1.0]
       --meteors <n>       black hole / galaxy meteors          [default: 3]
       --beam-speed <f>    beams horizontal speed               [default: 1.0]
+      --seed-count <n>    dandelion drifting seeds            [default: 90]
+      --seed-speed <f>    dandelion seed drift speed          [default: 1.0]
       --jump              Tom & Jerry jumps (default: off)
       --no-jump           disable Tom & Jerry jumps
       --seed <u64>        Deterministic random seed
@@ -411,7 +434,8 @@ THEMES
 
 KEYS (interactive)
   q / Esc   quit            space   pause
-  n / p     next/prev      1-9,0,[ ]  jump to effect
+  n / p     next/prev      1-9,0,[ ]  first 12 effects
+  m/e/d     Mario/ECG/Dandelion
   t         next theme     + / -   speed
   r         restart        i       status line
   h         help overlay
@@ -423,6 +447,8 @@ EXAMPLES
   trix map --theme ice
   trix matrix --ascii
   trix map --snapshot earth.ans --size 120x36 --frames 150
+  trix mario --ascii
+  trix dandelion --seed-count 180 --seed-speed 1.4
 "#,
         VERSION = VERSION,
         themes = theme::THEMES
@@ -475,7 +501,7 @@ mod tests {
     #[test]
     fn parses_tuning_options() {
         let Parsed::Run(o) = parse_args(&args(
-            "galaxy --density 2 --twinkle 3.5 --meteors 8 --spin 0.25 --beam-speed 1.5 --jump --unicode",
+            "galaxy --density 2 --twinkle 3.5 --meteors 8 --spin 0.25 --beam-speed 1.5 --seed-count 180 --seed-speed 1.4 --jump --unicode",
         ))
         .unwrap()
         else {
@@ -486,6 +512,8 @@ mod tests {
         assert_eq!(o.meteors, 8);
         assert!((o.spin - 0.25).abs() < f32::EPSILON);
         assert!((o.beam_speed - 1.5).abs() < f32::EPSILON);
+        assert_eq!(o.seed_count, 180);
+        assert!((o.seed_speed - 1.4).abs() < f32::EPSILON);
         assert!(o.jump);
         assert_eq!(o.charset, Some(Charset::Unicode));
     }
@@ -495,6 +523,8 @@ mod tests {
         assert!(parse_args(&args("fire --density 9")).is_err());
         assert!(parse_args(&args("fire --meteors 99")).is_err());
         assert!(parse_args(&args("fire --beam-speed 0")).is_err());
+        assert!(parse_args(&args("fire --seed-count 0")).is_err());
+        assert!(parse_args(&args("fire --seed-speed 9")).is_err());
     }
 
     #[test]
