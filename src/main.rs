@@ -1,3 +1,3 @@
 fn main() {
-    std::process::exit(texiao::run());
+    std::process::exit(trix::run());
 }

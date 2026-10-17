@@ -22,7 +22,7 @@ pub fn run() -> i32 {
             0
         }
         Ok(Parsed::Version) => {
-            println!("texiao {}", cli::VERSION);
+            println!("trix {}", cli::VERSION);
             0
         }
         Ok(Parsed::List) => {
@@ -31,8 +31,8 @@ pub fn run() -> i32 {
         }
         Ok(Parsed::Run(opts)) => run_options(opts),
         Err(e) => {
-            eprintln!("texiao: {e}");
-            eprintln!("Try 'texiao --help' for usage.");
+            eprintln!("trix: {e}");
+            eprintln!("Try 'trix --help' for usage.");
             2
         }
     }
@@ -52,7 +52,7 @@ fn resolve_effect(opts: &Options, deterministic: bool) -> Result<(EffectId, u64)
     let name = opts
         .effect
         .as_deref()
-        .ok_or_else(|| "no effect selected. Try 'texiao rain' or 'texiao --list'".to_string())?;
+        .ok_or_else(|| "no effect selected. Try 'trix rain' or 'trix --list'".to_string())?;
     let id = EffectId::parse(name).ok_or_else(|| {
         let names = EffectId::ALL
             .iter()
@@ -95,7 +95,7 @@ fn snapshot(opts: &Options, path: &Path) -> i32 {
     let (id, seed) = match resolve_effect(opts, true) {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("texiao: {e}");
+            eprintln!("trix: {e}");
             return 2;
         }
     };
@@ -154,7 +154,7 @@ fn snapshot(opts: &Options, path: &Path) -> i32 {
         match std::fs::write(path, &ansi) {
             Ok(()) => {
                 eprintln!(
-                    "texiao: wrote {} ({}x{}, {} frames, {:.1} KiB)",
+                    "trix: wrote {} ({}x{}, {} frames, {:.1} KiB)",
                     path.display(),
                     w,
                     h,
@@ -163,7 +163,7 @@ fn snapshot(opts: &Options, path: &Path) -> i32 {
                 );
             }
             Err(e) => {
-                eprintln!("texiao: cannot write '{}': {e}", path.display());
+                eprintln!("trix: cannot write '{}': {e}", path.display());
                 return 1;
             }
         }
@@ -175,7 +175,7 @@ fn benchmark(opts: &Options) -> i32 {
     let (id, seed) = match resolve_effect(opts, true) {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("texiao: {e}");
+            eprintln!("trix: {e}");
             return 2;
         }
     };
@@ -247,7 +247,7 @@ fn benchmark(opts: &Options) -> i32 {
     times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
     let p95 = times[((frames as f64 * 0.95) as usize).min(times.len() - 1)];
     let avg_bytes = bytes as f64 / frames as f64;
-    println!("texiao /// offscreen render benchmark");
+    println!("trix /// offscreen render benchmark");
     println!("  effect      {:<10} theme {}", id.key(), theme.key);
     println!("  canvas      {w}x{h}  chars {}", w * h);
     println!("  frames      {frames} @ {fps} fps target");
@@ -271,7 +271,7 @@ fn interactive(opts: Options) -> i32 {
     let (mut id, mut seed) = match resolve_effect(&opts, false) {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("texiao: {e}");
+            eprintln!("trix: {e}");
             return 2;
         }
     };
@@ -284,7 +284,7 @@ fn interactive(opts: Options) -> i32 {
     let mut term = match Terminal::enter(!opts.no_alt) {
         Ok(t) => t,
         Err(e) => {
-            eprintln!("texiao: {e}");
+            eprintln!("trix: {e}");
             return 1;
         }
     };
@@ -639,7 +639,7 @@ fn draw_help(
     let y = (h - bh) / 2;
     canvas.clear_rect(x, y, bw, bh);
     canvas.rect(x, y, bw, bh, theme.c(2).scale(0.65));
-    let title = "TEXIAO // MISSION CONTROL";
+    let title = "TRIX // MISSION CONTROL";
     canvas.put_str_gradient(x + 2, y + 1, title, &[theme.c(2), theme.c(3), theme.hot()]);
     let rows: &[(&str, String)] = &[
         ("q / Esc", "quit".to_string()),

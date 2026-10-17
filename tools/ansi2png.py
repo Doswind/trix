@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render a texiao ANSI snapshot to a PNG (for README screenshots).
+"""Render a trix ANSI snapshot to a PNG (for README screenshots).
 
 This is a documentation helper, not part of the Rust tool.
 
@@ -130,7 +130,7 @@ def render(ansi_path: str, out_path: str, size: tuple[int, int] | None, label: s
         draw.text((PAD, img_h - 26), label, font=small, fill=(90, 120, 150))
         draw.text(
             (img_w - PAD - 120, img_h - 26),
-            "texiao // ascii fx",
+            "trix // ascii fx",
             font=small,
             fill=(45, 65, 85),
         )

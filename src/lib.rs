@@ -1,4 +1,4 @@
-//! texiao — fast, low-footprint sci-fi ASCII effects for the terminal.
+//! trix — fast, low-footprint sci-fi ASCII effects for the terminal.
 
 pub mod app;
 pub mod canvas;

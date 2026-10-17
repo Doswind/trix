@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render an animated GIF from deterministic texiao snapshots.
+"""Render an animated GIF from deterministic trix snapshots.
 
 Documentation helper, not part of the Rust binary.
 
@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ansi2png  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BIN = os.path.join(ROOT, "target", "release", "texiao")
+BIN = os.path.join(ROOT, "target", "release", "trix")
 
 
 def main() -> int:

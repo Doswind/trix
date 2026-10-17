@@ -1,9 +1,11 @@
-# texiao
+# trix
+
+> 前身：texiao（原项目名）；从 v0.5.0 起正式更名为 **trix**。
 
 > 终端里的科幻 ASCII 特效引擎 — 代码雨、火焰、巨龙、世界地图、NASA 登录、黑洞、光束、烟花、太阳系、银河、佛光、Tom & Jerry。
-> Rust 单线程、无异步运行时、diff 渲染，启动约 **2 ms**，常驻内存约 **2.1 MB**，30 FPS 下 CPU 约 **0.3–1.6%** 单核。当前 **v0.4.0**。
+> Rust 单线程、无异步运行时、diff 渲染，启动约 **2 ms**，常驻内存约 **2.1 MB**，30 FPS 下 CPU 约 **0.3–1.6%** 单核。当前 **v0.5.0**。
 
-![texiao overview](docs/overview.png)
+![trix overview](docs/overview.png)
 
 > 动图：[火焰](docs/fire.gif) · [巨龙](docs/dragon.gif) · [NASA 登录](docs/matrix.gif) · [黑洞](docs/blackhole.gif) · [光束](docs/beams.gif) · [烟花](docs/fireworks.gif) · [太阳系](docs/solar.gif) · [银河](docs/galaxy.gif) · [佛光](docs/buddha.gif) · [Tom & Jerry](docs/tomjerry.gif)
 
@@ -61,47 +63,47 @@
 
 ```bash
 cargo build --release
-./target/release/texiao rain
+./target/release/trix rain
 ```
 
 安装到 `PATH`：
 
 ```bash
 cargo install --path . --locked
-texiao dragon
+trix dragon
 ```
 
 ### 一条命令一个特效
 
 ```bash
-texiao rain                          # 代码雨
-texiao fire --fps 60                 # 多堆细长火焰
-texiao dragon --theme gold           # 金色巨龙
-texiao map --theme ice               # 全息世界地图
-texiao matrix                        # NASA Unicode 大屏（--ascii 可降级）
-texiao blackhole                     # 黑洞吞噬恒星
-texiao beams                         # 横向随机亮色光束
-texiao fireworks                     # 双层烟花绽放
-texiao solar                         # 太阳系九大行星一线
-texiao galaxy                        # 满天星河 / 银河
-texiao buddha --theme gold           # 佛光普照
-texiao tomjerry --speed 0.8          # 默认 0.6x 左右，可调
- texiao tomjerry --jump               # 开启跳跃
-texiao --list                        # 列出特效和主题
+trix rain                          # 代码雨
+trix fire --fps 60                 # 多堆细长火焰
+trix dragon --theme gold           # 金色巨龙
+trix map --theme ice               # 全息世界地图
+trix matrix                        # NASA Unicode 大屏（--ascii 可降级）
+trix blackhole                     # 黑洞吞噬恒星
+trix beams                         # 横向随机亮色光束
+trix fireworks                     # 双层烟花绽放
+trix solar                         # 太阳系九大行星一线
+trix galaxy                        # 满天星河 / 银河
+trix buddha --theme gold           # 佛光普照
+trix tomjerry --speed 0.8          # 默认 0.6x 左右，可调
+ trix tomjerry --jump               # 开启跳跃
+trix --list                        # 列出特效和主题
 
 # 参数示例
-texiao matrix --ascii                         # 纯 ASCII 回退
-texiao blackhole --spin 0.25 --meteors 8      # 更慢旋转 + 更多流星
-texiao beams --density 1.5 --beam-speed 1.2   # 更密、更快
-texiao fireworks --density 2                  # 更多烟花
-texiao galaxy --density 1.5 --twinkle 2 --meteors 8
-texiao tomjerry --chase-speed 0.8 --jump      # 追逐速度 / 跳跃
+trix matrix --ascii                         # 纯 ASCII 回退
+trix blackhole --spin 0.25 --meteors 8      # 更慢旋转 + 更多流星
+trix beams --density 1.5 --beam-speed 1.2   # 更密、更快
+trix fireworks --density 2                  # 更多烟花
+trix galaxy --density 1.5 --twinkle 2 --meteors 8
+trix tomjerry --chase-speed 0.8 --jump      # 追逐速度 / 跳跃
 ```
 
 ## 命令行
 
 ```text
-texiao <effect> [options]
+trix <effect> [options]
 
   -e, --effect <name>     与位置参数等价
   -f, --fps <1-240>       目标帧率                          [默认: 30]
@@ -208,7 +210,7 @@ texiao <effect> [options]
 
 ```bash
 scripts/bench.sh
-./target/release/texiao fire --bench --size 160x48 --frames 300
+./target/release/trix fire --bench --size 160x48 --frames 300
 ```
 
 ## 实现
@@ -233,8 +235,8 @@ scripts/bench.sh
 ## 录制与文档工具
 
 ```bash
-texiao dragon --snapshot dragon.ans --size 120x36 --frames 145 --seed 7
-python3 tools/ansi2png.py dragon.ans dragon.png --size 120x36 --label "texiao dragon"
+trix dragon --snapshot dragon.ans --size 120x36 --frames 145 --seed 7
+python3 tools/ansi2png.py dragon.ans dragon.png --size 120x36 --label "trix dragon"
 python3 tools/render_gif.py dragon docs/dragon.gif --start 100 --frames 24 --step 3
 ```
 
@@ -260,17 +262,16 @@ cargo fmt --check
 
 ## 版本与回退
 
-- **当前版本：0.4.0**（`texiao --version`），tag **`v0.4.0`**。
-- 上一版：tag **`v0.3.0`**（多堆火焰、NASA 登录、7 个新特效）。
-- 更早：tag **`v0.2.0`**（火焰变高、横向 NASA 入侵、中国龙）。
-- 最早基线：tag **`v0.1.0`**（commit `bb57b76`）。
+- **当前版本：0.5.0**（`trix --version`），tag **`v0.5.0`**。
+- 上一版：tag **`v0.4.0`**（Unicode NASA 登录、连通火焰、可调参数）。
+- 更早：tag **`v0.3.0`**（多堆火焰、7 个新特效）；**`v0.2.0`**（中国龙、NASA 入侵）；**`v0.1.0`**（初始基线）。
 - 回退：
   ```bash
-  git checkout v0.3.0     # 只看上一版（detached HEAD）
-  git switch main
-  git reset --hard v0.3.0 # 彻底退回上一版
+  git checkout v0.4.0     # 只看上一版（detached HEAD）
+  git switch master
+  git reset --hard v0.4.0 # 彻底退回上一版
   ```
-- 额外备份（不进 git）：`backups/texiao-v0.1.0-*`、`texiao-v0.2.0-*`、`texiao-v0.3.0-*`、`texiao-v0.4.0-*`，含源码 tar 与 aarch64 macOS 二进制。
+- 额外备份（不进 git）：`backups/trix-v0.1.0-*` 到 `trix-v0.5.0-*`，含源码 tar 与 aarch64 macOS 二进制。
 - 改动记录：[CHANGELOG.md](CHANGELOG.md)。
 
 ## 数据来源、参考与许可
@@ -283,5 +284,5 @@ cargo fmt --check
 ---
 
 ```text
-  t e x i a o  ::  stay curious, look up.
+  t r i x  ::  stay curious, look up.
 ```

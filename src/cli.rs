@@ -353,14 +353,14 @@ fn validate(opts: &mut Options) -> Result<(), String> {
 pub fn help_text() -> String {
     format!(
         r#"
-  t e x i a o   ::  terminal effects engine  v{VERSION}
+  t r i x   ::  terminal effects engine  v{VERSION}
 
   Low-footprint, sci-fi ASCII effects for your terminal.
 
 USAGE
-  texiao <effect> [options]
-  texiao --list
-  texiao <effect> --snapshot out.ans --size 120x36 --frames 180
+  trix <effect> [options]
+  trix --list
+  trix <effect> --snapshot out.ans --size 120x36 --frames 180
 
 EFFECTS
   rain      代码雨      cyan code rain with falling source tokens
@@ -417,12 +417,12 @@ KEYS (interactive)
   h         help overlay
 
 EXAMPLES
-  texiao rain
-  texiao fire --fps 60 --theme ember
-  texiao dragon -f 45 -t gold
-  texiao map --theme ice
-  texiao matrix --ascii
-  texiao map --snapshot earth.ans --size 120x36 --frames 150
+  trix rain
+  trix fire --fps 60 --theme ember
+  trix dragon -f 45 -t gold
+  trix map --theme ice
+  trix matrix --ascii
+  trix map --snapshot earth.ans --size 120x36 --frames 150
 "#,
         VERSION = VERSION,
         themes = theme::THEMES
@@ -448,7 +448,7 @@ pub fn list_text() -> String {
     for t in theme::THEMES {
         s.push_str(&format!("  {:<10} {}\n", t.key, t.label));
     }
-    s.push_str("\nRun `texiao --help` for options.\n");
+    s.push_str("\nRun `trix --help` for options.\n");
     s
 }
 
