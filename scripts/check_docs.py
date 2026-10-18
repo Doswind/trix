@@ -60,6 +60,10 @@ def check_readme(path: Path, rows: list[tuple[str, str, str]]) -> None:
         for value, label in ((key, "key"), (en, "English name"), (zh, "Chinese name")):
             if value not in text:
                 raise SystemExit(f"{path.name}: missing {label} {value!r}")
+        # Main previews must use the cache-safe ASCII image names.
+        ascii_shot = f"docs/{key}-ascii.png"
+        if ascii_shot not in text:
+            raise SystemExit(f"{path.name}: main preview must use {ascii_shot}")
     headings = [line for line in text.splitlines() if line.startswith("## ")]
     if len(headings) < 8:
         raise SystemExit(f"{path.name}: expected more sections, got {len(headings)}")

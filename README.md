@@ -10,7 +10,7 @@
 ![rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)
 ![platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20WSL-lightgrey.svg)
 
-![trix-tui overview](docs/overview.png)
+![trix-tui overview](docs/overview-ascii.png)
 
 **26 effects · 8 themes · zero dependencies · ~2 ms startup · ~1.1 MB binary · macOS / Linux / WSL**
 
@@ -129,39 +129,39 @@ Every effect name is given in English and Chinese; `trix --list` uses the same n
 
 | Code Rain `rain` | Blazing Fire `fire` | Coiling Dragon `dragon` |
 | --- | --- | --- |
-| ![Code Rain](docs/rain.png) | ![Blazing Fire](docs/fire.png) | ![Coiling Dragon](docs/dragon.png) |
+| ![Code Rain](docs/rain-ascii.png) | ![Blazing Fire](docs/fire-ascii.png) | ![Coiling Dragon](docs/dragon-ascii.png) |
 
 | World Map `map` | The Matrix `matrix` | Black Hole `blackhole` |
 | --- | --- | --- |
-| ![World Map](docs/map.png) | ![The Matrix](docs/matrix.png) | ![Black Hole](docs/blackhole.png) |
+| ![World Map](docs/map-ascii.png) | ![The Matrix](docs/matrix-ascii.png) | ![Black Hole](docs/blackhole-ascii.png) |
 
 | Light Beams `beams` | Fireworks `fireworks` | Solar System `solar` |
 | --- | --- | --- |
-| ![Light Beams](docs/beams.png) | ![Fireworks](docs/fireworks.png) | ![Solar System](docs/solar.png) |
+| ![Light Beams](docs/beams-ascii.png) | ![Fireworks](docs/fireworks-ascii.png) | ![Solar System](docs/solar-ascii.png) |
 
 | Starry Galaxy `galaxy` | Buddha's Halo `buddha` | Tom & Jerry `tomjerry` |
 | --- | --- | --- |
-| ![Starry Galaxy](docs/galaxy.png) | ![Buddha's Halo](docs/buddha.png) | ![Tom & Jerry](docs/tomjerry.png) |
+| ![Starry Galaxy](docs/galaxy-ascii.png) | ![Buddha's Halo](docs/buddha-ascii.png) | ![Tom & Jerry](docs/tomjerry-ascii.png) |
 
 | Super Mario `mario` | Heartbeat Monitor `ecg` | Dandelion `dandelion` |
 | --- | --- | --- |
-| ![Super Mario](docs/mario-ascii.png) | ![Heartbeat Monitor](docs/ecg-ascii.png) | ![Dandelion](docs/dandelion.png) |
+| ![Super Mario](docs/mario-ascii.png) | ![Heartbeat Monitor](docs/ecg-ascii.png) | ![Dandelion](docs/dandelion-ascii.png) |
 
 | Aquarium `fish` | Colorful Landscape `landscape` | Oriental Pearl `shanghai` |
 | --- | --- | --- |
-| ![Aquarium](docs/fish.png) | ![Colorful Landscape](docs/landscape.png) | ![Oriental Pearl](docs/shanghai.png) |
+| ![Aquarium](docs/fish-ascii.png) | ![Colorful Landscape](docs/landscape-ascii.png) | ![Oriental Pearl](docs/shanghai-ascii.png) |
 
 | Tiananmen Radiance `tiananmen` | Traffic Flow `traffic` | Tornado `tornado` |
 | --- | --- | --- |
-| ![Tiananmen Radiance](docs/tiananmen.png) | ![Traffic Flow](docs/traffic.png) | ![Tornado](docs/tornado.png) |
+| ![Tiananmen Radiance](docs/tiananmen-ascii.png) | ![Traffic Flow](docs/traffic-ascii.png) | ![Tornado](docs/tornado-ascii.png) |
 
 | Thunderstorm `storm` | Mona Lisa `monalisa` | Ice Ballet `ballet` |
 | --- | --- | --- |
-| ![Thunderstorm](docs/storm.png) | ![Mona Lisa](docs/monalisa.png) | ![Ice Ballet](docs/ballet.png) |
+| ![Thunderstorm](docs/storm-ascii.png) | ![Mona Lisa](docs/monalisa-ascii.png) | ![Ice Ballet](docs/ballet-ascii.png) |
 
 | Demon Eye `demoneye` | Threads of Life `life` |
 | --- | --- | --- |
-| ![Demon Eye](docs/demoneye.png) | ![Threads of Life](docs/life.png) |
+| ![Demon Eye](docs/demoneye-ascii.png) | ![Threads of Life](docs/life-ascii.png) |
 
 <details>
 <summary><b>Full effect notes (26)</b></summary>
@@ -201,7 +201,7 @@ Light Beams has two motion modes:
 
 | Straight (default) | Jumping (`--beam-motion jump`) |
 | --- | --- |
-| ![beams straight](docs/beams.png) | ![beams jump](docs/beams-jump.png) |
+| ![beams straight](docs/beams-ascii.png) | ![beams jump](docs/beams-jump.png) |
 
 ## ASCII / Unicode editions
 
@@ -218,8 +218,8 @@ Light Beams has two motion modes:
 
 | ASCII (default) | Unicode (`--unicode`) |
 | --- | --- |
-| ![shanghai ascii](docs/shanghai.png) | ![shanghai unicode](docs/shanghai-unicode.png) |
-| ![traffic ascii](docs/traffic.png) | ![traffic unicode](docs/traffic-unicode.png) |
+| ![shanghai ascii](docs/shanghai-ascii.png) | ![shanghai unicode](docs/shanghai-unicode.png) |
+| ![traffic ascii](docs/traffic-ascii.png) | ![traffic unicode](docs/traffic-unicode.png) |
 
 Vertical street:
 

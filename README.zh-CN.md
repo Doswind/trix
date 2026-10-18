@@ -10,7 +10,7 @@
 ![rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)
 ![platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20WSL-lightgrey.svg)
 
-![trix-tui 总览](docs/overview.png)
+![trix-tui 总览](docs/overview-ascii.png)
 
 **26 个特效 · 8 套主题 · 零依赖 · 启动约 2 ms · 二进制约 1.1 MB · macOS / Linux / WSL**
 
@@ -129,39 +129,39 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 
 | 代码雨 `rain` | 燃烧火焰 `fire` | 巨龙盘旋 `dragon` |
 | --- | --- | --- |
-| ![代码雨](docs/rain.png) | ![燃烧火焰](docs/fire.png) | ![巨龙盘旋](docs/dragon.png) |
+| ![代码雨](docs/rain-ascii.png) | ![燃烧火焰](docs/fire-ascii.png) | ![巨龙盘旋](docs/dragon-ascii.png) |
 
 | 世界地图 `map` | 黑客帝国 `matrix` | 黑洞 `blackhole` |
 | --- | --- | --- |
-| ![世界地图](docs/map.png) | ![黑客帝国](docs/matrix.png) | ![黑洞](docs/blackhole.png) |
+| ![世界地图](docs/map-ascii.png) | ![黑客帝国](docs/matrix-ascii.png) | ![黑洞](docs/blackhole-ascii.png) |
 
 | 光束 `beams` | 烟花 `fireworks` | 太阳系 `solar` |
 | --- | --- | --- |
-| ![光束](docs/beams.png) | ![烟花](docs/fireworks.png) | ![太阳系](docs/solar.png) |
+| ![光束](docs/beams-ascii.png) | ![烟花](docs/fireworks-ascii.png) | ![太阳系](docs/solar-ascii.png) |
 
 | 满天星河 `galaxy` | 佛光普照 `buddha` | 猫和老鼠 `tomjerry` |
 | --- | --- | --- |
-| ![满天星河](docs/galaxy.png) | ![佛光普照](docs/buddha.png) | ![猫和老鼠](docs/tomjerry.png) |
+| ![满天星河](docs/galaxy-ascii.png) | ![佛光普照](docs/buddha-ascii.png) | ![猫和老鼠](docs/tomjerry-ascii.png) |
 
 | 超级马里奥 `mario` | 心率跳动 `ecg` | 蒲公英 `dandelion` |
 | --- | --- | --- |
-| ![超级马里奥](docs/mario-ascii.png) | ![心率跳动](docs/ecg-ascii.png) | ![蒲公英](docs/dandelion.png) |
+| ![超级马里奥](docs/mario-ascii.png) | ![心率跳动](docs/ecg-ascii.png) | ![蒲公英](docs/dandelion-ascii.png) |
 
 | 水族馆 `fish` | 五光十色 `landscape` | 东方明珠 `shanghai` |
 | --- | --- | --- |
-| ![水族馆](docs/fish.png) | ![五光十色](docs/landscape.png) | ![东方明珠](docs/shanghai.png) |
+| ![水族馆](docs/fish-ascii.png) | ![五光十色](docs/landscape-ascii.png) | ![东方明珠](docs/shanghai-ascii.png) |
 
 | 光芒万丈 `tiananmen` | 车水马龙 `traffic` | 龙卷风 `tornado` |
 | --- | --- | --- |
-| ![光芒万丈](docs/tiananmen.png) | ![车水马龙](docs/traffic.png) | ![龙卷风](docs/tornado.png) |
+| ![光芒万丈](docs/tiananmen-ascii.png) | ![车水马龙](docs/traffic-ascii.png) | ![龙卷风](docs/tornado-ascii.png) |
 
 | 电闪雷鸣 `storm` | 蒙娜丽莎 `monalisa` | 冰上芭蕾 `ballet` |
 | --- | --- | --- |
-| ![电闪雷鸣](docs/storm.png) | ![蒙娜丽莎](docs/monalisa.png) | ![冰上芭蕾](docs/ballet.png) |
+| ![电闪雷鸣](docs/storm-ascii.png) | ![蒙娜丽莎](docs/monalisa-ascii.png) | ![冰上芭蕾](docs/ballet-ascii.png) |
 
 | 恶魔之眼 `demoneye` | 生命的轨迹 `life` |
 | --- | --- | --- |
-| ![恶魔之眼](docs/demoneye.png) | ![生命的轨迹](docs/life.png) |
+| ![恶魔之眼](docs/demoneye-ascii.png) | ![生命的轨迹](docs/life-ascii.png) |
 
 <details>
 <summary><b>完整特效说明（26 个）</b></summary>
@@ -201,7 +201,7 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 
 | 直线（默认） | 上下起伏（`--beam-motion jump`） |
 | --- | --- |
-| ![beams straight](docs/beams.png) | ![beams jump](docs/beams-jump.png) |
+| ![beams straight](docs/beams-ascii.png) | ![beams jump](docs/beams-jump.png) |
 
 ## ASCII / Unicode 双版本
 
@@ -218,8 +218,8 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 
 | ASCII（默认） | Unicode（`--unicode`） |
 | --- | --- |
-| ![shanghai ascii](docs/shanghai.png) | ![shanghai unicode](docs/shanghai-unicode.png) |
-| ![traffic ascii](docs/traffic.png) | ![traffic unicode](docs/traffic-unicode.png) |
+| ![shanghai ascii](docs/shanghai-ascii.png) | ![shanghai unicode](docs/shanghai-unicode.png) |
+| ![traffic ascii](docs/traffic-ascii.png) | ![traffic unicode](docs/traffic-unicode.png) |
 
 纵向车流：
 
