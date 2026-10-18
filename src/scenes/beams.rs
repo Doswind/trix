@@ -211,7 +211,6 @@ impl Scene for BeamsScene {
 
         // Beams.
         for b in &self.beams {
-            let shift = (t * 0.8 + b.phase).sin();
             let color = b.color.hue_rotate(t * 0.012 + b.phase * 0.01);
             let steps = b.len as isize;
             let head_x = b.x.round() as isize;
@@ -221,8 +220,13 @@ impl Scene for BeamsScene {
                     continue;
                 }
                 let fade = 1.0 - i as f32 / b.len.max(1.0);
-                let yy = b.y + (x as f32 * 0.055 + b.phase + t * 1.6).sin() * b.wobble;
-                let y = yy.round() as isize;
+                let yy = if f.tune.beam_jump {
+                    let amp = 2.5 + b.wobble * 1.6;
+                    b.y + (x as f32 * 0.11 + b.phase + t * 2.6).sin() * amp
+                } else {
+                    b.y
+                };
+                let y = yy.round().clamp(1.0, self.h as f32 - 2.0) as isize;
                 let ch = if i == 0 {
                     '@'
                 } else if i < 5 {
@@ -253,7 +257,6 @@ impl Scene for BeamsScene {
                     canvas.set(x, y - 1, '\'', color.scale(0.6));
                 }
             }
-            let _ = shift;
         }
 
         // Sparks.

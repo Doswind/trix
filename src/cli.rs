@@ -49,6 +49,7 @@ pub struct Options {
     pub meteors: u32,
     pub beam_speed: f32,
     pub jump: bool,
+    pub beam_jump: bool,
     pub seed_count: u32,
     pub seed_speed: f32,
     pub street_vertical: bool,
@@ -82,6 +83,7 @@ impl Default for Options {
             meteors: 3,
             beam_speed: 1.0,
             jump: false,
+            beam_jump: false,
             seed_count: 90,
             seed_speed: 1.0,
             street_vertical: false,
@@ -195,6 +197,15 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                     let v = take_value(args, &mut i, inline, "--tornado-speed")?;
                     opts.tornado_speed = parse_num(&v, "--tornado-speed")?;
                 }
+                "beam-motion" => {
+                    let v = take_value(args, &mut i, inline, "--beam-motion")?;
+                    opts.beam_jump = match v.to_ascii_lowercase().as_str() {
+                        "straight" | "line" | "direct" => false,
+                        "jump" | "bounce" | "wave" | "updown" => true,
+                        _ => return Err("--beam-motion must be 'straight' or 'jump'".into()),
+                    };
+                }
+                "beam-jump" => opts.beam_jump = true,
                 "beam-speed" => {
                     let v = take_value(args, &mut i, inline, "--beam-speed")?;
                     opts.beam_speed = parse_num(&v, "--beam-speed")?;
@@ -455,27 +466,27 @@ USAGE
 
 EFFECTS
   rain      代码雨      blue/green code rain with falling source tokens
-  fire      燃烧火焰    connected fire bed, separate slender tips
+  fire      燃烧火焰    bottom fire bed 2x wider, separate slender tips
   dragon    巨龙盘旋    Chinese celestial dragon flying across the sky
   map       世界地图    holographic Earth with live network arcs
   matrix    黑客帝国    NASA backend login screen with a large logo
-  blackhole 黑洞        event horizon devouring stars
-  beams     光束        irregular horizontal neon light beams
+  blackhole 黑洞        horizon + slower, wider outer star orbits
+  beams     光束        one-way beams; straight or jumping motion
   fireworks 烟花        layered fireworks over a neon skyline
-  solar     太阳系      Sun + nine planets on a single line
+  solar     太阳系      Sun + planets; radial light wave sweeps outward
   galaxy    满天星河    full-screen Milky Way starfield
   buddha    佛光普照    glowing Buddha, halo and lotus mandala
   tomjerry  猫和老鼠    Tom chasing Jerry through a space station
   mario     超级马里奥  mushroom-bumping platformer (Unicode / --ascii)
   ecg       心率跳动    glowing ECG monitor (Unicode / --ascii)
-  dandelion 蒲公英      blooming dandelions with drifting seeds
+  dandelion 蒲公英      clustered stems, staggered blooms, drifting seeds
   fish      鱼缸        colorful aquarium fish in every direction
   landscape 五光十色    mountains, lake, boat, geese and jungle
   shanghai  东方明珠    Shanghai Bund and Oriental Pearl (ASCII default)
   tiananmen 光芒万丈    Tiananmen gate radiating light
   traffic   车水马龙    city street with cars; --street horizontal|vertical
   fairy     仙女散花    flying fairy scattering petals
-  tornado   龙卷风      one or more tornadoes crossing left to right
+  tornado   龙卷风      twisted funnels, 2x wider tops, heavy base debris
   storm     电闪雷鸣    rain, clouds and full-screen lightning flashes
 
 OPTIONS
@@ -495,6 +506,8 @@ OPTIONS
       --twinkle <f>       galaxy twinkle rate                  [default: 1.0]
       --meteors <n>       black hole / galaxy meteors          [default: 3]
       --beam-speed <f>    beams horizontal speed               [default: 1.0]
+      --beam-motion <m>   straight | jump (default: straight)
+      --beam-jump         alias for --beam-motion jump
       --seed-count <n>    dandelion drifting seeds            [default: 90]
       --seed-speed <f>    dandelion seed drift speed          [default: 1.0]
       --street <dir>      traffic street: horizontal|vertical [default: horizontal]
@@ -596,7 +609,7 @@ mod tests {
     #[test]
     fn parses_tuning_options() {
         let Parsed::Run(o) = parse_args(&args(
-            "galaxy --density 2 --twinkle 3.5 --meteors 8 --spin 0.25 --beam-speed 1.5 --seed-count 180 --seed-speed 1.4 --jump --unicode",
+            "galaxy --density 2 --twinkle 3.5 --meteors 8 --spin 0.25 --beam-speed 1.5 --beam-motion jump --seed-count 180 --seed-speed 1.4 --jump --unicode",
         ))
         .unwrap()
         else {
@@ -607,6 +620,7 @@ mod tests {
         assert_eq!(o.meteors, 8);
         assert!((o.spin - 0.25).abs() < f32::EPSILON);
         assert!((o.beam_speed - 1.5).abs() < f32::EPSILON);
+        assert!(o.beam_jump);
         assert_eq!(o.seed_count, 180);
         assert!((o.seed_speed - 1.4).abs() < f32::EPSILON);
         assert!(o.jump);
@@ -645,6 +659,7 @@ mod tests {
         assert!(parse_args(&args("fire --beam-speed 0")).is_err());
         assert!(parse_args(&args("fire --seed-count 0")).is_err());
         assert!(parse_args(&args("fire --seed-speed 9")).is_err());
+        assert!(parse_args(&args("beams --beam-motion sideways")).is_err());
     }
 
     #[test]

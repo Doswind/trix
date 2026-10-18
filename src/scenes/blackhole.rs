@@ -102,7 +102,8 @@ impl BlackHoleScene {
         }
         let dust_n = (self.w * self.h / 28).clamp(60, 220);
         for _ in 0..dust_n {
-            let r = self.radius * self.rng.range(1.1, 6.0);
+            // Outer dust/star orbits are 1/3 wider than the old ring.
+            let r = self.radius * self.rng.range(1.1, 6.0) * 1.333;
             let d = self.make_disk(r);
             self.dust.push(d);
         }
@@ -388,7 +389,8 @@ impl Scene for BlackHoleScene {
             self.disk[i] = p;
         }
         for p in self.dust.iter_mut() {
-            p.a += dt * p.speed * 0.7 * spin;
+            // Outer stars orbit at half the old angular speed.
+            p.a += dt * p.speed * 0.35 * spin;
         }
         let mut respawn_infall = Vec::new();
         for (i, p) in self.infall.iter_mut().enumerate() {

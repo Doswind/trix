@@ -150,10 +150,12 @@ impl Scene for TornadoScene {
             // fill the cone with rotating debris
             for y in top as isize..base as isize {
                 let tt = ((base - y as f32) / hgt).clamp(0.0, 1.0);
-                let radius = 0.7 + funnel.size * (0.25 + tt * 0.95);
+                let radius = 0.7 + funnel.size * (0.25 + tt * 0.95 + tt * tt * 1.15);
+                let curve =
+                    (tt * 4.8 + t * 1.3 + funnel.phase).sin() * funnel.size * (0.35 + tt * 0.85);
                 for k in 0..7 {
                     let a = funnel.phase + tt * 5.0 + k as f32 / 7.0 * TAU;
-                    let x = cx + a.cos() * radius;
+                    let x = cx + curve + a.cos() * radius;
                     let yy = y as f32 + a.sin() * radius * 0.25;
                     let ch = if unicode {
                         match k % 3 {
@@ -175,9 +177,11 @@ impl Scene for TornadoScene {
             for k in 0..40 {
                 let tt = k as f32 / 40.0;
                 let y = base - tt * hgt;
-                let radius = 0.7 + funnel.size * (0.25 + tt * 0.95);
+                let radius = 0.7 + funnel.size * (0.25 + tt * 0.95 + tt * tt * 1.15);
+                let curve =
+                    (tt * 4.8 + t * 1.3 + funnel.phase).sin() * funnel.size * (0.35 + tt * 0.85);
                 let a = funnel.phase + tt * 9.0 + (t * 0.9).sin();
-                let x = cx + a.cos() * radius;
+                let x = cx + curve + a.cos() * radius;
                 canvas.set(
                     x as isize,
                     y as isize,
@@ -185,26 +189,50 @@ impl Scene for TornadoScene {
                     FUNNEL.scale(0.75),
                 );
                 canvas.set(
-                    (cx - a.cos() * radius) as isize,
+                    (cx + curve - a.cos() * radius) as isize,
                     y as isize,
                     if unicode { '·' } else { '.' },
                     FUNNEL_DARK.scale(0.85),
                 );
             }
             // dust fan at the base and cloud cap
-            for k in 0..10 {
-                let a = k as f32 / 10.0 * TAU + funnel.phase;
-                let x = cx + a.cos() * funnel.size * 1.5;
-                let y = base + (a.sin() * 1.5).abs();
+            // a much larger debris fan kicked up at the base
+            for k in 0..28 {
+                let a = k as f32 / 28.0 * TAU + funnel.phase + (t * 1.2).sin() * 0.15;
+                let reach = funnel.size * (1.4 + (k % 5) as f32 * 0.22);
+                let x = cx + a.cos() * reach;
+                let y = base + (a.sin() * 2.2).abs() + (k % 3) as f32 * 0.35;
+                let ch = if unicode {
+                    match k % 4 {
+                        0 => '░',
+                        1 => '▒',
+                        2 => '·',
+                        _ => '✦',
+                    }
+                } else if k % 4 == 0 {
+                    '*'
+                } else {
+                    ':'
+                };
                 canvas.set(
                     x as isize,
                     y as isize,
-                    if unicode { '░' } else { ':' },
-                    DUST.scale(0.45),
+                    ch,
+                    DUST.scale(0.35 + (k % 4) as f32 * 0.10),
+                );
+            }
+            for k in 0..8 {
+                let x = cx + (k as f32 - 4.0) * funnel.size * 0.45;
+                let y = base + 1.0 + (k % 2) as f32;
+                canvas.set(
+                    x as isize,
+                    y as isize,
+                    if unicode { '▴' } else { '^' },
+                    DUST.scale(0.55),
                 );
             }
             let cap_y = (top as isize).max(1);
-            for dx in -4..=4 {
+            for dx in -9..=9 {
                 canvas.set(
                     cx as isize + dx,
                     cap_y,

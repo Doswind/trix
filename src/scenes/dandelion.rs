@@ -71,19 +71,30 @@ impl DandelionScene {
         self.h = h.max(1);
         self.ground = (self.h as f32 - 4.0).max(6.0);
         self.flowers.clear();
-        let n = 4;
-        for i in 0..n {
-            let x = self.w as f32 * (0.08 + i as f32 * 0.065);
-            let want = (self.h as f32 * (0.22 + i as f32 * 0.11)).max(1.0);
-            let max_span = (self.ground - 3.0).max(1.0);
-            let head_y = (self.ground - want.min(max_span)).max(1.0);
-            self.flowers.push(Flower {
-                x,
-                head_y,
-                size: 5.4 + (i % 3) as f32 * 0.75,
-                phase: self.rng.range(0.0, TAU),
-                lean: self.rng.range(-0.6, 0.6),
-            });
+        // Three clumps; each clump has two stems growing from one root so the
+        // stems converge at the base and fan out to different heights.
+        for c in 0..3 {
+            let base = self.w as f32 * (0.06 + c as f32 * 0.105)
+                + self.rng.range(-0.01, 0.01) * self.w as f32;
+            for st in 0..2 {
+                let want = (self.h as f32
+                    * (0.16 + c as f32 * 0.095 + st as f32 * 0.16 + self.rng.range(-0.035, 0.035)))
+                .max(1.0);
+                let max_span = (self.ground - 3.0).max(1.0);
+                let head_y = (self.ground - want.min(max_span)).max(1.0);
+                let lean = if st == 0 {
+                    self.rng.range(-4.6, -2.2)
+                } else {
+                    self.rng.range(2.2, 4.6)
+                };
+                self.flowers.push(Flower {
+                    x: base,
+                    head_y,
+                    size: 4.4 + (c * 2 + st) as f32 * 0.22,
+                    phase: self.rng.range(0.0, TAU),
+                    lean: lean + self.rng.range(-0.35, 0.35),
+                });
+            }
         }
         self.seeds.clear();
         for _ in 0..90 {
@@ -117,12 +128,21 @@ impl DandelionScene {
     }
 
     fn draw_flower(&self, canvas: &mut Canvas, f: &Flower, unicode: bool, t: f32) {
-        let sway = (t * 0.8 + f.phase).sin() * 0.9 + f.lean;
+        let sway = (t * 0.8 + f.phase).sin() * 1.4 + f.lean;
         let base_x = f.x.round() as isize;
         let ground = self.ground.round() as isize;
         let head_x = (f.x + sway).round() as isize;
         let head_y = f.head_y.round() as isize;
         let stem = if unicode { '║' } else { '|' };
+        // shared root tuft
+        for dx in -3..=3 {
+            canvas.set(
+                base_x + dx,
+                ground,
+                if unicode { '▀' } else { '"' },
+                GREEN_DARK.scale(0.75),
+            );
+        }
         let steps = (ground - head_y).max(1);
         for k in 0..steps {
             let p = k as f32 / steps as f32;
@@ -454,7 +474,7 @@ mod tests {
     fn flowers_and_seeds_exist() {
         let mut s = DandelionScene::new(7);
         s.resize(120, 36);
-        assert_eq!(s.flowers.len(), 4);
+        assert_eq!(s.flowers.len(), 6);
         assert!(s.seeds.len() > 20);
     }
 }

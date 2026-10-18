@@ -48,27 +48,33 @@
 | 特效 | 说明 |
 | --- | --- |
 | `rain` 代码雨 | 逐列头/尾、随机速度与深度、白热头、**蓝/绿双色尾**、二进制雾、横向数据包、CRT 扫描 |
-| `fire` 燃烧火焰 | Doom-fire 热扩散 + **更宽连续底部火床** + 多个随机燃料堆；中间最高，顶部多股细长分开火舌；火星与爆燃 |
+| `fire` 燃烧火焰 | Doom-fire 热扩散；**底部火床再加宽 2 倍并允许重叠**，顶部火苗形状不变；中间最高，顶部多股分开；火星与爆燃 |
 | `dragon` 巨龙盘旋 | 整屏 Lissajous 飞行的中国龙：弧长跟随龙身、鹿角、龙须、鬃毛、獠牙、四爪、背鳍、尾鳍、龙鳞 |
 | `map` 世界地图 | 内嵌 Natural Earth 陆地掩膜、城市节点、大圆弧数据包、扫描波束、UTC 时钟 |
 | `matrix` 黑客帝国 | **NASA 后台登录大屏**：Unicode 蓝色 NASA 横幅 + 白色大字 + 红色 swoosh、居中下移的登录框、OPERATOR/PASSWORD/2FA、AUTH/DECRYPT、雷达、ACCESS GRANTED |
-| `blackhole` 黑洞 | 事件视界、连续光子环、吸积盘、引力透镜弧、喷流；随机方向流星；恒星被吸入计数；`--spin` 控制旋转速度 |
-| `beams` 光束 | **单向**横向不规则光束，随机亮色，白热头/渐隐尾；`--density`/`--beam-speed` 调密度/速度 |
+| `blackhole` 黑洞 | 事件视界、光子环、吸积盘、透镜弧、喷流、流星；**外围星尘速度减半、范围扩大 1/3**；`--spin` 控制整体旋转 |
+| `beams` 光束 | **单向**横向光束，随机亮色；`--beam-motion straight\|jump`（默认直线），`--density`/`--beam-speed` |
+
+光束两种运动模式：
+
+| 直线（默认） | 上下跳跃 |
+| --- | --- |
+| ![beams straight](docs/beams.png) | ![beams jump](docs/beams-jump.png) |
 | `fireworks` 烟花 | 火箭升空，内外双层粒子环绽放，延迟爆裂；`--density` 调烟花密度；城市天际线/星空 |
-| `solar` 太阳系 | 太阳 + 九大行星在一条轨道线上；圆形行星、不同颜色/大小，土星环、卫星、彗星；左上金色发散阳光 |
+| `solar` 太阳系 | 太阳 + 九大行星；太阳光从太阳**径向分层点亮/扩散**，呈现光线传播过程；圆形行星、土星环、卫星、彗星 |
 | `galaxy` 满天星河 | 满屏星海、中央稠密银河带；动态星团/暗尘/星座线；`--density`、`--twinkle`、`--meteors` 可调 |
 | `buddha` 佛光普照 | **垂直居中**的 ASCII 佛祖、大号头光/光环、莲花座、曼陀罗、金色粒子与飘落花瓣，全身发光 |
 | `tomjerry` 猫和老鼠 | Tom 追逐 Jerry 的太空站动画；默认放慢且不跳跃，`--speed` / `+` `-` 调速，`--jump` 开启跳跃 |
 | `mario` 超级马里奥 | 自动闯关：顶问号砖块、弹出蘑菇、吃金币；Unicode 实心精灵，`--ascii` 经典字符版 |
 | `ecg` 心率跳动 | 绿色心电监护仪：网格、P-QRS-T 波形、扫描线、HR/SpO2；Unicode / `--ascii` 两版 |
-| `dandelion` 蒲公英 | 左侧多株盛开蒲公英，白色种子向右飘散；`--seed-count` / `--seed-speed` 调数量和速度 |
+| `dandelion` 蒲公英 | 每丛**多支花茎从共同根部聚拢**、高低错落、花茎倾斜；白色种子向右飘散；`--seed-count` / `--seed-speed` |
 | `fish` 鱼缸 | 全屏水族箱，大小鱼随机方向/姿态游动，水草、气泡、沙底与光斑 |
 | `landscape` 五光十色 | 层叠远山、平湖、小船、白鹅、两侧丛林；水面/雾气/花瓣动态 |
 | `shanghai` 东方明珠 | 上海外滩夜景、东方明珠、高楼霓虹、黄浦江倒影；**默认 ASCII**，`--unicode` 可切换 |
 | `tiananmen` 光芒万丈 | 正中天安门城楼、红墙金瓦、五门洞、红旗与向上发散的金色光芒 |
 | `traffic` 车水马龙 | 城市街道两侧高楼、霓虹、车流；`--street horizontal\|vertical`；**默认 ASCII**，`--unicode` 可切换 |
 | `fairy` 仙女散花 | 空中飞天侍女、花篮、飘带、满屏花瓣；`--petal-count` / `--petal-speed` |
-| `tornado` 龙卷风 | 1–8 股大小/高低不同龙卷风从左向右；`--tornado-count` / `--tornado-speed` |
+| `tornado` 龙卷风 | 1–8 股龙卷风从左向右；**更扭曲、顶部宽度 2 倍、底部碎片更多**；`--tornado-count` / `--tornado-speed` |
 | `storm` 电闪雷鸣 | 乌云、斜雨、城市剪影、闪电；落雷时全屏白色亮闪（[效果图](docs/storm-flash.png)） |
 
 > 截图均为 120×36、truecolor、离屏渲染；动图见上。
@@ -166,6 +172,7 @@ trix --list                        # 列出特效和主题
 trix matrix --ascii                         # 纯 ASCII 回退
 trix blackhole --spin 0.25 --meteors 8      # 更慢旋转 + 更多流星
 trix beams --density 1.5 --beam-speed 1.2   # 更密、更快
+trix beams --beam-motion jump              # 上下起伏
 trix fireworks --density 2                  # 更多烟花
 trix galaxy --density 1.5 --twinkle 2 --meteors 8
 trix tomjerry --chase-speed 0.8 --jump      # 追逐速度 / 跳跃
@@ -211,6 +218,8 @@ trix <effect> [options]
       --twinkle <f>       galaxy twinkle rate                [默认: 1.0]
       --meteors <n>       black hole / galaxy meteors        [默认: 3]
       --beam-speed <f>    beams horizontal speed             [默认: 1.0]
+      --beam-motion <m>   straight | jump                    [默认: straight]
+      --beam-jump         --beam-motion jump 的别名
       --seed-count <n>    dandelion seed count                [默认: 90]
       --seed-speed <f>    dandelion seed drift speed          [默认: 1.0]
       --street <dir>      horizontal | vertical               [默认: horizontal]
@@ -366,20 +375,20 @@ scripts/bench.sh
 - **Canvas**（`src/canvas.rs`）：`Cell { char, fg }` 双缓冲；逐行变化区间；颜色变化才发 SGR；支持 truecolor/256/16/mono。
 - **零框架**：唯一依赖 `libc`；没有 tokio/crossterm/线程任务。
 - **代码雨**：逐列头/尾、随机速度与深度、二进制雾、横向数据包、CRT 扫描。
-- **火焰**：Doom-fire 元胞传播；连续底部火床 + 随机 3–5 个燃料堆，中央堆最高；每堆细长火舌，顶部彼此分开；火星与周期爆燃。
+- **火焰**：Doom-fire 元胞传播；底部火床宽度 ×2（允许重叠），顶部火苗不变；随机 3–5 个燃料堆，中央堆最高；火星与周期爆燃。
 - **巨龙**：飞行轨迹按弧长重采样，长蛇身 splat 到强度/深度缓冲；大型中国龙头、鹿角、龙须、鬃毛、四爪、背鳍、尾鳍、龙鳞；整屏 Lissajous 飞行。
 - **世界地图**：Natural Earth 陆地掩膜、覆盖率采样、城市节点、大圆弧、扫描波束。
 - **黑客帝国**：NASA 后台登录大屏。Unicode 蓝色 NASA 横幅（白色大字、红色 swoosh、白色星点、蓝白流光）、居中下移的 Unicode 边框登录框；OPERATOR/PASSWORD/2FA、AUTH/DECRYPT 进度、日志、雷达、ACCESS GRANTED；`--ascii` 提供纯 ASCII 回退。
-- **黑洞**：事件视界遮罩、连续光子环、吸积盘、引力透镜弧、喷流、随机方向流星、恒星螺旋内落与“CONSUMED”计数；`--spin` 调吸积盘/内落旋转速度。
-- **光束**：单向从左向右的随机光束，亮色头、渐隐尾；`--density`/`--beam-speed` 调密度与速度；星空和网格。
+- **黑洞**：事件视界遮罩、光子环、吸积盘、透镜弧、喷流、流星、内落与“CONSUMED”；外围星尘轨道速度减半、半径 ×4/3；`--spin` 调整体旋转。
+- **光束**：单向从左向右；默认直线，`--beam-motion jump` 上下起伏；`--density`/`--beam-speed` 调密度与速度。
 - **烟花**：火箭 + 内外双环粒子 + 延迟爆裂；粒子拖尾、重力、城市剪影、星空。
-- **太阳系**：太阳与九大行星一维排列；圆形球体、土星环、卫星、彗星、小行星带；左上角金色发散阳光与全息星图网格。
+- **太阳系**：太阳与九大行星；太阳光波从太阳向外分层点亮，波前带多层弧线；圆形行星、土星环、卫星、彗星、星图。
 - **银河**：预计算星点沿斜向银河带 + 中央核球；动态星团弧、暗尘、流星、星座线；`--density`/`--twinkle`/`--meteors` 可调。
 - **佛光**：垂直居中的 ASCII 佛祖（头光、面部、肩部、莲座）、多层光环/曼陀罗/射线、金色粒子与花瓣；逐字符发光。
 - **Tom & Jerry**：太空站走廊；运行帧动画；默认慢速、不跳跃；`--speed`/`+`/`-` 调速，`--jump` 开启跳跃；HUD 显示倍率。
 - **超级马里奥**：自动奔跑/跳跃，问号砖块顶出蘑菇、金币与分数；滚动天空/山丘/地面/板栗仔；Unicode 实心精灵与 `--ascii` 版本。
 - **心率跳动**：ECG 网格、P-QRS-T 波形、扫描线、HR/SpO2/SYS-DIA；Unicode 框线/实心波形与 `--ascii` 版本。
-- **蒲公英**：左侧 4 株蒲公英，白色种子向右飘散；`--seed-count`/`--seed-speed` 调种子数量/速度。
+- **蒲公英**：三丛多支花茎从共同根部聚拢，高低错落、花茎倾斜；种子向右飘散；`--seed-count`/`--seed-speed` 可调。
 - **地图数据离线生成**：`tools/gen_land.py` 下载 Natural Earth 并栅格化为 `src/data/land_720x360.bin`，运行时不访问网络。
 
 ## 录制与文档工具

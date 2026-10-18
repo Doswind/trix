@@ -267,45 +267,96 @@ impl SolarScene {
         );
     }
     fn draw_sunburst(&self, canvas: &mut Canvas, theme: &Theme, t: f32) {
-        let ox = 1.0f32;
-        let oy = 1.0f32;
-        // a golden fan of light spilling in from the upper-left
-        for k in 0..12 {
-            let a = 0.10 + k as f32 / 12.0 * 1.30;
-            let len = (self.w as f32 * 0.34).min(self.baseline * 0.92);
-            let x = ox + a.cos() * len;
-            let y = oy + a.sin() * len * 0.55;
+        let ox = self.sun_x;
+        let oy = self.baseline;
+        let max_len = (self.w as f32).max(self.h as f32) * 1.10;
+        let rays = 30usize;
+        let fan = std::f32::consts::PI + 0.30;
+        // A dim permanent fan from the sun, so the geometry is always visible.
+        for k in 0..rays {
+            let a = -std::f32::consts::PI + (k as f32 + 0.5) / rays as f32 * fan;
+            let x = ox + a.cos() * max_len;
+            let y = oy + a.sin() * max_len * 0.58;
             canvas.line(
                 ox as isize,
                 oy as isize,
                 x as isize,
                 (y as isize).min(self.baseline as isize - 1),
-                '-',
-                Rgb::hex(0xfbbf24).scale(0.22),
+                if k % 3 == 0 { '-' } else { '.' },
+                Rgb::hex(0xfbbf24).scale(0.16),
             );
         }
-        for k in 0..18 {
-            let a = 0.08 + k as f32 / 18.0 * 1.35;
-            let len = (self.w as f32 * 0.32 + (t * 1.3 + k as f32).sin().abs() * 4.0)
-                .min(self.w as f32 * 0.62);
-            for s in (2..len as isize).step_by(2) {
-                let x = (ox + a.cos() * s as f32).round() as isize;
-                let y = (oy + a.sin() * s as f32 * 0.55).round() as isize;
-                if x < 0 || y < 0 || x >= self.w as isize || y >= self.baseline as isize {
-                    continue;
+
+        // A bright wavefront travels outward from the sun, lighting each ray
+        // from the inside out.  This is the same "scanning bar" idea as the
+        // world-map data sweep: the wave front is the bright layer.
+        let phase = (t * 0.19).rem_euclid(1.0);
+        let front = phase * max_len;
+        let band = (max_len * 0.10).max(2.5);
+        for k in 0..rays {
+            let a = -std::f32::consts::PI + (k as f32 + 0.5) / rays as f32 * fan;
+            let ca = a.cos();
+            let sa = a.sin();
+            let mut s = 2.0f32;
+            while s < max_len {
+                let x = (ox + ca * s).round() as isize;
+                let y = (oy + sa * s * 0.58).round() as isize;
+                if x >= 0 && y >= 0 && x < self.w as isize && y < self.baseline as isize {
+                    let behind = front - s;
+                    if behind >= 0.0 {
+                        let trail = (1.0 - behind / (front + 1.0)).clamp(0.0, 1.0);
+                        let heat = if behind < band {
+                            1.0
+                        } else {
+                            (0.12 + trail * 0.42).clamp(0.0, 0.65)
+                        };
+                        let col = Rgb::hex(0xfbbf24)
+                            .lerp(Rgb::hex(0xfff7d6), heat * 0.85)
+                            .scale(heat);
+                        let ch = if behind < band {
+                            if s as isize % 4 == 0 {
+                                '*'
+                            } else {
+                                '-'
+                            }
+                        } else if s as isize % 7 == 0 {
+                            '*'
+                        } else {
+                            '.'
+                        };
+                        canvas.set(x, y, ch, col);
+                    }
                 }
-                let col = Rgb::hex(0xfbbf24)
-                    .lerp(Rgb::hex(0xfff7d6), (s as f32 / len).min(1.0))
-                    .scale(0.55 - s as f32 / len * 0.35);
-                canvas.set(x, y, if s % 6 == 0 { '*' } else { '.' }, col);
+                s += 1.0;
             }
         }
-        for (dx, dy) in [(0, 0), (1, 0), (0, 1), (2, 0), (0, 2)] {
+
+        // The wave front itself: a few concentric bright arcs so the
+        // propagation reads as distinct layers, not a single random streak.
+        let arc_n = 72;
+        for (lag, strength) in [(0.0, 1.0f32), (0.10, 0.55), (0.20, 0.28)] {
+            let radius = (front - max_len * lag).max(0.0);
+            for k in 0..arc_n {
+                let a = -std::f32::consts::PI + (k as f32 + 0.5) / arc_n as f32 * fan;
+                let x = (ox + a.cos() * radius).round() as isize;
+                let y = (oy + a.sin() * radius * 0.58).round() as isize;
+                if x >= 0 && y >= 0 && x < self.w as isize && y < self.baseline as isize {
+                    let col = Rgb::hex(0xfff7d6).scale((0.45 + 0.45 * (1.0 - phase)) * strength);
+                    canvas.set(x, y, if k % 5 == 0 { '*' } else { '·' }, col);
+                    if lag == 0.0 && k % 3 == 0 {
+                        canvas.add_light(x, y, Rgb::hex(0xfbbf24), 0.30, '.');
+                    }
+                }
+            }
+        }
+
+        // Hot core glow at the sun.
+        for (dx, dy) in [(0, 0), (1, 0), (0, 1), (2, 0), (0, 2), (-1, 0), (0, -1)] {
             canvas.add_light(
                 ox as isize + dx,
                 oy as isize + dy,
-                Rgb::hex(0xfbbf24),
-                0.6,
+                Rgb::hex(0xffd166),
+                0.55,
                 '.',
             );
         }

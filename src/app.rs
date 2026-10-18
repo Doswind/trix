@@ -88,6 +88,7 @@ fn tune_for(opts: &Options) -> Tune {
         meteors: opts.meteors,
         beam_speed: opts.beam_speed,
         jump: opts.jump,
+        beam_jump: opts.beam_jump,
         seed_count: opts.seed_count,
         seed_speed: opts.seed_speed,
         street_vertical: opts.street_vertical,

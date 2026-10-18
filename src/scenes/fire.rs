@@ -238,7 +238,9 @@ impl Scene for FireScene {
                 let mut env = 0.0f32;
                 for pile in &self.piles {
                     let cx = pile.x + (t * pile.rate + pile.phase).sin() * pile.drift;
-                    let width = pile.width * (0.55 + 0.95 * depth);
+                    // Only the bottom footprint is doubled: a wide, overlapping fire bed,
+                    // while the tips keep their original separation.
+                    let width = pile.width * (0.55 + 0.95 * depth) * (1.0 + depth.powi(6));
                     let d = (xf - cx).abs() / width;
                     let e = 1.0 - ((d - 0.45).max(0.0) / 0.55).clamp(0.0, 1.0);
                     env = env.max(e);
