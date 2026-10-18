@@ -3,12 +3,12 @@
 //! One or several funnels of different sizes and heights travel left to right.
 //! `--tornado-count` and `--tornado-speed` tune the number and travel speed.
 
-use std::f32::consts::TAU;
+use std::f32::consts::{PI, TAU};
 
 use crate::canvas::Canvas;
 use crate::cli::Charset;
 use crate::color::Rgb;
-use crate::rng::Rng;
+use crate::rng::{hash01, Rng};
 use crate::scene::{Frame, Scene};
 
 const SKY: Rgb = Rgb::hex(0x0b1220);
@@ -18,6 +18,10 @@ const FUNNEL: Rgb = Rgb::hex(0x94a3b8);
 const FUNNEL_DARK: Rgb = Rgb::hex(0x475569);
 const DUST: Rgb = Rgb::hex(0xa16207);
 const LIGHT: Rgb = Rgb::hex(0xe2e8f0);
+/// Debris motes drawn around the funnel at every row.
+const FUNNEL_PARTICLES: usize = 20;
+/// Loose debris flung outwards from the base of each funnel.
+const BASE_DEBRIS: usize = 30;
 
 struct Tornado {
     x: f32,
@@ -57,7 +61,8 @@ impl TornadoScene {
             },
             base_y: h * self.rng.range(0.82, 0.94),
             size: self.rng.range(2.5, 7.5),
-            height: h * self.rng.range(0.38, 0.78),
+            // Shorter than the original so the sky opens up above it.
+            height: h * self.rng.range(0.28, 0.58),
             speed: self.rng.range(3.5, 10.0),
             phase: self.rng.range(0.0, TAU),
         }
@@ -100,7 +105,7 @@ impl Scene for TornadoScene {
                 t.x = -18.0 - i as f32 * 4.0;
                 t.base_y = h * self.rng.range(0.82, 0.94);
                 t.size = self.rng.range(2.5, 7.5);
-                t.height = h * self.rng.range(0.38, 0.78);
+                t.height = h * self.rng.range(0.28, 0.58);
                 t.speed = self.rng.range(3.5, 10.0);
                 t.phase = self.rng.range(0.0, TAU);
             }
@@ -142,7 +147,7 @@ impl Scene for TornadoScene {
                 canvas.set(x, y, if unicode { '█' } else { '#' }, DUST.scale(0.28));
             }
         }
-        for funnel in &self.funnels {
+        for (fi, funnel) in self.funnels.iter().enumerate() {
             let cx = funnel.x;
             let base = funnel.base_y;
             let top = base - funnel.height;
@@ -154,8 +159,8 @@ impl Scene for TornadoScene {
                 let radius = 0.15 + funnel.size * (tt * 1.0 + tt * tt * 2.8);
                 let curve =
                     (tt * 7.0 + t * 1.5 + funnel.phase).sin() * funnel.size * (0.50 + tt * 1.20);
-                for k in 0..28 {
-                    let a = funnel.phase + tt * 5.0 + k as f32 / 28.0 * TAU;
+                for k in 0..FUNNEL_PARTICLES {
+                    let a = funnel.phase + tt * 5.0 + k as f32 / FUNNEL_PARTICLES as f32 * TAU;
                     let x = cx + curve + a.cos() * radius;
                     let yy = y as f32 + a.sin() * radius * 0.25;
                     let ch = if unicode {
@@ -171,7 +176,7 @@ impl Scene for TornadoScene {
                             _ => '~',
                         }
                     };
-                    canvas.set(x as isize, yy as isize, ch, FUNNEL.scale(0.66 + tt * 0.72));
+                    canvas.set(x as isize, yy as isize, ch, FUNNEL.scale(0.42 + tt * 0.43));
                 }
             }
             // bright spiral edges
@@ -188,13 +193,13 @@ impl Scene for TornadoScene {
                     x as isize,
                     y as isize,
                     if unicode { '✦' } else { '*' },
-                    FUNNEL.scale(1.0),
+                    FUNNEL.scale(0.72),
                 );
                 canvas.set(
                     (cx + curve - a.cos() * radius) as isize,
                     y as isize,
                     if unicode { '·' } else { '.' },
-                    FUNNEL_DARK.scale(0.85),
+                    FUNNEL_DARK.scale(0.62),
                 );
             }
             // dust fan at the base and cloud cap
@@ -252,6 +257,39 @@ impl Scene for TornadoScene {
                     if unicode { '▴' } else { '^' },
                     DUST.scale(0.55),
                 );
+            }
+            // Debris torn off the ground: motes that are flung clear of the
+            // base, arc outwards and fade before they settle back down.
+            for k in 0..BASE_DEBRIS {
+                let seed = self.seed;
+                let h1 = hash01(k as i64 * 3 + 1, fi as i64, seed);
+                let h2 = hash01(k as i64 * 3 + 2, fi as i64, seed);
+                let h3 = hash01(k as i64 * 3 + 3, fi as i64, seed);
+                let life = 1.9 + h1 * 2.3;
+                let p = (t / life + h2).fract();
+                let sec = p * life;
+                let dir = if h3 > 0.5 { 1.0 } else { -1.0 };
+                let reach = funnel.size * (0.30 + h1 * 0.80) + (1.8 + h2 * 8.0) * sec;
+                let x = cx + dir * reach;
+                let arc = (p * PI).sin();
+                let y = base - arc * (1.4 + h3 * 6.2);
+                let fade = (1.0 - p).powf(1.3) * (0.35 + 0.65 * arc);
+                let ch = if unicode {
+                    match k % 4 {
+                        0 => '▴',
+                        1 => '░',
+                        2 => '·',
+                        _ => ':',
+                    }
+                } else {
+                    match k % 4 {
+                        0 => '^',
+                        1 => ':',
+                        2 => '.',
+                        _ => '~',
+                    }
+                };
+                canvas.set(x as isize, y as isize, ch, DUST.scale(0.14 + 0.52 * fade));
             }
             let cap_y = (top as isize).max(1);
             let cap_half = (funnel.size * 2.8) as isize;
@@ -313,5 +351,35 @@ mod tests {
         let mut s = TornadoScene::new(7);
         s.resize(120, 36);
         assert_eq!(s.funnels.len(), 3);
+    }
+
+    #[test]
+    fn funnels_keep_their_top_inside_the_sky() {
+        let mut s = TornadoScene::new(7);
+        s.resize(120, 36);
+        for f in &s.funnels {
+            assert!(f.height < f.base_y, "funnel top is above the screen");
+            assert!((0.28..=0.58).contains(&(f.height / 36.0)));
+        }
+        let mut frame = Frame {
+            t: 0.0,
+            dt: 0.1,
+            w: 120,
+            h: 36,
+            fps: 30,
+            theme: &crate::theme::THEMES[0],
+            charset: Charset::Ascii,
+            seed: 7,
+            speed: 1.0,
+            tune: Default::default(),
+        };
+        // Funnels keep the same shape after they are recycled on the right.
+        for k in 0..400 {
+            frame.t = k as f64 * 0.1;
+            s.update(&frame);
+            for f in &s.funnels {
+                assert!(f.height < f.base_y);
+            }
+        }
     }
 }

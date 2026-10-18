@@ -6,11 +6,12 @@
 use crate::canvas::Canvas;
 use crate::cli::Charset;
 use crate::color::Rgb;
-use crate::rng::{hash01, Rng};
+use crate::rng::{hash01, value_noise, Rng};
 use crate::scene::{Frame, Scene};
 
 const SKY: Rgb = Rgb::hex(0x020617);
 const CLOUD: Rgb = Rgb::hex(0x1e293b);
+const CLOUD_HIGH: Rgb = Rgb::hex(0xaab6c6);
 const RAIN: Rgb = Rgb::hex(0x7dd3fc);
 const BOLT: Rgb = Rgb::hex(0xf8fafc);
 const BOLT_BLUE: Rgb = Rgb::hex(0x93c5fd);
@@ -140,6 +141,57 @@ impl Scene for StormScene {
                         CLOUD.scale(0.5 + k as f32 * 0.04),
                     );
                 }
+            }
+        }
+        // A second, lighter cloud deck above the heavy bands: ragged,
+        // multi-octave puffs in grey-white.  It only fills empty cells, so
+        // the deep clouds, rain and lightning stay exactly as they were.
+        let top = (self.h / 4).clamp(2, 10) as isize;
+        // The deck drifts slowly to the right.  Every octave is offset by the
+        // same number of columns (not the same phase), so both the big puffs
+        // and the fine grain travel together instead of shearing apart.
+        let flow = f.t as f32 * 3.0;
+        for y in 0..top {
+            for x in 0..w {
+                let coarse = value_noise(
+                    x as f32 * 0.062 - flow * 0.062,
+                    y as f32 * 0.50,
+                    self.seed ^ 0x9d,
+                );
+                let mid = value_noise(
+                    x as f32 * 0.150 - flow * 0.150 + 37.0,
+                    y as f32 * 0.95 + 11.0,
+                    self.seed ^ 0x3b,
+                );
+                let fine = value_noise(
+                    x as f32 * 0.330 - flow * 0.330 + 71.0,
+                    y as f32 * 1.70 + 53.0,
+                    self.seed ^ 0x77,
+                );
+                let n = coarse * 0.60 + mid * 0.25 + fine * 0.15;
+                // Soften the bottom of the deck so it melts into the sky.
+                let edge = (y as f32 / top as f32).powi(2);
+                if n <= 0.42 + 0.16 * edge {
+                    continue;
+                }
+                let a = ((n - 0.42 - 0.16 * edge) / (0.58 - 0.16 * edge)).clamp(0.0, 1.0);
+                let grain = hash01(x as i64, y as i64 + 13, self.seed ^ 0x44);
+                let dense = a * 0.75 + grain * 0.25;
+                let ch = if unicode {
+                    if dense > 0.56 {
+                        '▒'
+                    } else if dense > 0.24 {
+                        '░'
+                    } else {
+                        '·'
+                    }
+                } else if dense > 0.30 {
+                    ':'
+                } else {
+                    '.'
+                };
+                let shade = ((0.45 + a * 0.42 + grain * 0.08) * (1.0 - 0.28 * edge)).min(0.95);
+                canvas.set_if_blank(x, y, ch, CLOUD_HIGH.scale(shade));
             }
         }
         // city silhouette + lit windows

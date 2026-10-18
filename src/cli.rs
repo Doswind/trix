@@ -57,6 +57,8 @@ pub struct Options {
     pub petal_speed: f32,
     pub tornado_count: u32,
     pub tornado_speed: f32,
+    pub life_cycle: f32,
+    pub eye_still: bool,
     pub seed: Option<u64>,
     pub size: Option<(usize, usize)>,
     pub no_alt: bool,
@@ -91,6 +93,8 @@ impl Default for Options {
             petal_speed: 1.0,
             tornado_count: 3,
             tornado_speed: 1.0,
+            life_cycle: 120.0,
+            eye_still: false,
             seed: None,
             size: None,
             no_alt: false,
@@ -197,6 +201,24 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                     let v = take_value(args, &mut i, inline, "--tornado-speed")?;
                     opts.tornado_speed = parse_num(&v, "--tornado-speed")?;
                 }
+                "life-cycle" | "life-span" | "life-duration" => {
+                    let v = take_value(args, &mut i, inline, "--life-cycle")?;
+                    let n = parse_num(&v, "--life-cycle")?;
+                    if !(5.0..=600.0).contains(&n) {
+                        return Err("--life-cycle must be between 5 and 600 seconds".into());
+                    }
+                    opts.life_cycle = n;
+                }
+                "eye-motion" | "eye-move" => {
+                    let v = take_value(args, &mut i, inline, "--eye-motion")?;
+                    opts.eye_still = match v.to_ascii_lowercase().as_str() {
+                        "dart" | "jump" | "move" | "moving" | "on" => false,
+                        "still" | "fixed" | "static" | "none" | "off" => true,
+                        _ => return Err("--eye-motion must be 'dart' or 'still'".into()),
+                    };
+                }
+                "eye-still" | "no-eye-dart" | "eye-fixed" => opts.eye_still = true,
+                "eye-dart" => opts.eye_still = false,
                 "beam-motion" => {
                     let v = take_value(args, &mut i, inline, "--beam-motion")?;
                     opts.beam_jump = match v.to_ascii_lowercase().as_str() {
@@ -490,7 +512,8 @@ EFFECTS
   storm     电闪雷鸣    rain, clouds and full-screen lightning flashes
   monalisa  蒙娜丽莎      living Mona Lisa oil painting: gaze, blink, smile
   ballet    舞动芭蕾    hand-in-hand duet dancing across the whole stage
-  demoneye  恶魔之眼    giant watching eye with random gaze and blinks
+  demoneye  恶魔之眼    giant blood eye; eyeball darts between blinks
+  life      生命的轨迹  a 0-100 life timeline of family, love and generations
 
   Dual-form effects start in ASCII; add --unicode for the Unicode variant.
 
@@ -520,6 +543,9 @@ OPTIONS
       --petal-speed <f>   fairy petal fall speed              [default: 1.0]
       --tornado-count <n> tornado count                        [default: 3]
       --tornado-speed <f> tornado travel speed                 [default: 1.0]
+      --life-cycle <secs> life: 0-100 cycle length            [default: 120]
+      --eye-motion <m>    demoneye: dart | still              [default: dart]
+      --eye-still         alias for --eye-motion still
       --jump              Tom & Jerry jumps (default: off)
       --no-jump           disable Tom & Jerry jumps
       --seed <u64>        Deterministic random seed
@@ -545,6 +571,7 @@ KEYS (interactive)
   f/l/b/j   Fish/Landscape/Bund/Gate
   c/x/z/k   Traffic/Fairy/Tornado/Storm
   o/v/g     Mona Lisa/Ballet/Demon eye
+  y         Life trajectory
   t         next theme     + / -   speed
   r         restart        i       status line
   h         help overlay
@@ -566,6 +593,8 @@ EXAMPLES
   trix monalisa
   trix ballet --speed 1.3
   trix demoneye
+  trix demoneye --eye-still
+  trix life --life-cycle 90
 "#,
         VERSION = VERSION,
         themes = theme::THEMES
@@ -639,7 +668,7 @@ mod tests {
     #[test]
     fn parses_playlist_and_street() {
         let Parsed::Run(o) = parse_args(&args(
-            "--playlist random --switch 8 --street vertical --petal-count 150 --petal-speed 1.5 --tornado-count 5 --tornado-speed 1.8",
+            "--playlist random --switch 8 --street vertical --petal-count 150 --petal-speed 1.5 --tornado-count 5 --tornado-speed 1.8 --life-cycle 90",
         ))
         .unwrap()
         else {
@@ -650,6 +679,32 @@ mod tests {
         assert!(o.street_vertical);
         assert_eq!(o.petal_count, 150);
         assert_eq!(o.tornado_count, 5);
+        assert!((o.life_cycle - 90.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn parses_eye_motion() {
+        let Parsed::Run(o) = parse_args(&args("demoneye")).unwrap() else {
+            panic!()
+        };
+        assert!(!o.eye_still, "the eyeball darts by default");
+        let Parsed::Run(o) = parse_args(&args("demoneye --eye-motion still")).unwrap() else {
+            panic!()
+        };
+        assert!(o.eye_still);
+        let Parsed::Run(o) = parse_args(&args("demoneye --eye-still")).unwrap() else {
+            panic!()
+        };
+        assert!(o.eye_still);
+        let Parsed::Run(o) = parse_args(&args("demoneye --eye-motion dart")).unwrap() else {
+            panic!()
+        };
+        assert!(!o.eye_still);
+        let Parsed::Run(o) = parse_args(&args("demoneye --eye-still --eye-dart")).unwrap() else {
+            panic!()
+        };
+        assert!(!o.eye_still);
+        assert!(parse_args(&args("demoneye --eye-motion sideways")).is_err());
     }
 
     #[test]
@@ -659,6 +714,8 @@ mod tests {
         assert!(parse_args(&args("traffic --street diagonal")).is_err());
         assert!(parse_args(&args("fairy --petal-count 0")).is_err());
         assert!(parse_args(&args("tornado --tornado-count 9")).is_err());
+        assert!(parse_args(&args("life --life-cycle 4")).is_err());
+        assert!(parse_args(&args("life --life-cycle 601")).is_err());
     }
 
     #[test]

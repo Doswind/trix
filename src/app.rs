@@ -96,6 +96,8 @@ fn tune_for(opts: &Options) -> Tune {
         petal_speed: opts.petal_speed,
         tornado_count: opts.tornado_count,
         tornado_speed: opts.tornado_speed,
+        life_cycle: opts.life_cycle,
+        eye_still: opts.eye_still,
     }
 }
 
@@ -431,7 +433,8 @@ fn interactive(opts: Options) -> i32 {
                     | 'k'
                     | 'o'
                     | 'v'
-                    | 'g'),
+                    | 'g'
+                    | 'y'),
                 ) => {
                     let idx = match c {
                         '0' => 9,
@@ -451,6 +454,7 @@ fn interactive(opts: Options) -> i32 {
                         'o' => 23,
                         'v' => 24,
                         'g' => 25,
+                        'y' => 26,
                         _ => c as usize - '1' as usize,
                     };
                     let target = EffectId::from_index(idx);
@@ -747,7 +751,7 @@ fn draw_help(
         return;
     }
     let bw = 76.min(w - 4).max(32);
-    let bh = 20.min(h - 2).max(11);
+    let bh = 22.min(h - 2).max(11);
     let x = (w - bw) / 2;
     let y = (h - bh) / 2;
     canvas.clear_rect(x, y, bw, bh);
@@ -769,7 +773,7 @@ fn draw_help(
         ("m / e / d", "Mario / ECG / Dandelion".into()),
         ("f l b j", "Fish / Landscape / Bund / Gate".into()),
         ("c x z k", "Traffic / Fairy / Tornado / Storm".into()),
-        ("o v g", "Mona Lisa / Ballet / Demon eye".into()),
+        ("o v g y", "Mona / Ballet / Eye / Life".into()),
         ("t", "cycle theme".into()),
         ("+ / -", format!("speed  {:.2}x", speed)),
         ("r", "restart current effect".into()),

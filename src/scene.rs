@@ -5,8 +5,9 @@ use crate::cli::Charset;
 use crate::scenes::{
     BalletScene, BeamsScene, BlackHoleScene, BuddhaScene, DandelionScene, DemonEyeScene,
     DragonScene, EcgScene, FairyScene, FireScene, FireworksScene, FishScene, GalaxyScene,
-    LandscapeScene, MapScene, MarioScene, MatrixScene, MonaLisaScene, RainScene, ShanghaiScene,
-    SolarScene, StormScene, TiananmenScene, TomJerryScene, TornadoScene, TrafficScene,
+    LandscapeScene, LifeScene, MapScene, MarioScene, MatrixScene, MonaLisaScene, RainScene,
+    ShanghaiScene, SolarScene, StormScene, TiananmenScene, TomJerryScene, TornadoScene,
+    TrafficScene,
 };
 use crate::theme::{self, Theme};
 
@@ -38,10 +39,11 @@ pub enum EffectId {
     MonaLisa,
     Ballet,
     DemonEye,
+    Life,
 }
 
 impl EffectId {
-    pub const ALL: [EffectId; 26] = [
+    pub const ALL: [EffectId; 27] = [
         EffectId::Rain,
         EffectId::Fire,
         EffectId::Dragon,
@@ -68,6 +70,7 @@ impl EffectId {
         EffectId::MonaLisa,
         EffectId::Ballet,
         EffectId::DemonEye,
+        EffectId::Life,
     ];
 
     pub fn key(self) -> &'static str {
@@ -98,6 +101,7 @@ impl EffectId {
             EffectId::MonaLisa => "monalisa",
             EffectId::Ballet => "ballet",
             EffectId::DemonEye => "demoneye",
+            EffectId::Life => "life",
         }
     }
 
@@ -129,6 +133,7 @@ impl EffectId {
             EffectId::MonaLisa => "Mona Lisa",
             EffectId::Ballet => "Ballet duet",
             EffectId::DemonEye => "Demon eye",
+            EffectId::Life => "Life trajectory",
         }
     }
 
@@ -160,6 +165,7 @@ impl EffectId {
             EffectId::MonaLisa => "蒙娜丽莎",
             EffectId::Ballet => "舞动芭蕾",
             EffectId::DemonEye => "恶魔之眼",
+            EffectId::Life => "生命的轨迹",
         }
     }
 
@@ -205,6 +211,8 @@ impl EffectId {
             "demoneye" | "eye" | "demon" | "evileye" | "watcher" | "oculus" | "gaze" => {
                 Some(EffectId::DemonEye)
             }
+            "life" | "lifetrack" | "lifeline" | "lifecycle" | "journey" | "trajectory"
+            | "legacy" => Some(EffectId::Life),
             _ => None,
         }
     }
@@ -253,6 +261,7 @@ impl EffectId {
             EffectId::MonaLisa => "gold",
             EffectId::Ballet => "aurora",
             EffectId::DemonEye => "ember",
+            EffectId::Life => "aurora",
         })
         .unwrap_or(&theme::THEMES[0])
     }
@@ -282,6 +291,8 @@ pub struct Tune {
     pub petal_speed: f32,
     pub tornado_count: u32,
     pub tornado_speed: f32,
+    pub life_cycle: f32,
+    pub eye_still: bool,
 }
 
 impl Default for Tune {
@@ -301,6 +312,8 @@ impl Default for Tune {
             petal_speed: 1.0,
             tornado_count: 3,
             tornado_speed: 1.0,
+            life_cycle: 120.0,
+            eye_still: false,
         }
     }
 }
@@ -352,6 +365,7 @@ pub fn build(id: EffectId, seed: u64) -> Box<dyn Scene> {
         EffectId::MonaLisa => Box::new(MonaLisaScene::new(seed)),
         EffectId::Ballet => Box::new(BalletScene::new(seed)),
         EffectId::DemonEye => Box::new(DemonEyeScene::new(seed)),
+        EffectId::Life => Box::new(LifeScene::new(seed)),
     }
 }
 
@@ -371,6 +385,7 @@ mod tests {
         assert_eq!(EffectId::parse("mona-lisa"), Some(EffectId::MonaLisa));
         assert_eq!(EffectId::parse("pas de deux"), Some(EffectId::Ballet));
         assert_eq!(EffectId::parse("evil_eye"), Some(EffectId::DemonEye));
+        assert_eq!(EffectId::parse("life-cycle"), Some(EffectId::Life));
         assert_eq!(EffectId::parse("nope"), None);
     }
 

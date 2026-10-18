@@ -44,9 +44,25 @@ pub struct DemonEyeScene {
     blink_start: f64,
     blink_len: f64,
     blink_count: u32,
-    next_gaze: f64,
+    /// Queued gaze events for the current blink window: "look away" and
+    /// "return to the centre" alternate, so the eye never stares off-centre
+    /// for long.
+    gaze_times: [f64; 4],
+    gaze_centers: [bool; 4],
+    gaze_count: usize,
+    gaze_next: usize,
     gaze: (f32, f32),
     target: (f32, f32),
+    saccade_from: (f32, f32),
+    saccade_start: f64,
+    saccade_len: f64,
+    /// Corneal highlight offset from the eyeball centre, in iris radii.
+    glint: (f32, f32),
+    glint_from: (f32, f32),
+    glint_target: (f32, f32),
+    glint_start: f64,
+    glint_len: f64,
+    next_glint: f64,
     stare: f32,
     dilate: f32,
     next_dilate: f64,
@@ -65,9 +81,21 @@ impl DemonEyeScene {
             blink_start: -10.0,
             blink_len: 0.32,
             blink_count: 0,
-            next_gaze: 1.2,
+            gaze_times: [f64::INFINITY; 4],
+            gaze_centers: [true; 4],
+            gaze_count: 0,
+            gaze_next: 0,
             gaze: (0.0, 0.0),
             target: (0.0, 0.0),
+            saccade_from: (0.0, 0.0),
+            saccade_start: -10.0,
+            saccade_len: 0.1,
+            glint: (-0.18, -0.34),
+            glint_from: (-0.18, -0.34),
+            glint_target: (-0.18, -0.34),
+            glint_start: 0.0,
+            glint_len: 0.1,
+            next_glint: 0.8,
             stare: 0.0,
             dilate: 1.0,
             next_dilate: 2.0,
@@ -78,11 +106,52 @@ impl DemonEyeScene {
     fn rebuild(&mut self, w: usize, h: usize) {
         self.w = w.max(1);
         self.h = h.max(1);
-        self.next_blink = self.rng.range(1.8, 4.0) as f64;
-        self.next_gaze = self.rng.range(0.6, 1.8) as f64;
+        self.next_blink = self.rng.range(8.0, 15.0) as f64;
         self.blink_start = -10.0;
         self.veins.clear();
         self.make_veins();
+        // Opening dart plan for the very first blink window.
+        self.plan_gaze(0.0, self.next_blink);
+    }
+
+    /// Plan the gaze for one inter-blink window: one or two glances, each a
+    /// hard dart followed by a fast return to the centre inside a second.
+    /// Two glances are only used when they can sit at least five seconds
+    /// apart, otherwise the eye just watches the viewer for the rest of the
+    /// window.
+    fn plan_gaze(&mut self, now: f64, gap: f64) {
+        self.gaze_count = 0;
+        self.gaze_next = 0;
+        // The short gap of a double blink is the lid's, not the iris's.
+        if gap <= 0.9 {
+            return;
+        }
+        let end = now + gap - 0.10;
+        let two = self.rng.chance(0.50);
+        let (lo, hi) = if two { (0.06, 0.22) } else { (0.12, 0.42) };
+        let out = now + gap * self.rng.range(lo, hi) as f64;
+        let back = out + self.rng.range(0.45, 0.85) as f64;
+        if back > end {
+            return;
+        }
+        self.push_gaze(out, false);
+        self.push_gaze(back, true);
+        if two {
+            let out2 = out + self.rng.range(5.0, 5.6) as f64;
+            let back2 = out2 + self.rng.range(0.45, 0.85) as f64;
+            if out2 > back + 0.3 && back2 <= end {
+                self.push_gaze(out2, false);
+                self.push_gaze(back2, true);
+            }
+        }
+    }
+
+    fn push_gaze(&mut self, t: f64, centre: bool) {
+        if self.gaze_count < self.gaze_times.len() {
+            self.gaze_times[self.gaze_count] = t;
+            self.gaze_centers[self.gaze_count] = centre;
+            self.gaze_count += 1;
+        }
     }
 
     fn make_veins(&mut self) {
@@ -158,6 +227,23 @@ impl DemonEyeScene {
     fn opening(u: f32, open: f32) -> f32 {
         let lid = (1.0 - u * u).max(0.0).powf(0.55);
         lid * open
+    }
+
+    /// Where the corneal highlight darts next: anywhere on the iris, so the
+    /// white light sweeps around the way it did on the original eye.
+    fn pick_glint(&mut self) -> (f32, f32) {
+        let a = self.rng.range(0.0, TAU);
+        let r = self.rng.range(0.14, 0.55);
+        (r * a.cos(), r * a.sin())
+    }
+
+    /// Both highlights in eyeball-local units (fractions of the iris radius):
+    /// the spark and its small companion, at the original offsets.
+    fn glint_offsets(&self) -> ((f32, f32), (f32, f32)) {
+        (
+            on_cornea(self.glint),
+            on_cornea((self.glint.0 + 0.31, self.glint.1 + 0.56)),
+        )
     }
 
     fn draw_veins(&self, canvas: &mut Canvas, t: f32, open: f32, blink: f32, unicode: bool) {
@@ -299,32 +385,81 @@ impl Scene for DemonEyeScene {
         if f.t >= self.next_blink {
             self.blink_start = f.t;
             self.blink_len = self.rng.range(0.24, 0.48) as f64;
-            self.next_blink = f.t + self.rng.range(2.6, 7.4) as f64;
+            // A long, unhurried rhythm: one blink every eight to fifteen
+            // seconds, now and then doubled up by a quick second one.
+            self.next_blink = f.t + self.rng.range(8.0, 15.0) as f64;
             self.blink_count = self.blink_count.wrapping_add(1);
-            if self.rng.chance(0.20) {
+            if self.rng.chance(0.30) {
                 self.next_blink = f.t + self.blink_len + self.rng.range(0.20, 0.40) as f64;
+            }
+            // One or two glances for the window that just opened.
+            if !f.tune.eye_still {
+                let gap = self.next_blink - f.t;
+                self.plan_gaze(f.t, gap);
             }
         }
 
-        // New gaze target: mostly random, sometimes straight into the viewer.
-        if f.t >= self.next_gaze {
-            let lock = self.rng.chance(0.20);
-            self.target = if lock {
-                (0.0, 0.0)
-            } else {
-                (self.rng.range(-0.78, 0.78), self.rng.range(-0.72, 0.72))
-            };
-            self.next_gaze = f.t
-                + if lock {
-                    self.rng.range(1.4, 3.2) as f64
-                } else {
-                    self.rng.range(0.6, 2.1) as f64
-                };
-        }
         let dt = f.dt.clamp(0.0, 0.08);
         let k = 1.0 - (-dt * 9.5).exp();
-        self.gaze.0 += (self.target.0 - self.gaze.0) * k;
-        self.gaze.1 += (self.target.1 - self.gaze.1) * k;
+        if f.tune.eye_still {
+            // `--eye-still`: the eyeball is nailed to the centre, only the
+            // lids, the pupil and the cornea light keep moving.
+            self.gaze = (0.0, 0.0);
+            self.target = (0.0, 0.0);
+            self.gaze_count = 0;
+            self.gaze_next = 0;
+        } else {
+            // Gaze events: glance away, then come back to the centre. Each
+            // change is a hard saccade, the whole eyeball snapping over in
+            // about a tenth of a second.
+            if self.gaze_next < self.gaze_count && f.t >= self.gaze_times[self.gaze_next] {
+                self.target = if self.gaze_centers[self.gaze_next] {
+                    (0.0, 0.0)
+                } else {
+                    let (mut gx, mut gy) =
+                        (self.rng.range(-0.78, 0.78), self.rng.range(-0.72, 0.72));
+                    // A glance is never a shrug: always look somewhere clearly.
+                    let r = (gx * gx + gy * gy).sqrt();
+                    if r < 0.32 {
+                        let scale = 0.32 / r.max(1e-3);
+                        gx *= scale;
+                        gy *= scale;
+                    }
+                    (gx, gy)
+                };
+                self.saccade_from = self.gaze;
+                self.saccade_start = f.t;
+                self.saccade_len = self.rng.range(0.07, 0.14) as f64;
+                self.gaze_next += 1;
+            }
+            let snap = if self.saccade_len > 1e-4 {
+                ((f.t - self.saccade_start) / self.saccade_len).clamp(0.0, 1.0) as f32
+            } else {
+                1.0
+            };
+            let snap = smoothstep(snap);
+            self.gaze.0 = self.saccade_from.0 + (self.target.0 - self.saccade_from.0) * snap;
+            self.gaze.1 = self.saccade_from.1 + (self.target.1 - self.saccade_from.1) * snap;
+        }
+
+        // The cornea light lives on its own clock: every second or so it
+        // darts to a new spot on the iris, exactly like the original eye.
+        if f.t >= self.next_glint {
+            self.glint_from = self.glint;
+            self.glint_target = self.pick_glint();
+            self.glint_start = f.t;
+            self.glint_len = self.rng.range(0.09, 0.18) as f64;
+            self.next_glint = f.t + self.rng.range(0.55, 1.60) as f64;
+        }
+        let gp = if self.glint_len > 1e-4 {
+            ((f.t - self.glint_start) / self.glint_len).clamp(0.0, 1.0) as f32
+        } else {
+            1.0
+        };
+        let gp = smoothstep(gp);
+        self.glint.0 = self.glint_from.0 + (self.glint_target.0 - self.glint_from.0) * gp;
+        self.glint.1 = self.glint_from.1 + (self.glint_target.1 - self.glint_from.1) * gp;
+
         let near_center = 1.0 - (self.gaze.0 * self.gaze.0 + self.gaze.1 * self.gaze.1).sqrt();
         self.stare += (near_center.clamp(0.0, 1.0) - self.stare) * (k * 0.6);
 
@@ -342,14 +477,26 @@ impl Scene for DemonEyeScene {
         let blink = self.blink(f.t);
         let open = (1.0 - blink).max(0.0);
         let (cx, cy, ex, ey) = self.geometry();
-        let gaze_x = self.gaze.0 * ex * 0.62;
-        let gaze_y = self.gaze.1 * ey * 0.56 + (t * 1.7).sin() * 0.35;
-        let ix = cx + gaze_x;
-        let iy = cy + gaze_y;
+        // The eyeball itself travels with the gaze; `ox` / `oy` are that
+        // offset expressed in the same aspect-corrected units as dx / dy.
+        // A still eye (`--eye-still`) keeps the iris dead centre, bob included.
+        let (gaze_x, gaze_y) = if f.tune.eye_still {
+            (0.0, 0.0)
+        } else {
+            (
+                self.gaze.0 * ex * 0.62,
+                self.gaze.1 * ey * 0.56 + (t * 1.7).sin() * 0.35,
+            )
+        };
+        let ox = gaze_x * 0.5;
+        let oy = gaze_y;
         let iris_r = (ey * 0.64).max(3.0);
         let pulse = 1.0 + 0.045 * (t * 1.6).sin() + self.stare * 0.06;
         let pupil_w = (iris_r * 0.095 * self.dilate * pulse).max(0.55);
         let pupil_h = (iris_r * 0.43 * self.dilate * pulse).max(1.4);
+        let (glint, glint2) = self.glint_offsets();
+        let glint_off = (glint.0 * iris_r, glint.1 * iris_r);
+        let glint2_off = (glint2.0 * iris_r, glint2.1 * iris_r);
 
         for y in 0..self.h as isize {
             for x in 0..self.w as isize {
@@ -411,10 +558,13 @@ impl Scene for DemonEyeScene {
                     if v < -opening * 0.72 {
                         sclera = sclera.lerp(SCLERA_EDGE, 0.20);
                     }
-                    let d = (dx * dx + dy * dy).sqrt();
+                    // Coordinates relative to the (moving) eyeball centre.
+                    let bdx = dx - ox;
+                    let bdy = dy - oy;
+                    let d = (bdx * bdx + bdy * bdy).sqrt();
                     let rn = d / iris_r;
                     if rn < 1.0 {
-                        let ang = dy.atan2(dx);
+                        let ang = bdy.atan2(bdx);
                         let fiber = 0.5
                             + 0.5
                                 * (ang * 43.0
@@ -431,29 +581,31 @@ impl Scene for DemonEyeScene {
                             iris = iris.lerp(IRIS_HOT, 0.30);
                         }
                         // Slit pupil.
-                        let slit = 1.0 - 0.18 * (dy / pupil_h).abs();
-                        let pu = dx / (pupil_w * slit.max(0.25));
-                        let pv = dy / pupil_h;
+                        let slit = 1.0 - 0.18 * (bdy / pupil_h).abs();
+                        let pu = bdx / (pupil_w * slit.max(0.25));
+                        let pv = bdy / pupil_h;
                         if pu * pu + pv * pv < 1.0 {
                             iris = PUPIL;
                         } else if pu * pu + pv * pv < 1.45 {
                             iris = iris.lerp(IRIS_HOT, 0.25);
                         }
-                        // Specular glints on the cornea.
-                        let gx = ix - iris_r * 0.36;
-                        let gy = iy - iris_r * 0.34;
-                        let gd = ((dx - (gx - cx)).powi(2) + (dy - (gy - cy)).powi(2)).sqrt();
-                        if gd < iris_r * 0.20 {
-                            iris = GLINT;
-                        } else if gd < iris_r * 0.30 {
-                            iris = iris.lerp(GLINT, 0.30);
-                        }
-                        // A second, smaller catchlight.
-                        let gx2 = ix + iris_r * 0.26;
-                        let gy2 = iy + iris_r * 0.22;
-                        let gd2 = ((dx - (gx2 - cx)).powi(2) + (dy - (gy2 - cy)).powi(2)).sqrt();
-                        if gd2 < iris_r * 0.07 {
-                            iris = GLINT.scale(0.85);
+                        // Corneal glints, drawn exactly as the original eye
+                        // did — and never over the pupil or its hot rim, so
+                        // the black slit always stays black.
+                        if pu * pu + pv * pv > 1.55 {
+                            let gd =
+                                ((bdx - glint_off.0).powi(2) + (bdy - glint_off.1).powi(2)).sqrt();
+                            if gd < iris_r * 0.20 {
+                                iris = GLINT;
+                            } else if gd < iris_r * 0.30 {
+                                iris = iris.lerp(GLINT, 0.30);
+                            }
+                            // A second, smaller catchlight.
+                            let gd2 = ((bdx - glint2_off.0).powi(2) + (bdy - glint2_off.1).powi(2))
+                                .sqrt();
+                            if gd2 < iris_r * 0.07 {
+                                iris = GLINT.scale(0.85);
+                            }
                         }
                         col = iris;
                         ch = if unicode {
@@ -538,6 +690,16 @@ fn smoothstep(x: f32) -> f32 {
     x * x * (3.0 - 2.0 * x)
 }
 
+/// Keep a cornea highlight near the middle of the iris.
+fn on_cornea(p: (f32, f32)) -> (f32, f32) {
+    let r = p.0.hypot(p.1);
+    if r > 0.62 {
+        (p.0 / r * 0.62, p.1 / r * 0.62)
+    } else {
+        p
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -565,28 +727,239 @@ mod tests {
     }
 
     #[test]
-    fn gaze_stays_in_the_eye() {
+    fn glances_out_and_back_between_blinks() {
+        let mut s = DemonEyeScene::new(3);
+        s.resize(80, 24);
+        let mut pairs = 0;
+        for gap in [8.0, 11.0, 15.0] {
+            for _ in 0..64 {
+                s.plan_gaze(10.0, gap);
+                assert!(s.gaze_count == 2 || s.gaze_count == 4, "{}", s.gaze_count);
+                assert!(!s.gaze_centers[0], "a window opens with a glance");
+                assert!(
+                    s.gaze_centers[s.gaze_count - 1],
+                    "and closes back on the centre"
+                );
+                let mut prev = 10.0;
+                for i in 0..s.gaze_count {
+                    let at = s.gaze_times[i];
+                    assert!(at > prev, "gaze events stay ordered");
+                    prev = at;
+                }
+                assert!(prev <= 10.0 + gap - 0.099);
+                // Every glance turns back within a second.
+                let mut i = 0;
+                while i + 1 < s.gaze_count {
+                    assert!(!s.gaze_centers[i] && s.gaze_centers[i + 1]);
+                    let hold = s.gaze_times[i + 1] - s.gaze_times[i];
+                    assert!((0.45..=0.85).contains(&hold), "hold was {hold}");
+                    i += 2;
+                }
+                if s.gaze_count == 4 {
+                    // Two glances means at least five seconds between them.
+                    assert!(s.gaze_times[2] - s.gaze_times[0] >= 5.0);
+                    pairs += 1;
+                }
+            }
+        }
+        assert!(pairs > 0, "two-glance windows should happen");
+        // The tight gap of a double blink gets no glance of its own.
+        s.plan_gaze(10.0, 0.5);
+        assert_eq!(s.gaze_count, 0);
+    }
+
+    #[test]
+    fn blinks_are_eight_to_fifteen_seconds_apart() {
+        let mut s = DemonEyeScene::new(7);
+        s.resize(80, 24);
+        let frame = |t: f64| Frame {
+            t,
+            dt: 0.1,
+            w: 80,
+            h: 24,
+            fps: 30,
+            theme: &crate::theme::THEMES[0],
+            charset: Charset::Unicode,
+            seed: 7,
+            speed: 1.0,
+            tune: Default::default(),
+        };
+        let mut last = s.blink_start;
+        let mut gaps: Vec<f64> = Vec::new();
+        let mut t = 0.0f64;
+        while t < 420.0 {
+            s.update(&frame(t));
+            if s.blink_start != last {
+                if last > -1.0 {
+                    gaps.push(s.blink_start - last);
+                }
+                last = s.blink_start;
+            }
+            t += 0.1;
+        }
+        assert!(gaps.len() > 15, "only {} blinks", gaps.len());
+        let mut doubles = 0;
+        for gap in &gaps {
+            if *gap > 2.0 {
+                assert!((8.0..=15.0).contains(gap), "slow blink gap {gap}");
+            } else {
+                doubles += 1;
+                assert!((0.4..=1.0).contains(gap), "double blink gap {gap}");
+            }
+        }
+        assert!(doubles > 0, "some blinks should be doubled");
+        assert!(gaps.len() - doubles > 10);
+    }
+
+    #[test]
+    fn a_glance_snaps_out_and_returns_to_the_centre() {
         let mut s = DemonEyeScene::new(7);
         s.resize(80, 24);
         s.gaze = (0.0, 0.0);
-        s.target = (0.9, -0.9);
+        s.gaze_count = 2;
+        s.gaze_next = 0;
+        s.gaze_times[0] = 0.0;
+        s.gaze_centers[0] = false;
+        s.gaze_times[1] = 0.6;
+        s.gaze_centers[1] = true;
+        let frame = |t: f64| Frame {
+            t,
+            dt: 0.05,
+            w: 80,
+            h: 24,
+            fps: 30,
+            theme: &crate::theme::THEMES[0],
+            charset: Charset::Unicode,
+            seed: 7,
+            speed: 1.0,
+            tune: Default::default(),
+        };
+        s.update(&frame(0.0));
+        // A glance is a snap, not a drift, and it goes somewhere.
+        assert!(s.saccade_len <= 0.15);
+        let away = s.target;
+        assert!(away.0.hypot(away.1) >= 0.32);
         let mut t = 0.0f64;
-        for _ in 0..40 {
-            let frame = Frame {
-                t,
-                dt: 0.05,
-                w: 80,
-                h: 24,
-                fps: 30,
-                theme: &crate::theme::THEMES[0],
-                charset: Charset::Unicode,
-                seed: 7,
-                speed: 1.0,
-                tune: Default::default(),
-            };
-            s.update(&frame);
+        while t < 0.4 {
             t += 0.05;
+            s.update(&frame(t));
+            assert!(s.gaze.0.abs() <= 0.95 && s.gaze.1.abs() <= 0.95);
         }
-        assert!(s.gaze.0.abs() <= 0.95 && s.gaze.1.abs() <= 0.95);
+        assert!((s.gaze.0 - away.0).abs() < 1e-4);
+        assert!((s.gaze.1 - away.1).abs() < 1e-4);
+        while t < 0.75 {
+            t += 0.05;
+            s.update(&frame(t));
+        }
+        assert_eq!(s.gaze, (0.0, 0.0), "the eyeball is back home");
+    }
+
+    #[test]
+    fn eye_still_keeps_the_eyeball_centred() {
+        let mut s = DemonEyeScene::new(7);
+        s.resize(80, 24);
+        let tune = crate::scene::Tune {
+            eye_still: true,
+            ..Default::default()
+        };
+        let frame = |t: f64| Frame {
+            t,
+            dt: 0.1,
+            w: 80,
+            h: 24,
+            fps: 30,
+            theme: &crate::theme::THEMES[0],
+            charset: Charset::Unicode,
+            seed: 7,
+            speed: 1.0,
+            tune,
+        };
+        for k in 0..240 {
+            s.update(&frame(k as f64 * 0.1));
+            assert_eq!(s.gaze, (0.0, 0.0));
+            assert_eq!(s.gaze_count, 0);
+        }
+    }
+
+    #[test]
+    fn cornea_glints_keep_darting_around_the_iris() {
+        let mut s = DemonEyeScene::new(7);
+        s.resize(80, 24);
+        let tune = crate::scene::Tune {
+            eye_still: true,
+            ..Default::default()
+        };
+        let frame = |t: f64| Frame {
+            t,
+            dt: 0.1,
+            w: 80,
+            h: 24,
+            fps: 30,
+            theme: &crate::theme::THEMES[0],
+            charset: Charset::Unicode,
+            seed: 7,
+            speed: 1.0,
+            tune,
+        };
+        let base = s.glint;
+        let mut travel = 0.0f32;
+        let mut moved = 0;
+        for k in 1..=200 {
+            s.update(&frame(k as f64 * 0.1));
+            let (main, small) = s.glint_offsets();
+            for p in [main, small] {
+                assert!(p.0.hypot(p.1) <= 0.6301, "glint left the iris: {p:?}");
+            }
+            let d = (main.0 - base.0).hypot(main.1 - base.1);
+            travel = travel.max(d);
+            if d > 0.02 {
+                moved += 1;
+            }
+        }
+        // The white light keeps sweeping the iris even with a still eyeball.
+        assert!(travel > 0.35, "glint only travelled {travel}");
+        assert!(moved > 100, "glint moved in only {moved} frames");
+    }
+
+    #[test]
+    fn cornea_glints_never_cover_the_pupil() {
+        let mut s = DemonEyeScene::new(7);
+        s.resize(80, 24);
+        let tune = crate::scene::Tune {
+            eye_still: true,
+            ..Default::default()
+        };
+        let frame = Frame {
+            t: 1.0,
+            dt: 0.05,
+            w: 80,
+            h: 24,
+            fps: 30,
+            theme: &crate::theme::THEMES[0],
+            charset: Charset::Unicode,
+            seed: 7,
+            speed: 1.0,
+            tune,
+        };
+        // Park the white light dead centre, right on top of the slit pupil.
+        s.glint = (0.0, 0.0);
+        s.glint_from = (0.0, 0.0);
+        s.glint_target = (0.0, 0.0);
+        s.next_glint = f64::INFINITY;
+        let mut canvas = Canvas::new(80, 24);
+        s.draw(&mut canvas, &frame);
+        let centre = canvas.get(40, 12).expect("in bounds");
+        assert_eq!(centre.ch, '█');
+        assert_eq!(centre.fg, PUPIL, "the pupil must stay black");
+        // The light itself is still drawn on the iris just beside it.
+        s.glint = (-0.32, -0.34);
+        s.glint_from = (-0.32, -0.34);
+        s.glint_target = (-0.32, -0.34);
+        let mut canvas = Canvas::new(80, 24);
+        s.draw(&mut canvas, &frame);
+        assert!(
+            (0..24).any(|y| (0..80).any(|x| canvas.get(x, y).is_some_and(|c| c.fg == GLINT))),
+            "the corneal highlight disappeared"
+        );
     }
 }

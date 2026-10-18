@@ -12,6 +12,17 @@ use crate::rng::Rng;
 use crate::scene::{Frame, Scene};
 use crate::theme::Theme;
 
+/// Visual tilt of the orbital plane: the ellipse's major axis runs "/".
+const ORBIT_TILT: f32 = 0.5;
+/// Flattening of the projected disk (minor / major axis).
+const ORBIT_MINOR: f32 = 0.52;
+/// Push the ring just past the screen edges so it fills the whole frame.
+const RING_REACH: f32 = 1.1;
+/// Global speed-up for everything orbiting the hole.
+const SPIN_BOOST: f32 = 1.7;
+/// Terminal cells are roughly twice as tall as they are wide.
+const CELL_ASPECT: f32 = 0.5;
+
 struct Disk {
     r: f32,
     a: f32,
@@ -58,6 +69,9 @@ pub struct BlackHoleScene {
     cx: f32,
     cy: f32,
     radius: f32,
+    /// Outermost visible orbit (in cells); sized so the tilted ring reaches
+    /// the top and bottom screen edges.
+    outer: f32,
     consumed: u32,
     flash: f32,
 }
@@ -77,6 +91,7 @@ impl BlackHoleScene {
             cx: 0.0,
             cy: 0.0,
             radius: 4.0,
+            outer: 8.0,
             consumed: 0,
             flash: 0.0,
         }
@@ -88,26 +103,39 @@ impl BlackHoleScene {
         self.cx = self.w as f32 * 0.5;
         self.cy = self.h as f32 * 0.52;
         self.radius = (self.h as f32 * 0.22).clamp(3.0, 8.5);
+        let (st, ct) = ORBIT_TILT.sin_cos();
+        let vertical = CELL_ASPECT * (st * st + ORBIT_MINOR * ORBIT_MINOR * ct * ct).sqrt();
+        // Push the far edge of the tilted ring just past the top/bottom edges.
+        self.outer = (self.cy * RING_REACH / vertical.max(0.05))
+            .clamp(self.radius * 3.5, self.radius * 12.0);
         self.disk.clear();
         self.dust.clear();
         self.stars.clear();
         self.infall.clear();
         self.meteors.clear();
         self.next_meteor = 1.0;
-        let n = (self.w * self.h / 15).clamp(120, 380);
+        let n = (self.w * self.h * 4 / 30).clamp(230, 690);
         for _ in 0..n {
-            let r = self.radius * self.rng.range(1.15, 4.6);
-            let d = self.make_disk(r);
+            let r = self.sample_radius(2.3);
+            let d = self.make_disk(r, false);
             self.disk.push(d);
         }
-        let dust_n = (self.w * self.h / 28).clamp(60, 220);
-        for _ in 0..dust_n {
-            // Outer dust/star orbits are 1/3 wider than the old ring.
-            let r = self.radius * self.rng.range(1.1, 6.0) * 1.333;
-            let d = self.make_disk(r);
+        let dust_n = (self.w * self.h / 13).clamp(150, 500);
+        for i in 0..dust_n {
+            let r = match i % 20 {
+                // Faint boundary of the disk.
+                0 | 1 => self.outer * self.rng.range(0.92, 1.0),
+                // A light sprinkle in the band just inside the boundary.
+                2..=5 => self.outer * self.rng.range(0.70, 0.94),
+                // Fill the gap between the dense core and the outer band.
+                6..=9 => self.outer * self.rng.range(0.40, 0.72),
+                // Inner dust keeps the usual density bias.
+                _ => self.sample_radius(1.25),
+            };
+            let d = self.make_disk(r, true);
             self.dust.push(d);
         }
-        let star_n = (self.w * self.h / 26).clamp(80, 340);
+        let star_n = (self.w * self.h / 36).clamp(60, 260);
         for _ in 0..star_n {
             self.stars.push(Star {
                 x: self.rng.range(0.0, self.w as f32),
@@ -116,25 +144,56 @@ impl BlackHoleScene {
                 phase: self.rng.range(0.0, TAU),
             });
         }
-        for _ in 0..9 {
+        for _ in 0..12 {
             let p = self.make_infall();
             self.infall.push(p);
         }
     }
 
-    fn make_disk(&mut self, r: f32) -> Disk {
+    /// Map polar coordinates on the tilted orbital plane to terminal cells.
+    ///
+    /// The disk is an ellipse in aspect-corrected (visual) space and its major
+    /// axis is rotated so that it reads as "/" on screen.
+    #[inline]
+    fn orbit(&self, r: f32, a: f32) -> (f32, f32) {
+        let (sa, ca) = a.sin_cos();
+        let u = ca * r;
+        let v = sa * r * ORBIT_MINOR;
+        let (st, ct) = ORBIT_TILT.sin_cos();
+        let x = u * ct + v * st;
+        let y = -u * st + v * ct;
+        (self.cx + x, self.cy + y * CELL_ASPECT)
+    }
+
+    #[inline]
+    fn inner_orbit(&self) -> f32 {
+        self.radius * 1.22
+    }
+
+    /// Radius sample biased towards the hole: `bias > 1` crowds the inner
+    /// orbits, leaving the outskirts sparse.
+    fn sample_radius(&mut self, bias: f32) -> f32 {
+        let inner = self.inner_orbit();
+        let span = (self.outer - inner).max(1.0);
+        inner + span * self.rng.range(0.0, 1.0).powf(bias)
+    }
+
+    fn make_disk(&mut self, r: f32, dust: bool) -> Disk {
+        // The shear itself is applied in `update` from the current radius, so
+        // stars spin up as they fall in; this is just a per-star jitter.
         Disk {
             r,
             a: self.rng.range(0.0, TAU),
-            speed: self.rng.range(0.5, 2.0),
-            size: self.rng.below(4) as u8,
+            speed: self.rng.range(0.55, 1.35),
+            size: self.rng.below(if dust { 12 } else { 4 }) as u8,
             hue: self.rng.below(6) as u8,
         }
     }
 
     fn make_infall(&mut self) -> Infall {
+        let far = (self.outer / self.radius).max(4.5);
         Infall {
-            r: self.radius * self.rng.range(4.0, 7.0),
+            r: self.radius * self.rng.range(4.0, far),
             a: self.rng.range(0.0, TAU),
             speed: self.rng.range(0.4, 1.2),
             life: self.rng.range(2.5, 5.0),
@@ -202,14 +261,13 @@ impl BlackHoleScene {
             // `t * ...` term bypassed `spin` for the disk (and, earlier, dust).
             let a = p.a;
             let r = p.r;
-            let x = self.cx + a.cos() * r;
-            let y = self.cy + a.sin() * r * 0.53;
+            let (x, y) = self.orbit(r, a);
             let col = self.disk_color(r, p.hue);
             let ch = if dust {
-                if p.size == 0 {
-                    '.'
-                } else {
-                    ':'
+                match p.size {
+                    0..=8 => '.',
+                    9 | 10 => ':',
+                    _ => '+',
                 }
             } else {
                 match p.size {
@@ -219,7 +277,8 @@ impl BlackHoleScene {
                     _ => '#',
                 }
             };
-            let bright = if dust { 0.28 } else { 0.72 };
+            let radial = ((r - self.radius) / (self.outer - self.radius).max(1.0)).clamp(0.0, 1.0);
+            let bright = if dust { 0.28 } else { 0.72 } * (1.0 - 0.45 * radial);
             canvas.set(
                 x as isize,
                 y as isize,
@@ -254,7 +313,7 @@ impl BlackHoleScene {
         }
         // four bright polar flares
         for k in 0..4 {
-            let a = k as f32 / 4.0 * TAU + t * 0.05 * spin * 0.18;
+            let a = k as f32 / 4.0 * TAU + t * 0.05 * spin * 0.18 * SPIN_BOOST;
             let sx = (cx + a.cos() * r).round() as isize;
             let sy = (cy + a.sin() * r * 0.5).round() as isize;
             for d in 1..=4 {
@@ -285,12 +344,14 @@ impl BlackHoleScene {
         }
         // accretion bands: three tilted rings of hot matter
         for band in 0..3 {
-            let rr = r * (1.45 + band as f32 * 0.55);
+            let rr = r * (2.18 + band as f32 * 0.82);
             let n = 90 + band * 20;
             for k in 0..n {
-                let a = k as f32 / n as f32 * TAU + t * (0.35 - band as f32 * 0.07) * spin * 0.18;
-                let x = (cx + a.cos() * rr).round() as isize;
-                let y = (cy + a.sin() * rr * 0.42).round() as isize;
+                let a = k as f32 / n as f32 * TAU
+                    + t * (0.35 - band as f32 * 0.07) * spin * 0.7 * SPIN_BOOST;
+                let (px, py) = self.orbit(rr, a);
+                let x = px.round() as isize;
+                let y = py.round() as isize;
                 if (k + band) % 3 == 0 {
                     continue;
                 }
@@ -306,6 +367,31 @@ impl BlackHoleScene {
                     col.scale(0.35 + 0.25 * (k as f32 * 0.4 + t).sin().abs()),
                 );
             }
+        }
+        // Low-density dots mark the outer edge.  No line glyphs here: they
+        // would read as a second, artificial ring around the disk.
+        let n = ((self.outer * 4.0) as usize).clamp(140, 360);
+        for k in 0..n {
+            if k % 2 == 0 {
+                continue;
+            }
+            let a = k as f32 / n as f32 * TAU + t * 0.12 * spin * SPIN_BOOST;
+            let rr = self.outer * (0.94 + 0.05 * ((k as f32 * 0.7).sin()));
+            let (px, py) = self.orbit(rr, a);
+            let twinkle = 0.20 + 0.13 * (t * 1.1 + k as f32 * 0.9).sin().abs();
+            let glyph = if k % 11 == 0 {
+                '+'
+            } else if k % 3 == 0 {
+                ':'
+            } else {
+                '.'
+            };
+            canvas.set(
+                px.round() as isize,
+                py.round() as isize,
+                glyph,
+                Rgb::hex(0xbfd7ff).scale(twinkle),
+            );
         }
         // gravitational arcs above and below
         for sign in [-1.0f32, 1.0] {
@@ -378,7 +464,10 @@ impl Scene for BlackHoleScene {
         let mut respawn_disk = Vec::new();
         for (i, p) in self.disk.iter_mut().enumerate() {
             p.r -= dt * (0.25 + 0.9 * self.radius / p.r.max(0.3));
-            p.a += dt * p.speed * 0.75 * spin;
+            // Mild Keplerian shear: the whole disk turns together while the
+            // inner radii stay noticeably quicker than the outskirts.
+            let shear = (self.radius / p.r.max(self.radius)).powf(0.8);
+            p.a += dt * p.speed * 1.75 * SPIN_BOOST * shear * 0.75 * spin;
             if p.r <= self.radius * 0.95 {
                 self.consumed += 1;
                 self.flash = 1.0;
@@ -386,20 +475,24 @@ impl Scene for BlackHoleScene {
             }
         }
         for i in respawn_disk {
-            let nr = self.radius * self.rng.range(2.5, 5.0);
-            let p = self.make_disk(nr);
+            let nr = self.sample_radius(2.0);
+            let p = self.make_disk(nr, false);
             self.disk[i] = p;
         }
         for p in self.dust.iter_mut() {
-            // Final slow-down after fixing the render-side extra rotation.
-            p.a += dt * p.speed * 0.0875 * spin;
+            // Outer dust turns with the same direction and a gentler gradient,
+            // so the nebula reads as one rotating ellipse instead of a still
+            // halo around a fast inner swirl.
+            let shear = (self.radius / p.r.max(self.radius)).powf(0.55);
+            p.a += dt * p.speed * 0.6 * SPIN_BOOST * shear * 0.62 * spin;
         }
         let mut respawn_infall = Vec::new();
         for (i, p) in self.infall.iter_mut().enumerate() {
             p.life -= dt;
             p.r -= dt * (1.0 + 2.0 * self.radius / p.r.max(0.3));
-            // Bright infalling stars also get one final half-speed pass.
-            p.a += dt * p.speed * spin * 0.25;
+            // Falling stars whip around faster as they approach the horizon.
+            let shear = (self.radius * 2.0 / p.r.max(self.radius)).powf(1.5);
+            p.a += dt * p.speed * spin * 0.25 * SPIN_BOOST * shear;
             if p.r <= self.radius || p.life <= 0.0 {
                 self.consumed += 1;
                 self.flash = 1.0;
@@ -424,7 +517,7 @@ impl Scene for BlackHoleScene {
                 s.x as isize,
                 s.y as isize,
                 if s.base > 0.7 { '+' } else { '.' },
-                Rgb::hex(0xbfd7ff).scale(s.base * tw * 0.55),
+                Rgb::hex(0xbfd7ff).scale(s.base * tw * 0.4),
             );
         }
         self.draw_jets(canvas, t);
@@ -452,12 +545,10 @@ impl Scene for BlackHoleScene {
 
         // Infalling stars, with a bright trail pointing at the horizon.
         for p in &self.infall {
-            let x = self.cx + p.a.cos() * p.r;
-            let y = self.cy + p.a.sin() * p.r * 0.7;
+            let (x, y) = self.orbit(p.r, p.a);
             for i in 0..5 {
                 let rr = p.r + i as f32 * 0.45;
-                let xx = self.cx + p.a.cos() * rr;
-                let yy = self.cy + p.a.sin() * rr * 0.7;
+                let (xx, yy) = self.orbit(rr, p.a);
                 canvas.set(
                     xx as isize,
                     yy as isize,
@@ -527,5 +618,32 @@ mod tests {
         assert!(s.disk.len() > 100);
         assert!(s.stars.len() > 50);
         assert!(s.radius > 2.0);
+    }
+
+    #[test]
+    fn orbit_is_tilted_slash_and_reaches_edges() {
+        let mut s = BlackHoleScene::new(8);
+        s.resize(120, 36);
+        // The near end of the major axis sits to the right of and above centre.
+        let (x, y) = s.orbit(s.outer, 0.0);
+        assert!(x > s.cx);
+        assert!(y < s.cy);
+        // The far edge is sized so the ring just touches the top/bottom edges.
+        let (st, ct) = ORBIT_TILT.sin_cos();
+        let vertical = CELL_ASPECT * (st * st + ORBIT_MINOR * ORBIT_MINOR * ct * ct).sqrt();
+        assert!((s.cy - s.outer * vertical).abs() < s.cy * 0.2);
+    }
+
+    #[test]
+    fn star_density_favours_the_inner_orbits() {
+        let mut s = BlackHoleScene::new(8);
+        s.resize(120, 36);
+        let inner = s.inner_orbit();
+        let midpoint = inner + (s.outer - inner) * 0.5;
+        let inside = s.disk.iter().filter(|p| p.r < midpoint).count();
+        assert!(
+            inside * 2 > s.disk.len(),
+            "expected more than half the disk inside the midpoint"
+        );
     }
 }

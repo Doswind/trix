@@ -2,14 +2,14 @@
 
 > 前身：texiao（原项目名）；从 v0.5.0 起正式更名为 **trix**。
 
-> 终端里的科幻 ASCII / Unicode 特效引擎 — 代码雨、火焰、巨龙、世界地图、NASA 登录、黑洞、光束、烟花、太阳系、银河、佛光、Tom & Jerry、超级马里奥、心率跳动、蒲公英、鱼缸、山水、东方明珠、天安门、车水马龙、仙女散花、龙卷风、电闪雷鸣、蒙娜丽莎、舞动芭蕾、恶魔之眼。
-> Rust 单线程、无异步运行时、diff 渲染，启动约 **2 ms**，常驻内存约 **2.1–2.3 MB**，30 FPS 下 CPU 约 **0.2–1.4%** 单核。当前 **v0.8.0**，共 **26** 个特效，双字形特效默认 ASCII。
+> 终端里的科幻 ASCII / Unicode 特效引擎 — 代码雨、火焰、巨龙、世界地图、NASA 登录、黑洞、光束、烟花、太阳系、银河、佛光、Tom & Jerry、超级马里奥、心率跳动、蒲公英、鱼缸、山水、东方明珠、天安门、车水马龙、仙女散花、龙卷风、电闪雷鸣、蒙娜丽莎、舞动芭蕾、恶魔之眼、生命的轨迹。
+> Rust 单线程、无异步运行时、diff 渲染，启动约 **2 ms**，常驻内存约 **2.1–2.3 MB**，30 FPS 下 CPU 约 **0.2–1.4%** 单核。当前 **v0.8.0**；开发版新增「生命的轨迹」，共 **27** 个特效，双字形特效默认 ASCII。
 
 ![release](https://github.com/Doswind/trix/actions/workflows/release.yml/badge.svg)
 
 ![trix overview](docs/overview.png)
 
-> 动图：[代码雨](docs/rain.gif) · [火焰](docs/fire.gif) · [巨龙](docs/dragon.gif) · [NASA 登录](docs/matrix.gif) · [黑洞](docs/blackhole.gif) · [光束](docs/beams.gif) · [烟花](docs/fireworks.gif) · [太阳系](docs/solar.gif) · [银河](docs/galaxy.gif) · [佛光](docs/buddha.gif) · [Tom & Jerry](docs/tomjerry.gif) · [马里奥](docs/mario.gif) · [心电](docs/ecg.gif) · [蒲公英](docs/dandelion.gif) · [鱼缸](docs/fish.gif) · [山水](docs/landscape.gif) · [东方明珠](docs/shanghai.gif) · [天安门](docs/tiananmen.gif) · [车水马龙](docs/traffic.gif) · [仙女](docs/fairy.gif) · [龙卷风](docs/tornado.gif) · [电闪雷鸣](docs/storm.gif) · [蒙娜丽莎](docs/monalisa.gif) · [舞动芭蕾](docs/ballet.gif) · [恶魔之眼](docs/demoneye.gif)
+> 动图：[代码雨](docs/rain.gif) · [火焰](docs/fire.gif) · [巨龙](docs/dragon.gif) · [NASA 登录](docs/matrix.gif) · [黑洞](docs/blackhole.gif) · [光束](docs/beams.gif) · [烟花](docs/fireworks.gif) · [太阳系](docs/solar.gif) · [银河](docs/galaxy.gif) · [佛光](docs/buddha.gif) · [Tom & Jerry](docs/tomjerry.gif) · [马里奥](docs/mario.gif) · [心电](docs/ecg.gif) · [蒲公英](docs/dandelion.gif) · [鱼缸](docs/fish.gif) · [山水](docs/landscape.gif) · [东方明珠](docs/shanghai.gif) · [天安门](docs/tiananmen.gif) · [车水马龙](docs/traffic.gif) · [仙女](docs/fairy.gif) · [龙卷风](docs/tornado.gif) · [电闪雷鸣](docs/storm.gif) · [蒙娜丽莎](docs/monalisa.gif) · [舞动芭蕾](docs/ballet.gif) · [恶魔之眼](docs/demoneye.gif) · [生命的轨迹](docs/life.gif)
 
 ## 特效
 
@@ -45,9 +45,9 @@
 | --- | --- | --- |
 | ![tornado](docs/tornado.png) | ![storm](docs/storm.png) | ![monalisa](docs/monalisa.png) |
 
-| 舞动芭蕾 `ballet` | 恶魔之眼 `demoneye` | |
+| 舞动芭蕾 `ballet` | 恶魔之眼 `demoneye` | 生命的轨迹 `life` |
 | --- | --- | --- |
-| ![ballet](docs/ballet.png) | ![demoneye](docs/demoneye.png) | |
+| ![ballet](docs/ballet.png) | ![demoneye](docs/demoneye.png) | ![life](docs/life.png) |
 
 | 特效 | 说明 |
 | --- | --- |
@@ -56,7 +56,7 @@
 | `dragon` 巨龙盘旋 | 整屏 Lissajous 飞行的中国龙：弧长跟随龙身、鹿角、龙须、鬃毛、獠牙、四爪、背鳍、尾鳍、龙鳞 |
 | `map` 世界地图 | 内嵌 Natural Earth 陆地掩膜、城市节点、大圆弧数据包、扫描波束、UTC 时钟 |
 | `matrix` 黑客帝国 | **NASA 后台登录大屏**：**默认 ASCII**，`--unicode` 切换蓝色 NASA 横幅 + 白色大字 + 红色 swoosh、Unicode 登录框；OPERATOR/PASSWORD/2FA、AUTH/DECRYPT、雷达、ACCESS GRANTED |
-| `blackhole` 黑洞 | 事件视界、光子环、吸积盘、透镜弧、喷流、流星；**所有环绕物统一减速**（盘面/星尘/坠星/吸积带/透镜环），不再绕过 `spin` |
+| `blackhole` 黑洞 | 事件视界、光子环、吸积盘、透镜弧、喷流、流星；**外围星星呈 "/" 倾斜的饱满椭圆环绕**，整体铺满屏幕、外缘压住上下边；最外圈为 `.` / `:` / `+` 低密度散点，中段补密；整体同向差速旋转（内快外慢），看起来是一个完整转动的椭圆盘 |
 | `beams` 光束 | **单向**横向光束，随机亮色；`--beam-motion straight\|jump`（默认直线），`--density`/`--beam-speed` |
 
 光束两种运动模式：
@@ -67,7 +67,7 @@
 | `fireworks` 烟花 | 火箭升空，内外双层粒子环绽放，延迟爆裂；`--density` 调烟花密度；城市天际线/星空 |
 | `solar` 太阳系 | **八大行星**（无冥王星）；太阳在左上角，光线向右下扇形分层扩散，并截止在行星线上方；圆形行星、土星环、卫星、彗星 |
 | `galaxy` 满天星河 | 满屏星海、中央稠密银河带；动态星团/暗尘/星座线；`--density`、`--twinkle`、`--meteors` 可调 |
-| `buddha` 佛光普照 | 回退上一版；原有**三层曼陀罗粒子环**改为动态：三层同时可见，按相位从内向外扩散；头光/莲花/粒子保留 |
+| `buddha` 佛光普照 | 外扩曼陀罗环**等距扩散**：所有环共用扩散相位、径向间距恒定；**首层从整尊佛像（佛身、头顶光环、莲座）之外起扩**，不压佛像也不与头光重叠；最多 5 层；环亮度压在佛像金色之下（内层 0.6），并由内向外逐层变暗；头光/莲座/粒子保留 |
 | `tomjerry` 猫和老鼠 | Tom 追逐 Jerry 的太空站动画；默认放慢且不跳跃，`--speed` / `+` `-` 调速，`--jump` 开启跳跃 |
 | `mario` 超级马里奥 | 自动闯关：顶问号砖块、弹出蘑菇、吃金币；**默认 ASCII 经典字符**，`--unicode` 切换实心精灵版 |
 | `ecg` 心率跳动 | 绿色心电监护仪；**约 56 BPM，随机心搏间隔**，上下幅度、QRS 宽度、平直段长度明显随机；**默认 ASCII**，`--unicode` 切换 |
@@ -78,17 +78,18 @@
 | `tiananmen` 光芒万丈 | 正中天安门城楼、红墙金瓦、五门洞、红旗与向上发散的金色光芒 |
 | `traffic` 车水马龙 | 城市街道两侧高楼、霓虹、车流；`--street horizontal\|vertical`；**默认 ASCII**，`--unicode` 可切换 |
 | `fairy` 仙女散花 | 空中飞天侍女、花篮、飘带、满屏花瓣；`--petal-count` / `--petal-speed` |
-| `tornado` 龙卷风 | 1–8 股龙卷风从左向右；更扭曲、顶部再宽 1.5–2 倍、底部收尖；**每团密度/亮度再 ×2**；碎片更多更高 |
-| `storm` 电闪雷鸣 | 乌云、斜雨、城市剪影、闪电；落雷时全屏白色亮闪（[效果图](docs/storm-flash.png)） |
+| `tornado` 龙卷风 | 1–8 股龙卷风从左向右；扭曲、底部收尖、顶部更宽；整体比原来**更矮一档**（0.28～0.58 屏高）且**更淡更疏**（亮度 0.42～0.85、每行 20 颗）；底部有 30 颗碎屑**向外飘散** |
+| `storm` 电闪雷鸣 | 乌云、斜雨、城市剪影、闪电；屏幕上方叠一层**灰白、不规则的高云**（较密、底部淡出、**缓慢向右飘移**（约 3 列/秒））与原有云带形成层次；落雷时全屏白色亮闪（[效果图](docs/storm-flash.png)） |
 | `monalisa` 蒙娜丽莎 | 整屏动态油画：sfumato 山水、金框、深色衣裙与交叠双手；呼吸、眼神游移/眨眼、若隐若现的微笑、油彩微光与浮尘 |
 | `ballet` 舞动芭蕾 | 男女双人舞者始终保持牵手；Lissajous 路径飞越整屏，足尖、tutu、tunic、飘带、聚光灯与浮尘；`--speed` 调速 |
-| `demoneye` 恶魔之眼 | 整屏一只巨大血眼：随机扫视/凝视观众、竖瞳缩放、随机眨眼与双击眨眼、眼睑压暗、血丝与眨眼冲击波 |
+| `demoneye` 恶魔之眼 | 整屏一只巨大血眼：眨眼每 8～15 秒一次、单眨或双眨（约 7:3），每两次眨眼之间只甩出 1～2 次（两次跳动相隔 ≥5 秒），约 0.1 秒到位、0.45～0.85 秒内必回正中直视观众；竖瞳缩放、眼睑压暗、血丝与眨眼冲击波；`--eye-motion dart\|still`（默认 dart），`--eye-still` 让眼球钉在正中 |
+| `life` 生命的轨迹 | 0～100 岁时间轴与左右生命线；人类统一 `@` 符号 + 同排彩色大写简写；近期为长光束、早期为不消失的可见暗点；`GPA/GMA` 从 -3/-4/-5 随机取相邻两行，结束后行位可复用；`DOG` 终身在 -1 紧挨我；`PAL/UNI` 在 +1 另一侧，`WORK/FRIEND` 婚前同样 +1；有未成年 KID 时 `WORK/FRIEND` 退到 -5，孩子成年后回到 -1；`ME 0 / WIFE +1`；`KID1 +2`、`KID2 -2`、`KID3 -4`，`GRAND1 +3`、`GRAND2 -3` 紧贴父辈；`CAT +4` 与第一个孩子同时出现；`DAD/MOM +3/+4` 在孩子出现后让位到 +5/+6，`BRO +5→+7`；死亡点保留 `@` + 名称并以每秒 2 次显现/消失；所有死亡角色升到顶部按死亡顺序隔行排列，终点标签在流星抵达后 0.5 秒淡入；人类 `*`、猫狗 `+` 闪烁；GF 靠近后 1～2 年变 WIFE；WIFE 75～90 岁、晚于我化星；AGE 无前导零；`--life-cycle` 控制一轮秒数 |
 
 > 截图均为 120×36、truecolor、离屏渲染；部分截图/动图展示 Unicode 字形，实际运行默认 ASCII（加 `--unicode` 切换）。
 
 ### ASCII / Unicode 双版本
 
-**所有同时支持两种字形的特效默认以 ASCII 启动**：`matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`tiananmen`、`fairy`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`shanghai`、`traffic`。需要 Unicode 时显式加 `--unicode`（或 `--charset unicode`）；`--ascii` 可再次强制 ASCII。
+**所有同时支持两种字形的特效默认以 ASCII 启动**：`matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`tiananmen`、`fairy`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`life`、`shanghai`、`traffic`。需要 Unicode 时显式加 `--unicode`（或 `--charset unicode`）；`--ascii` 可再次强制 ASCII。
 
 `mario` / `ecg` 两种字形：
 
@@ -121,7 +122,7 @@ trix ecg --unicode      # Unicode 心电监护
 
 ## 特性
 
-- **26 个可切换特效**：支持命令行参数、运行时热切换与主题。
+- **27 个可切换特效**：支持命令行参数、运行时热切换与主题。
 - **ASCII 优先**：同时支持 ASCII / Unicode 的特效默认以 ASCII 启动；需要 Unicode 时显式加 `--unicode`。
 - **低资源**：单线程、无 async、无事件循环框架；默认 30 FPS；仅依赖 `libc`。
 - **快速启动**：`--version` 中位数约 **2.0 ms**；发布版二进制约 **733 KB**。
@@ -178,6 +179,9 @@ trix storm                         # 电闪雷鸣
 trix monalisa                      # 蒙娜丽莎动态油画
 trix ballet --speed 1.3            # 舞动芭蕾（双人牵手满屏舞动）
 trix demoneye                      # 恶魔之眼（随机注视 / 眨眼）
+trix demoneye --eye-still          # 眼球钉在正中，只保留眨眼与瞳孔动态
+trix life                          # 生命的轨迹（默认 120 秒一轮）
+trix life --life-cycle 60          # 更快，1 分钟走完 0～100 岁
 trix tomjerry --jump               # 开启跳跃
 trix --list                        # 列出特效和主题
 
@@ -203,7 +207,7 @@ trix demoneye                                # 恶魔之眼
 
 ## 直接运行：自动循环播放
 
-不带特效名直接运行 `trix`，会在**当前终端循环播放全部 26 个特效**：
+不带特效名直接运行 `trix`，会在**当前终端循环播放全部 27 个特效**：
 
 ```bash
 trix                                   # 默认 cycle，每 12 秒切换
@@ -236,6 +240,9 @@ trix <effect> [options]
       --beam-speed <f>    beams horizontal speed             [默认: 1.0]
       --beam-motion <m>   straight | jump                    [默认: straight]
       --beam-jump         --beam-motion jump 的别名
+      --life-cycle <secs> life: 0～100 岁一轮时长              [默认: 120]
+      --eye-motion <m>    demoneye: dart | still              [默认: dart]
+      --eye-still         --eye-motion still 的别名
       --seed-count <n>    dandelion seed count                [默认: 90]
       --seed-speed <f>    dandelion seed drift speed          [默认: 1.0]
       --street <dir>      horizontal | vertical               [默认: horizontal]
@@ -270,13 +277,14 @@ trix <effect> [options]
 | `f` / `l` / `b` / `j` | 鱼缸 / 山水 / 东方明珠 / 天安门 |
 | `c` / `x` / `z` / `k` | 车水马龙 / 仙女散花 / 龙卷风 / 电闪雷鸣 |
 | `o` / `v` / `g` | 蒙娜丽莎 / 舞动芭蕾 / 恶魔之眼 |
+| `y` | 生命的轨迹 |
 | `t` | 循环主题 |
 | `+` / `-` | 加速 / 减速（0.1×–8×），Tom & Jerry 同样生效 |
 | `r` | 用新种子重开当前特效 |
 | `i` | 显示 / 隐藏状态行（FPS、耗时、主题、尺寸、种子） |
 | `h` / `?` | 帮助面板 |
 
-数字键顺序：`1 rain`、`2 fire`、`3 dragon`、`4 map`、`5 matrix`、`6 blackhole`、`7 beams`、`8 fireworks`、`9 solar`、`0 galaxy`、`[ buddha`、`] tomjerry`；字母键：`m mario`、`e ecg`、`d dandelion`、`f fish`、`l landscape`、`b shanghai`、`j tiananmen`、`c traffic`、`x fairy`、`z tornado`、`k storm`、`o monalisa`、`v ballet`、`g demoneye`。
+数字键顺序：`1 rain`、`2 fire`、`3 dragon`、`4 map`、`5 matrix`、`6 blackhole`、`7 beams`、`8 fireworks`、`9 solar`、`0 galaxy`、`[ buddha`、`] tomjerry`；字母键：`m mario`、`e ecg`、`d dandelion`、`f fish`、`l landscape`、`b shanghai`、`j tiananmen`、`c traffic`、`x fairy`、`z tornado`、`k storm`、`o monalisa`、`v ballet`、`g demoneye`、`y life`。
 
 ## 主题
 
@@ -328,7 +336,7 @@ git push origin v0.8.0
 | dragon | 0.124 ms | 0.157 ms | 15.0 KiB/帧 |
 | map | 0.161 ms | 0.189 ms | 43.6 KiB/帧 |
 | matrix | 0.071 ms | 0.087 ms | 12.0 KiB/帧 |
-| blackhole | 0.100 ms | 0.118 ms | 21.0 KiB/帧 |
+| blackhole | 0.133 ms | 0.172 ms | 28.0 KiB/帧 |
 | beams | 0.085 ms | 0.113 ms | 24.9 KiB/帧 |
 | fireworks | 0.040 ms | 0.064 ms | 8.6 KiB/帧 |
 | solar | 0.039 ms | 0.045 ms | 7.6 KiB/帧 |
@@ -349,6 +357,7 @@ git push origin v0.8.0
 | monalisa | 0.380 ms | 0.489 ms | 15.3 KiB/帧 |
 | ballet | 0.120 ms | 0.151 ms | 14.5 KiB/帧 |
 | demoneye | 0.273 ms | 0.398 ms | 15.4 KiB/帧 |
+| life | 0.158 ms | 0.209 ms | 5.6 KiB/帧 |
 
 真实 PTY、truecolor、120×36、30 FPS、运行 5 秒（CPU = 子进程 `utime+stime / 5s`，含 PTY 写入，不含终端模拟器自身绘制）：
 
@@ -399,7 +408,7 @@ scripts/bench.sh
 - **巨龙**：飞行轨迹按弧长重采样，长蛇身 splat 到强度/深度缓冲；大型中国龙头、鹿角、龙须、鬃毛、四爪、背鳍、尾鳍、龙鳞；整屏 Lissajous 飞行。
 - **世界地图**：Natural Earth 陆地掩膜、覆盖率采样、城市节点、大圆弧、扫描波束。
 - **黑客帝国**：NASA 后台登录大屏。默认 ASCII；`--unicode` 切换蓝色 NASA 横幅（白色大字、红色 swoosh、白色星点、蓝白流光）、居中下移的 Unicode 边框登录框；OPERATOR/PASSWORD/2FA、AUTH/DECRYPT 进度、日志、雷达、ACCESS GRANTED。
-- **黑洞**：事件视界、光子环、吸积盘、透镜弧、喷流、流星、内落；外围星尘再次减速、范围保持 ×4/3，坠星同步减速；`--spin` 调整体旋转。
+- **黑洞**：事件视界、光子环、吸积盘、透镜弧、喷流、流星、内落；外围星尘沿 "/" 倾斜的饱满椭圆环绕，整体铺满屏幕；最外圈用 `.` / `:` / `+` 随机低密度散点，内层与外层之间补一层中段星尘；整体同向差速旋转（内快外慢，外圈与吸积带同步提速），看起来是一个完整转动的椭圆盘；整体公转速度 ×1.7；`--spin` 调整体旋转。
 - **光束**：单向从左向右；默认直线，`--beam-motion jump` 上下起伏；`--density`/`--beam-speed` 调密度与速度。
 - **烟花**：火箭 + 内外双环粒子 + 延迟爆裂；粒子拖尾、重力、城市剪影、星空。
 - **太阳系**：太阳在左上角；八大行星在下方轨道线；阳光向右下扇形分层传播，且在行星线上方截止。
@@ -435,7 +444,7 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-当前 **59 个**单元/集成测试：颜色转换、按键解析、CLI/新参数校验、Canvas 裁剪/差分、地图掩膜、26 个特效多尺寸/主题/颜色/Unicode 降级、默认字符集 ASCII-only、小终端不 panic、确定性种子、Tom & Jerry 速度/跳跃、恶魔之眼眨眼/注视、芭蕾牵手/满屏路径等。
+当前 **76 个**单元/集成测试：颜色转换、按键解析、CLI/新参数校验、Canvas 裁剪/差分、地图掩膜、27 个特效多尺寸/主题/颜色/Unicode 降级、默认字符集 ASCII-only、小终端不 panic、确定性种子、Tom & Jerry 速度/跳跃、龙卷风高不见顶/恶魔之眼 8～15 秒眨眼节奏/注视/看出去再回正/瞳孔不被高光遮挡/静止开关、芭蕾牵手/满屏路径、生命的轨迹世代/时间轴/狗猫/符号/核心 0 次变轨/死亡头部/终点符号等。
 
 真实 PTY 实测：`q`/`Esc`/`Ctrl-C`/`SIGTERM`、暂停、帮助、数字/`[`/`]` 切换、`i` 状态、缩放、`--no-alt`、颜色降级、退出恢复。
 

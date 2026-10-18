@@ -6,6 +6,8 @@ Documentation helper, not part of the Rust binary.
 Usage:
     python3 tools/render_gif.py fire docs/fire.gif --start 60 --frames 30 --step 2
     python3 tools/render_gif.py dragon docs/dragon.gif --start 100 --frames 30 --step 2
+    python3 tools/render_gif.py demoneye docs/demoneye.gif --start 10 --frames 24 \
+        --step 4 --size 88x26 --width 520 --unicode
 """
 from __future__ import annotations
 
@@ -34,6 +36,11 @@ def main() -> int:
     ap.add_argument("--size", default="80x24")
     ap.add_argument("--width", type=int, default=800)
     ap.add_argument("--duration", type=int, default=66)
+    ap.add_argument(
+        "--unicode",
+        action="store_true",
+        help="render the Unicode charset (docs GIFs use it; the binary defaults to ASCII)",
+    )
     args = ap.parse_args()
     w, h = map(int, args.size.lower().split("x"))
     images = []
@@ -42,21 +49,24 @@ def main() -> int:
             frame = args.start + i * args.step
             ans = os.path.join(td, f"f{i}.ans")
             png = os.path.join(td, f"f{i}.png")
+            cmd = [
+                BIN,
+                args.effect,
+                "--snapshot",
+                ans,
+                "--size",
+                f"{w}x{h}",
+                "--frames",
+                str(frame),
+                "--fps",
+                "30",
+                "--seed",
+                "7",
+            ]
+            if args.unicode:
+                cmd.append("--unicode")
             subprocess.run(
-                [
-                    BIN,
-                    args.effect,
-                    "--snapshot",
-                    ans,
-                    "--size",
-                    f"{w}x{h}",
-                    "--frames",
-                    str(frame),
-                    "--fps",
-                    "30",
-                    "--seed",
-                    "7",
-                ],
+                cmd,
                 check=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
