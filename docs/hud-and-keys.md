@@ -1,6 +1,6 @@
-# trix-tui HUD 与快捷键设计
+# trix-effects HUD 与快捷键设计
 
-本文记录 trix-tui 的统一 HUD、文字归属和跨平台按键契约。修改场景文字或快捷键时，请同步更新本文、`src/hud.rs`、`src/help.rs`、`src/meta.rs`、README 与 CHANGELOG。
+本文记录 trix-effects 的统一 HUD、文字归属和跨平台按键契约。修改场景文字或快捷键时，请同步更新本文、`src/hud.rs`、`src/help.rs`、`src/meta.rs`、README 与 CHANGELOG。
 
 ## 1. 三种 HUD 模式
 

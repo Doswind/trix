@@ -1,4 +1,4 @@
-//! trix-tui — 26 animated ASCII/Unicode effects for the terminal.
+//! trix-effects — 26 animated ASCII/Unicode effects for the terminal.
 
 pub mod app;
 pub mod canvas;

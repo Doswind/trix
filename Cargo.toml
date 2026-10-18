@@ -1,19 +1,19 @@
 [package]
-name = "trix-tui"
-version = "0.9.0"
+name = "trix-effects"
+version = "0.9.1"
 edition = "2021"
 rust-version = "1.70"
 description = "26 animated ASCII/Unicode effects for the terminal in one fast, dependency-free Rust binary"
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/Doswind/trix-tui"
-homepage = "https://github.com/Doswind/trix-tui"
-documentation = "https://docs.rs/trix-tui"
+repository = "https://github.com/Doswind/trix-effects"
+homepage = "https://github.com/Doswind/trix-effects"
+documentation = "https://docs.rs/trix-effects"
 keywords = ["terminal", "ascii-art", "animation", "tui", "effects"]
 categories = ["command-line-utilities", "graphics"]
 
 [lib]
-name = "trix_tui"
+name = "trix_effects"
 path = "src/lib.rs"
 
 [[bin]]

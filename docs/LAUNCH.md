@@ -1,6 +1,6 @@
 # Launch kit
 
-Copy-paste drafts for announcing trix-tui. Adjust the tone to the community and
+Copy-paste drafts for announcing trix-effects. Adjust the tone to the community and
 follow each platform's self-promotion rules. The best asset is the `trix --help`
 screenshot and a short GIF; lead with those.
 
@@ -32,7 +32,7 @@ screenshot and a short GIF; lead with those.
 >   section.
 >
 > It runs on macOS, Linux and WSL. Source and prebuilt static binaries:
-> https://github.com/Doswind/trix-tui
+> https://github.com/Doswind/trix-effects
 >
 > Happy to answer questions about the renderer, the no-dependency terminal
 > driver, or the help layout.
@@ -56,13 +56,13 @@ screenshot and a short GIF; lead with those.
 > `trix --help <effect>` embeds a preview rendered by the actual scene. It
 > degrades to aligned plain text off a TTY.
 >
-> Repo: https://github.com/Doswind/trix-tui
+> Repo: https://github.com/Doswind/trix-effects
 
 ### r/commandline
 
 **Title**
 
-> trix-tui: 26 ASCII/Unicode effects for your terminal (single binary, no deps)
+> trix-effects: 26 ASCII/Unicode effects for your terminal (single binary, no deps)
 
 **Body**
 
@@ -76,7 +76,7 @@ screenshot and a short GIF; lead with those.
 
 **Title**
 
-> [OC] trix-tui – 26 terminal effects (code rain, dragon, Mona Lisa)
+> [OC] trix-effects – 26 terminal effects (code rain, dragon, Mona Lisa)
 
 **Body**
 
@@ -84,13 +84,13 @@ screenshot and a short GIF; lead with those.
 > edition; `--unicode` is opt-in. Eight colour themes, a shared HUD, and a
 > `--snapshot` mode for clean captures.
 >
-> Repo: https://github.com/Doswind/trix-tui
+> Repo: https://github.com/Doswind/trix-effects
 
 ## Lobsters
 
 **Title**
 
-> trix-tui: 26 ASCII effects in a dependency-free Rust binary
+> trix-effects: 26 ASCII effects in a dependency-free Rust binary
 
 **Tags**: `rust`, `show`, `visualization`
 
@@ -98,10 +98,10 @@ screenshot and a short GIF; lead with those.
 
 Submit the repo link with a one-paragraph description:
 
-> trix-tui is a 26-effect ASCII/Unicode terminal engine in Rust. One ~1.1 MB
+> trix-effects is a 26-effect ASCII/Unicode terminal engine in Rust. One ~1.1 MB
 > binary, `libc` as the only dependency, a diff renderer, eight themes, and a
 > metadata-driven help system that renders a real preview of each effect.
-> https://github.com/Doswind/trix-tui
+> https://github.com/Doswind/trix-effects
 
 ## 中文渠道
 
@@ -113,7 +113,7 @@ Submit the repo link with a one-paragraph description:
 
 **正文**
 
-> 做了一个终端特效引擎 trix-tui：代码雨、火焰、巨龙、黑客帝国、黑洞、烟花、
+> 做了一个终端特效引擎 trix-effects：代码雨、火焰、巨龙、黑客帝国、黑洞、烟花、
 > 太阳系、蒙娜丽莎、冰上芭蕾、生命的轨迹等 26 个场景。
 >
 > - Rust 单线程，唯一依赖 `libc`，发布二进制约 1.1MB
@@ -123,7 +123,7 @@ Submit the repo link with a one-paragraph description:
 > - `trix --help rain` 会用真实场景渲染一张预览
 >
 > macOS / Linux / WSL 可用，Release 有静态 Linux x86_64/aarch64 和 macOS
-> universal 包。仓库：https://github.com/Doswind/trix-tui
+> universal 包。仓库：https://github.com/Doswind/trix-effects
 >
 > 欢迎提意见，尤其是帮助排版、终端兼容性和新特效的点子。
 
@@ -131,7 +131,7 @@ Submit the repo link with a one-paragraph description:
 
 **标题**
 
-> 在终端里看代码雨、巨龙和蒙娜丽莎：trix-tui
+> 在终端里看代码雨、巨龙和蒙娜丽莎：trix-effects
 
 **导语**
 
@@ -146,10 +146,10 @@ Submit the repo link with a one-paragraph description:
 
 **回答开头**
 
-> 最近把 trix-tui 整理到了 0.9.0：26 个场景、8 套主题、单线程、只依赖 libc，
+> 最近把 trix-effects 整理到了 0.9.1：26 个场景、8 套主题、单线程、只依赖 libc，
 > 发布二进制约 1.1MB。比较有意思的是帮助系统——`trix --help` 会渲染真实 HUD
 > 画面，`trix --help rain` 直接用场景本身生成预览。仓库：
-> https://github.com/Doswind/trix-tui
+> https://github.com/Doswind/trix-effects
 
 ### Bilibili / 小红书 / 即刻
 
@@ -162,7 +162,7 @@ Submit the repo link with a one-paragraph description:
 Suggested entry (adjust to each list's format):
 
 ```markdown
-- [trix-tui](https://github.com/Doswind/trix-tui) - 26 animated ASCII/Unicode
+- [trix-effects](https://github.com/Doswind/trix-effects) - 26 animated ASCII/Unicode
   effects for the terminal in one fast, dependency-free Rust binary.
 ```
 
@@ -171,7 +171,7 @@ Targets: `awesome-rust`, `awesome-cli-apps`, `awesome-terminal`,
 
 ## Launch checklist
 
-- [ ] `v0.9.0` release is green and the three archives + `SHA256SUMS` exist.
+- [ ] `v0.9.1` release is green and the three archives + `SHA256SUMS` exist.
 - [ ] README first screen has the overview image, one-liner and install command.
 - [ ] `docs/social-preview.png` uploaded in repository settings.
 - [ ] Topics and description set.

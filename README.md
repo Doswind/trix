@@ -1,35 +1,35 @@
-# trix-tui
+# trix-effects
 
 **English** | [简体中文](README.zh-CN.md)
 
 > **26 animated ASCII / Unicode effects for your terminal, in one fast, dependency-free Rust binary.** Code rain, fire, a coiling dragon, the Matrix, a black hole, fireworks, the solar system, Mona Lisa, and 18 more — in ASCII by default, with Unicode as an opt-in.
 
-![release](https://github.com/Doswind/trix-tui/actions/workflows/release.yml/badge.svg)
-![CI](https://github.com/Doswind/trix-tui/actions/workflows/ci.yml/badge.svg)
+![release](https://github.com/Doswind/trix-effects/actions/workflows/release.yml/badge.svg)
+![CI](https://github.com/Doswind/trix-effects/actions/workflows/ci.yml/badge.svg)
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 ![rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)
 ![platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20WSL-lightgrey.svg)
 
-![trix-tui overview](docs/overview-ascii.png)
+![trix-effects overview](docs/overview-ascii.png)
 
 **26 effects · 8 themes · zero dependencies · ~2 ms startup · ~1.1 MB binary · macOS / Linux / WSL**
 
 [Install](#install) · [Quick start](#quick-start) · [Help](#help-that-looks-like-the-product) · [Effects](#effects) · [ASCII / Unicode](#ascii--unicode-editions) · [Keys](#runtime-keys) · [Themes](#themes) · [Performance](#performance) · [FAQ](#compatibility-and-faq)
 
-> The command is **`trix`**; the package and repository are **`trix-tui`** — the same short-command split as `ripgrep` / `rg`. The old name `texiao` was renamed to `trix` in v0.5.0 and to the package name `trix-tui` in v0.9.0.
+> The command is **`trix`**; the package and repository are **`trix-effects`** — the same short-command split as `ripgrep` / `rg`. The old name `texiao` was renamed to `trix` in v0.5.0 and to the package name `trix-effects` in v0.9.1.
 
 ## Install
 
 ```bash
 # macOS / Linux, prebuilt (uses the latest GitHub release)
-curl -fsSL https://raw.githubusercontent.com/Doswind/trix-tui/master/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | sh
 
 # Rust toolchain, straight from git
-cargo install --git https://github.com/Doswind/trix-tui --locked
+cargo install --git https://github.com/Doswind/trix-effects --locked
 
 # From a clone
-git clone https://github.com/Doswind/trix-tui
-cd trix-tui
+git clone https://github.com/Doswind/trix-effects
+cd trix-effects
 cargo install --path . --locked
 ```
 
@@ -441,7 +441,7 @@ scripts/bench.sh
 - Linux binaries are static musl builds for `x86_64` and `aarch64`, so they run on any distribution (including Alpine) on those architectures.
 - Non-TTY runs suggest `--snapshot`; `trix --snapshot -` writes ANSI to stdout.
 - The canvas is black; a dark terminal is recommended.
-- **Why is the command `trix` but the package `trix-tui`?** Short command, unique package name — the `ripgrep` / `rg` split. Installing the package (for example with `cargo install --git …`) installs the `trix` binary.
+- **Why is the command `trix` but the package `trix-effects`?** Short command, unique package name — the `ripgrep` / `rg` split. Installing the package (for example with `cargo install --git …`) installs the `trix` binary.
 - **Why do screenshots show ASCII?** ASCII is the default and works in every terminal/font. Unicode previews are isolated in the ASCII / Unicode section.
 - **How do I record a GIF?** Use `--snapshot` plus `tools/ansi2png.py`, or `tools/render_gif.py`; see [Recording and documentation tools](#recording-and-documentation-tools).
 - **Shell completions?** `trix --completions bash` (also `zsh`, `fish`); install the output in your shell's completion directory.
@@ -492,14 +492,15 @@ There are currently **199** unit / integration tests. See `.github/workflows/ci.
 
 ## Versions and rollback
 
-- **Current version: 0.9.0** (`trix --version`), tag **`v0.9.0`**.
-- **0.9.0** renames the package/repository to `trix-tui` (command stays `trix`), adds the styled help system, removes the `fairy` entry (source retained), and makes `life` part of the 26-effect set.
-- Previous: tag **`v0.8.0`** (Mona Lisa / Ice Ballet / Demon Eye; 26 effects including `fairy`); **`v0.7.0`** (aquarium / landscape / Oriental Pearl / Tiananmen / traffic / fairy / tornado / thunderstorm, playlists); **`v0.6.0`** (Mario / ECG / dandelion, blue-green code rain); **`v0.5.1`** (automated release pipeline).
+- **Current version: 0.9.1** (`trix --version`), tag **`v0.9.1`**.
+- **0.9.1** renames the package/repository to `trix-effects` (command stays `trix`), hardens `install.sh`, adds cache-safe ASCII previews and contributor/launch docs.
+- **0.9.0** was the short-lived `trix-tui` name; it added the styled help system, removed the `fairy` entry (source retained), and made `life` part of the 26-effect set.
+- Previous: tag **`v0.9.0`** (`trix-tui`); **`v0.8.0`** (Mona Lisa / Ice Ballet / Demon Eye; 26 effects including `fairy`); **`v0.7.0`** (aquarium / landscape / Oriental Pearl / Tiananmen / traffic / fairy / tornado / thunderstorm, playlists); **`v0.6.0`** (Mario / ECG / dandelion, blue-green code rain); **`v0.5.1`** (automated release pipeline).
 - Rollback:
   ```bash
-  git checkout v0.8.0     # inspect the previous version only (detached HEAD)
+  git checkout v0.9.0     # inspect the previous version only (detached HEAD)
   git switch master
-  git reset --hard v0.8.0 # fully revert to the previous version
+  git reset --hard v0.9.0 # fully revert to the previous version
   ```
 - Extra backups (not in git): `backups/trix-v0.1.0-*` through `trix-v0.7.0-*`, containing source tarballs and aarch64 macOS binaries.
 - Change log: [English](CHANGELOG.md) · [中文](CHANGELOG.zh-CN.md).
@@ -509,7 +510,7 @@ There are currently **199** unit / integration tests. See `.github/workflows/ci.
 - Pushing a `v*` tag builds the binaries and creates a GitHub Release.
 - **macOS**: `aarch64-apple-darwin` + `x86_64-apple-darwin`, merged with `lipo` into a universal binary.
 - **Linux**: static musl builds for `x86_64` and `aarch64` (the ARM64 build is cross-compiled and smoke-tested under QEMU).
-- Assets: `trix-tui-<version>-macos-universal.tar.gz`, `trix-tui-<version>-linux-x86_64.tar.gz`, `trix-tui-<version>-linux-aarch64.tar.gz`, plus `SHA256SUMS`.
+- Assets: `trix-effects-<version>-macos-universal.tar.gz`, `trix-effects-<version>-linux-x86_64.tar.gz`, `trix-effects-<version>-linux-aarch64.tar.gz`, plus `SHA256SUMS`.
 - `Run workflow` on the Actions page builds artifacts without creating a Release.
 
 ## Contributing

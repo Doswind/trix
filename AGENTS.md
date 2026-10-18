@@ -1,4 +1,4 @@
-# trix-tui project conventions
+# trix-effects project conventions
 
 > 项目约定：凡是同时支持 ASCII 与 Unicode 的特效，默认必须以 ASCII 启动；Unicode 只能通过 `--unicode` / `--charset unicode` 显式开启。
 
@@ -30,8 +30,8 @@ ASCII by default**.
 - README screenshots use the **default ASCII glyphs** and the current code.
   Unicode screenshots belong only in the “ASCII / Unicode” section, where the
   text explicitly introduces `--unicode`.
-- The project name is `trix-tui`; the command stays `trix`. Release assets are
-  `trix-tui-<version>-...`, while the binary inside is `trix`.
+- The project name is `trix-effects`; the command stays `trix`. Release assets are
+  `trix-effects-<version>-...`, while the binary inside is `trix`.
 
 ## Docs and localization
 

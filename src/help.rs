@@ -361,7 +361,7 @@ fn header(style: &HelpStyle) -> Vec<String> {
     let info = [
         format!(
             "{}  {}",
-            bold("trix-tui", style.theme.c(3), style),
+            bold("trix-effects", style.theme.c(3), style),
             dim("terminal effects engine", style)
         ),
         format!(
@@ -369,7 +369,7 @@ fn header(style: &HelpStyle) -> Vec<String> {
             EffectId::ALL.len(),
             theme::THEMES.len()
         ),
-        dim("github.com/Doswind/trix-tui", style),
+        dim("github.com/Doswind/trix-effects", style),
         format!("v{}", cli::VERSION),
     ];
     let logo_w = logo.iter().map(|l| display_width(l)).max().unwrap_or(0);
@@ -399,14 +399,14 @@ fn header(style: &HelpStyle) -> Vec<String> {
         if style.width >= 58 {
             out.push(format!(
                 "{}  {}  {}",
-                bold("trix-tui", style.theme.c(3), style),
+                bold("trix-effects", style.theme.c(3), style),
                 dim("terminal effects engine", style),
                 version
             ));
         } else {
             out.push(format!(
                 "{}  {}",
-                bold("trix-tui", style.theme.c(3), style),
+                bold("trix-effects", style.theme.c(3), style),
                 version
             ));
             out.push(dim("terminal effects engine", style));
@@ -424,7 +424,7 @@ fn header(style: &HelpStyle) -> Vec<String> {
                 theme::THEMES.len()
             ));
         }
-        out.push(dim("github.com/Doswind/trix-tui", style));
+        out.push(dim("github.com/Doswind/trix-effects", style));
         out
     }
 }
@@ -772,13 +772,13 @@ fn footer(style: &HelpStyle) -> Vec<String> {
         }
     }
     for line in wrap(
-        "docs/hud-and-keys.md  ·  github.com/Doswind/trix-tui",
+        "docs/hud-and-keys.md  ·  github.com/Doswind/trix-effects",
         style.width.saturating_sub(6),
     ) {
         out.push(format!("    {}", dim(&line, style)));
     }
     for line in wrap(
-        "If trix-tui makes your terminal nicer, a star helps others find it.",
+        "If trix-effects makes your terminal nicer, a star helps others find it.",
         style.width.saturating_sub(6),
     ) {
         out.push(format!("    {}", paint(&line, OK, style)));
@@ -1470,7 +1470,7 @@ fn pretty_list(style: &HelpStyle) -> String {
     let header = if style.width >= 54 {
         format!(
             "{}  {}  ·  {} effects  ·  {} themes",
-            bold("trix-tui", style.theme.c(3), style),
+            bold("trix-effects", style.theme.c(3), style),
             dim("catalog", style),
             EffectId::ALL.len(),
             theme::THEMES.len()
@@ -1478,7 +1478,7 @@ fn pretty_list(style: &HelpStyle) -> String {
     } else {
         format!(
             "{}  ·  {} effects",
-            bold("trix-tui", style.theme.c(3), style),
+            bold("trix-effects", style.theme.c(3), style),
             EffectId::ALL.len()
         )
     };
@@ -1619,7 +1619,7 @@ pub fn completions(shell: &str) -> String {
     let flags = flag_word_list();
     match shell {
         "bash" => format!(
-            r#"# bash completion for trix-tui
+            r#"# bash completion for trix-effects
 _trix() {{
   local cur prev
   COMPREPLY=()
@@ -1644,11 +1644,10 @@ _trix() {{
   fi
 }}
 complete -F _trix trix
-complete -F _trix trix-tui
 "#
         ),
         "zsh" => format!(
-            r#"#compdef trix trix-tui
+            r#"#compdef trix
 _trix() {{
   _arguments -s \
     '(-e --effect)'{{-e,--effect}}'[effect to run]:effect:({effects})' \
@@ -1683,11 +1682,11 @@ _trix() {{
     '--completions[completion script]:shell:(bash zsh fish)' \
     '*:effect:({effects})'
 }}
-compdef _trix trix trix-tui
+compdef _trix trix
 "#
         ),
         _ => format!(
-            r#"# fish completion for trix-tui
+            r#"# fish completion for trix-effects
 complete -c trix -f
 complete -c trix -n '__fish_use_subcommand' -a '{effects}'
 complete -c trix -l effect -xa '{effects}'
@@ -1716,7 +1715,6 @@ complete -c trix -l size -r -d 'canvas size'
 complete -c trix -l bench -d 'benchmark'
 complete -c trix -l seed -r -d 'seed'
 complete -c trix -l duration -r -d 'seconds'
-complete -c trix-tui -w trix
 "#
         ),
     }
@@ -1759,7 +1757,7 @@ pub fn run_list(opts: &Options) -> i32 {
 }
 
 pub fn run_version() -> i32 {
-    println!("trix-tui {}", cli::VERSION);
+    println!("trix-effects {}", cli::VERSION);
     0
 }
 
@@ -1879,7 +1877,7 @@ mod tests {
             assert!(!text.trim().is_empty());
         }
         assert!(completions("bash").contains("complete -F _trix trix"));
-        assert!(completions("zsh").contains("#compdef trix trix-tui"));
+        assert!(completions("zsh").contains("#compdef trix"));
         assert!(completions("fish").contains("complete -c trix"));
     }
 

@@ -1,35 +1,35 @@
-# trix-tui
+# trix-effects
 
 [English](README.md) | **简体中文**
 
 > **终端里的 26 个 ASCII / Unicode 动态特效，装进一个快速、零依赖的 Rust 单文件。** 代码雨、火焰、巨龙、黑客帝国、黑洞、烟花、太阳系、蒙娜丽莎，再加 18 个场景——默认 ASCII，Unicode 显式开启。
 
-![release](https://github.com/Doswind/trix-tui/actions/workflows/release.yml/badge.svg)
-![CI](https://github.com/Doswind/trix-tui/actions/workflows/ci.yml/badge.svg)
+![release](https://github.com/Doswind/trix-effects/actions/workflows/release.yml/badge.svg)
+![CI](https://github.com/Doswind/trix-effects/actions/workflows/ci.yml/badge.svg)
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 ![rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)
 ![platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20WSL-lightgrey.svg)
 
-![trix-tui 总览](docs/overview-ascii.png)
+![trix-effects 总览](docs/overview-ascii.png)
 
 **26 个特效 · 8 套主题 · 零依赖 · 启动约 2 ms · 二进制约 1.1 MB · macOS / Linux / WSL**
 
 [安装](#安装) · [快速开始](#快速开始) · [帮助](#像产品一样的帮助) · [特效](#特效) · [ASCII / Unicode](#ascii--unicode-双版本) · [快捷键](#运行时快捷键) · [主题](#主题) · [性能](#性能) · [常见问题](#兼容性与常见问题)
 
-> 命令叫 **`trix`**，包名和仓库叫 **`trix-tui`**——和 `ripgrep` / `rg` 一样，短命令 + 唯一包名。项目原名 `texiao`，v0.5.0 改名为 `trix`，v0.9.0 起包名改为 `trix-tui`。
+> 命令叫 **`trix`**，包名和仓库叫 **`trix-effects`**——和 `ripgrep` / `rg` 一样，短命令 + 唯一包名。项目原名 `texiao`，v0.5.0 改名为 `trix`，v0.9.1 起包名改为 `trix-effects`。
 
 ## 安装
 
 ```bash
 # macOS / Linux，预编译（使用最新 GitHub Release）
-curl -fsSL https://raw.githubusercontent.com/Doswind/trix-tui/master/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | sh
 
 # 有 Rust 工具链，直接从 git 安装
-cargo install --git https://github.com/Doswind/trix-tui --locked
+cargo install --git https://github.com/Doswind/trix-effects --locked
 
 # 从克隆安装
-git clone https://github.com/Doswind/trix-tui
-cd trix-tui
+git clone https://github.com/Doswind/trix-effects
+cd trix-effects
 cargo install --path . --locked
 ```
 
@@ -441,7 +441,7 @@ scripts/bench.sh
 - Linux 二进制是 `x86_64` / `aarch64` 的静态 musl 构建，任意发行版（包括 Alpine）可用。
 - 非 TTY 运行会提示 `--snapshot`；`trix --snapshot -` 输出 ANSI 到 stdout。
 - 画布是黑色，建议深色终端。
-- **为什么命令叫 `trix`、包叫 `trix-tui`？** 短命令 + 唯一包名，类似 `ripgrep` / `rg`。安装这个包（例如 `cargo install --git …`）装出来的命令是 `trix`。
+- **为什么命令叫 `trix`、包叫 `trix-effects`？** 短命令 + 唯一包名，类似 `ripgrep` / `rg`。安装这个包（例如 `cargo install --git …`）装出来的命令是 `trix`。
 - **为什么截图是 ASCII？** ASCII 是默认，兼容所有终端/字体；Unicode 预览只放在 ASCII / Unicode 一节。
 - **怎么录制 GIF？** 用 `--snapshot` + `tools/ansi2png.py`，或 `tools/render_gif.py`；见[录制与文档工具](#录制与文档工具)。
 - **Shell 补全？** `trix --completions bash`（也支持 `zsh`、`fish`），把输出放到对应 shell 的补全目录。
@@ -492,14 +492,15 @@ cargo fmt --check
 
 ## 版本与回退
 
-- **当前版本：0.9.0**（`trix --version`），tag **`v0.9.0`**。
-- **0.9.0**：包名/仓库改为 `trix-tui`（命令仍是 `trix`），新增风格化帮助系统，`fairy` 入口移除（源码保留），`life` 进入 26 个特效。
-- 上一版：tag **`v0.8.0`**（蒙娜丽莎 / 冰上芭蕾 / 恶魔之眼；26 个特效，含 `fairy`）；**`v0.7.0`**（水族馆/山水/东方明珠/天安门/车水马龙/仙女/龙卷风/雷暴、播放列表）；**`v0.6.0`**（马里奥/心电/蒲公英、蓝绿代码雨）；**`v0.5.1`**（自动发布流水线）。
+- **当前版本：0.9.1**（`trix --version`），tag **`v0.9.1`**。
+- **0.9.1**：包名/仓库改为 `trix-effects`（命令仍是 `trix`），加固 `install.sh`，新增缓存安全的 ASCII 预览和贡献/发布文档。
+- **0.9.0** 是短暂使用的 `trix-tui` 名字；新增风格化帮助系统，`fairy` 入口移除（源码保留），`life` 进入 26 个特效。
+- 上一版：tag **`v0.9.0`**（`trix-tui`）；**`v0.8.0`**（蒙娜丽莎 / 冰上芭蕾 / 恶魔之眼；26 个特效，含 `fairy`）；**`v0.7.0`**（水族馆/山水/东方明珠/天安门/车水马龙/仙女/龙卷风/雷暴、播放列表）；**`v0.6.0`**（马里奥/心电/蒲公英、蓝绿代码雨）；**`v0.5.1`**（自动发布流水线）。
 - 回退：
   ```bash
-  git checkout v0.8.0     # 只查看上一版（detached HEAD）
+  git checkout v0.9.0     # 只查看上一版（detached HEAD）
   git switch master
-  git reset --hard v0.8.0 # 完全回退到上一版
+  git reset --hard v0.9.0 # 完全回退到上一版
   ```
 - 额外备份（不进 git）：`backups/trix-v0.1.0-*` 到 `trix-v0.7.0-*`，含源码 tar 与 aarch64 macOS 二进制。
 - 变更日志：[English](CHANGELOG.md) · [中文](CHANGELOG.zh-CN.md)。
@@ -509,7 +510,7 @@ cargo fmt --check
 - 推送 `v*` tag 会自动构建二进制并创建 GitHub Release。
 - **macOS**：`aarch64-apple-darwin` + `x86_64-apple-darwin`，用 `lipo` 合成 universal 二进制。
 - **Linux**：`x86_64` / `aarch64` 静态 musl 构建（ARM64 用 `cross` 交叉编译，并在 QEMU 下做启动冒烟）。
-- 资产：`trix-tui-<version>-macos-universal.tar.gz`、`trix-tui-<version>-linux-x86_64.tar.gz`、`trix-tui-<version>-linux-aarch64.tar.gz`，以及 `SHA256SUMS`。
+- 资产：`trix-effects-<version>-macos-universal.tar.gz`、`trix-effects-<version>-linux-x86_64.tar.gz`、`trix-effects-<version>-linux-aarch64.tar.gz`，以及 `SHA256SUMS`。
 - 在 Actions 页面手动 `Run workflow` 只构建产物，不创建 Release。
 
 ## 参与贡献

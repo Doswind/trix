@@ -1,6 +1,6 @@
-# Contributing to trix-tui
+# Contributing to trix-effects
 
-Thanks for taking the time to improve trix-tui. Issues, bug reports, effect
+Thanks for taking the time to improve trix-effects. Issues, bug reports, effect
 ideas and pull requests are all welcome.
 
 ## Development setup
@@ -11,8 +11,8 @@ ideas and pull requests are all welcome.
   256 / 16 / monochrome and in ASCII.
 
 ```bash
-git clone https://github.com/Doswind/trix-tui
-cd trix-tui
+git clone https://github.com/Doswind/trix-effects
+cd trix-effects
 cargo build --release
 ./target/release/trix --help
 cargo test

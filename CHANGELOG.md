@@ -2,9 +2,17 @@
 
 **English** | [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.9.1 — 2026-10-19
+
+- **Renamed to `trix-effects`**: the package, crate and repository are now `trix-effects`; the command stays `trix`, and the binary version prints `trix-effects 0.9.1`. Release assets are `trix-effects-<version>-...`. This supersedes the short-lived `trix-tui` name from 0.9.0.
+- **Installer hardening**: release checksums written as `./asset` are accepted, downloads retry over HTTP/1.1, and `TRIX_BASE_URL` can point at a mirror or a local test server.
+- **ASCII screenshot cache fix**: the overview and all 26 main previews use new `-ascii.png` URLs so GitHub camo cannot serve the old Unicode images; the ASCII storm flash still has its own cache-safe path. `scripts/check_docs.py` enforces the ASCII main previews.
+- Added `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue forms, a pull-request template and `docs/LAUNCH.md` (Show HN / Reddit / V2EX / 少数派 drafts).
+- Fixed the clippy 1.99 `byte_char_slices` warning in the solar-system asteroid glyphs; CI is green again.
+
 ## 0.9.0 — 2026-10-18
 
-- **Renamed to `trix-tui`**: the package, crate and repository are now `trix-tui`; the command stays `trix` (the `ripgrep` / `rg` split). Release assets are named `trix-tui-<version>-...`, `--version` prints `trix-tui 0.9.0`, and `install.sh` installs the `trix` binary. The older `texiao` → `trix` rename remains historical.
+- **Renamed to `trix-tui`** (later renamed again to `trix-effects` in 0.9.1): the package, crate and repository were `trix-tui`; the command stays `trix` (the `ripgrep` / `rg` split). Release assets were named `trix-tui-<version>-...`, `--version` printed `trix-tui 0.9.0`, and `install.sh` installed the `trix` binary. The older `texiao` → `trix` rename remains historical.
 - **A help system that matches the product**: `trix --help` renders a wordmark, a real HUD frame, a colour-coded effect grid, grouped options, theme swatches and examples; `trix --help <effect>` adds a live preview rendered by the actual scene plus only that effect's flags; `trix --help all` is the full reference; `trix --list` is a styled catalog on a TTY and plain text when piped. Errors gained “did you mean” suggestions. The layout degrades to aligned ASCII / mono off a TTY or with `NO_COLOR` / `--no-color`.
 - **Help metadata is centralised**: effect summaries, descriptions, categories, shortcuts, charset support and per-effect flags now live in `src/meta.rs` and drive `--help`, `--list`, the `i` panel and the interactive `h` panel.
 - **Screenshots regenerated in ASCII**: all main README previews use the default ASCII glyphs and the current code; Unicode previews are isolated in the ASCII / Unicode section. The GIFs were re-recorded too.

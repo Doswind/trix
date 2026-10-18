@@ -21,7 +21,7 @@ body:
     attributes:
       label: Version
       description: Output of `trix --version`.
-      placeholder: "trix-tui 0.9.0"
+      placeholder: "trix-effects 0.9.1"
     validations:
       required: true
   - type: textarea

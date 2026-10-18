@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Install the trix binary from the latest trix-tui GitHub release.
+# Install the trix binary from the latest trix-effects GitHub release.
 #
-#   curl -fsSL https://raw.githubusercontent.com/Doswind/trix-tui/master/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | sh
 #
 # Environment:
 #   TRIX_VERSION      release version to install (default: latest)
@@ -9,13 +9,13 @@
 #   TRIX_BASE_URL     override the release download base (for mirrors/tests)
 set -euo pipefail
 
-REPO="Doswind/trix-tui"
+REPO="Doswind/trix-effects"
 BIN="trix"
 VERSION="${TRIX_VERSION:-}"
 DEST="${TRIX_INSTALL_DIR:-$HOME/.local/bin}"
 
 say() { printf '%s\n' "$*"; }
-die() { printf 'trix-tui installer: %s\n' "$*" >&2; exit 1; }
+die() { printf 'trix-effects installer: %s\n' "$*" >&2; exit 1; }
 
 command -v curl >/dev/null 2>&1 || die "curl is required"
 command -v tar >/dev/null 2>&1 || die "tar is required"
@@ -41,7 +41,7 @@ case "$OS/$ARCH" in
 esac
 
 if [ -z "$VERSION" ]; then
-    say "Looking up the latest trix-tui release..."
+    say "Looking up the latest trix-effects release..."
     VERSION="$("${CURL[@]}" "https://api.github.com/repos/$REPO/releases/latest" \
         | sed -n 's/.*"tag_name": *"v\{0,1\}\([^"]*\)".*/\1/p' \
         | head -n 1)"
@@ -49,7 +49,7 @@ if [ -z "$VERSION" ]; then
 fi
 VERSION="${VERSION#v}"
 
-ASSET="trix-tui-${VERSION}-${PLATFORM}.tar.gz"
+ASSET="trix-effects-${VERSION}-${PLATFORM}.tar.gz"
 BASE="${TRIX_BASE_URL:-https://github.com/$REPO/releases/download/v${VERSION}}"
 
 TMP="$(mktemp -d)"

@@ -2,9 +2,17 @@
 
 [English](CHANGELOG.md) | **简体中文**
 
+## 0.9.1 — 2026-10-19
+
+- **更名为 `trix-effects`**：包名、crate 和仓库改为 `trix-effects`，命令仍是 `trix`，`trix --version` 输出 `trix-effects 0.9.1`。Release 资产命名为 `trix-effects-<version>-...`，取代 0.9.0 短暂使用的 `trix-tui`。
+- **安装脚本加固**：兼容校验文件里的 `./asset` 路径，下载改为 HTTP/1.1 重试，支持用 `TRIX_BASE_URL` 指向镜像或本地测试服务器。
+- **ASCII 截图缓存修复**：overview 和 26 张主图改用新的 `-ascii.png` URL，避免 GitHub camo 继续返回旧 Unicode 图；ASCII 闪电图也使用独立路径。`scripts/check_docs.py` 会强制主图使用 ASCII 文件。
+- 新增 `CONTRIBUTING.md`、`CODE_OF_CONDUCT.md`、Issue 表单、PR 模板和 `docs/LAUNCH.md`（Show HN / Reddit / V2EX / 少数派 文案）。
+- 修复 clippy 1.99 对太阳系小行星字符的 `byte_char_slices` 警告，CI 恢复绿色。
+
 ## 0.9.0 — 2026-10-18
 
-- **更名为 `trix-tui`**：包名、crate 和仓库改为 `trix-tui`，命令仍是 `trix`（类似 `ripgrep` / `rg`）。Release 资产命名为 `trix-tui-<version>-...`，`--version` 输出 `trix-tui 0.9.0`，`install.sh` 安装 `trix` 命令。早年的 `texiao` → `trix` 改名保留为历史。
+- **更名为 `trix-tui`**（0.9.1 又改为 `trix-effects`）：包名、crate 和仓库改为 `trix-tui`，命令仍是 `trix`（类似 `ripgrep` / `rg`）。Release 资产命名为 `trix-tui-<version>-...`，`--version` 输出 `trix-tui 0.9.0`，`install.sh` 安装 `trix` 命令。早年的 `texiao` → `trix` 改名保留为历史。
 - **像产品一样的帮助系统**：`trix --help` 渲染字标、真实 HUD 画面、按主题着色的特效网格、分组参数、主题色带和示例；`trix --help <effect>` 用真实场景渲染预览，并只列该特效的参数；`trix --help all` 是完整参数手册；`trix --list` 在 TTY 下是风格化目录，管道下是纯文本。错误信息增加“did you mean”建议。非 TTY、`NO_COLOR` 或 `--no-color` 下退化为对齐的 ASCII / 单色文本。
 - **帮助元数据集中**：特效摘要、说明、分类、快捷键、字符集支持和专属参数统一放在 `src/meta.rs`，同时驱动 `--help`、`--list`、`i` 面板和交互式 `h` 面板。
 - **截图全部按 ASCII 重录**：README 主预览使用默认 ASCII 字形和当前代码；Unicode 预览只放在 ASCII / Unicode 一节。GIF 也重新录制。

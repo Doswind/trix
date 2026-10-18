@@ -2,7 +2,7 @@
 
 ## Our pledge
 
-We want trix-tui to be a welcoming project for everyone, regardless of
+We want trix-effects to be a welcoming project for everyone, regardless of
 experience level, background, identity or language. Be respectful, assume
 good faith and focus on the work.
 
