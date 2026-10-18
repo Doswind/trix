@@ -1,9 +1,11 @@
 //! The effect scenes.  Each scene owns its state and draws into a Canvas.
 
+pub mod ballet;
 pub mod beams;
 pub mod blackhole;
 pub mod buddha;
 pub mod dandelion;
+pub mod demoneye;
 pub mod dragon;
 pub mod ecg;
 pub mod fairy;
@@ -15,6 +17,7 @@ pub mod landscape;
 pub mod map;
 pub mod mario;
 pub mod matrix;
+pub mod monalisa;
 pub mod rain;
 pub mod shanghai;
 pub mod solar;
@@ -24,10 +27,12 @@ pub mod tomjerry;
 pub mod tornado;
 pub mod traffic;
 
+pub use ballet::BalletScene;
 pub use beams::BeamsScene;
 pub use blackhole::BlackHoleScene;
 pub use buddha::BuddhaScene;
 pub use dandelion::DandelionScene;
+pub use demoneye::DemonEyeScene;
 pub use dragon::DragonScene;
 pub use ecg::EcgScene;
 pub use fairy::FairyScene;
@@ -39,6 +44,7 @@ pub use landscape::LandscapeScene;
 pub use map::MapScene;
 pub use mario::MarioScene;
 pub use matrix::MatrixScene;
+pub use monalisa::MonaLisaScene;
 pub use rain::RainScene;
 pub use shanghai::ShanghaiScene;
 pub use solar::SolarScene;

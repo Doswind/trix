@@ -381,12 +381,12 @@ impl Scene for LandscapeScene {
             " SHAN SHUI // FIVE COLOURS "
         };
         canvas.put_str(2, 0, title, SUN.scale(0.9));
-        canvas.put_str(
-            2,
-            h - 1,
-            "MOUNTAINS · LAKE · BOAT · GEESE · JUNGLE",
-            MIST.scale(0.55),
-        );
+        let footer = if unicode {
+            "MOUNTAINS · LAKE · BOAT · GEESE · JUNGLE"
+        } else {
+            "MOUNTAINS | LAKE | BOAT | GEESE | JUNGLE"
+        };
+        canvas.put_str(2, h - 1, footer, MIST.scale(0.55));
         let _ = self.seed;
     }
 }

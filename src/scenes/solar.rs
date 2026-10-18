@@ -1,4 +1,4 @@
-//! 太阳系 — the Sun and nine planets laid out on a single orbital line.
+//! 太阳系 — the Sun and eight planets laid out on a single orbital line.
 //!
 //! A starfield, an asteroid belt and a passing comet fill the rest of the
 //! screen; the planets themselves are ASCII spheres with distinct palettes,
@@ -37,12 +37,13 @@ pub struct SolarScene {
     asteroids: Vec<Asteroid>,
     stars: Vec<(f32, f32, f32, f32)>,
     sun_x: f32,
+    sun_y: f32,
     sun_r: f32,
     baseline: f32,
     label_y: f32,
 }
 
-const NAMES: [(&str, &str, f32, u32, u32, u8); 9] = [
+const NAMES: [(&str, &str, f32, u32, u32, u8); 8] = [
     ("MERCURY", "MER", 1.0, 0xa8a29e, 0xe7e5e4, 0),
     ("VENUS", "VEN", 1.5, 0xf5c542, 0xfff1b8, 0),
     ("EARTH", "EAR", 1.7, 0x38bdf8, 0x22c55e, 1),
@@ -51,7 +52,6 @@ const NAMES: [(&str, &str, f32, u32, u32, u8); 9] = [
     ("SATURN", "SAT", 3.0, 0xfde68a, 0xd6b25e, 3),
     ("URANUS", "URA", 2.2, 0x67e8f9, 0xcffafe, 0),
     ("NEPTUNE", "NEP", 2.1, 0x3b82f6, 0x93c5fd, 0),
-    ("PLUTO", "PLU", 0.9, 0xc4b5fd, 0xede9fe, 0),
 ];
 
 impl SolarScene {
@@ -64,6 +64,7 @@ impl SolarScene {
             asteroids: Vec::new(),
             stars: Vec::new(),
             sun_x: 0.0,
+            sun_y: 0.0,
             sun_r: 0.0,
             baseline: 0.0,
             label_y: 0.0,
@@ -78,13 +79,18 @@ impl SolarScene {
         self.stars.clear();
         let unit = ((self.w as f32 / 120.0).min(self.h as f32 / 34.0)).clamp(0.50, 1.25);
         self.sun_r = (h as f32 * 0.105).clamp(2.2, 4.6);
-        self.sun_x = self.sun_r + 3.0;
+        // The light source is fixed in the upper-left; the planets stay on
+        // the lower orbital line, so the fan is clipped before it crosses it.
+        self.sun_x = (w as f32 * 0.055).max(self.sun_r + 2.0);
+        let max_y = (h as f32 * 0.30).max(3.0);
+        let min_y = (self.sun_r + 1.0).min(max_y);
+        self.sun_y = (h as f32 * 0.17).clamp(min_y, max_y);
         self.baseline = (h as f32 * 0.62).clamp(2.0, (h as f32 - 2.0).max(2.0));
         let start = self.sun_x + self.sun_r + 4.5;
         let end = w as f32 - 7.0;
         let span = (end - start).max(8.0);
         for (i, (name, abbr, r, col, accent, kind)) in NAMES.iter().enumerate() {
-            let x = start + span * i as f32 / 8.0;
+            let x = start + span * i as f32 / 7.0;
             self.planets.push(Planet {
                 name,
                 abbr,
@@ -214,7 +220,7 @@ impl SolarScene {
 
     fn draw_sun(&self, canvas: &mut Canvas, theme: &Theme, t: f32) {
         let cx = self.sun_x.round() as isize;
-        let cy = self.baseline.round() as isize;
+        let cy = self.sun_y.round() as isize;
         let r = self.sun_r;
         let ry = (r * 0.78).max(0.6);
         let ri = r.ceil() as isize;
@@ -251,12 +257,14 @@ impl SolarScene {
             for s in (r.round() as isize + 1)..=(len.round() as isize) {
                 let x = cx + (a.cos() * s as f32).round() as isize;
                 let y = cy + (a.sin() * s as f32 * 0.48).round() as isize;
-                canvas.set(
-                    x,
-                    y,
-                    if s % 2 == 0 { '-' } else { '.' },
-                    theme.c(3).scale(0.55),
-                );
+                if y < self.baseline as isize {
+                    canvas.set(
+                        x,
+                        y,
+                        if s % 2 == 0 { '-' } else { '.' },
+                        theme.c(3).scale(0.55),
+                    );
+                }
             }
         }
         canvas.put_str(
@@ -268,13 +276,13 @@ impl SolarScene {
     }
     fn draw_sunburst(&self, canvas: &mut Canvas, theme: &Theme, t: f32) {
         let ox = self.sun_x;
-        let oy = self.baseline;
-        let max_len = (self.w as f32).max(self.h as f32) * 1.10;
+        let oy = self.sun_y;
+        let max_len = (self.w as f32).max(self.h as f32) * 1.20;
         let rays = 30usize;
-        let fan = std::f32::consts::PI + 0.30;
-        // A dim permanent fan from the sun, so the geometry is always visible.
+        let fan = std::f32::consts::FRAC_PI_2 + 0.18;
+        // A dim permanent fan from the upper-left sun, directed right/down.
         for k in 0..rays {
-            let a = -std::f32::consts::PI + (k as f32 + 0.5) / rays as f32 * fan;
+            let a = -0.04 + (k as f32 + 0.5) / rays as f32 * fan;
             let x = ox + a.cos() * max_len;
             let y = oy + a.sin() * max_len * 0.58;
             canvas.line(
@@ -294,7 +302,7 @@ impl SolarScene {
         let front = phase * max_len;
         let band = (max_len * 0.10).max(2.5);
         for k in 0..rays {
-            let a = -std::f32::consts::PI + (k as f32 + 0.5) / rays as f32 * fan;
+            let a = -0.04 + (k as f32 + 0.5) / rays as f32 * fan;
             let ca = a.cos();
             let sa = a.sin();
             let mut s = 2.0f32;
@@ -337,12 +345,12 @@ impl SolarScene {
         for (lag, strength) in [(0.0, 1.0f32), (0.10, 0.55), (0.20, 0.28)] {
             let radius = (front - max_len * lag).max(0.0);
             for k in 0..arc_n {
-                let a = -std::f32::consts::PI + (k as f32 + 0.5) / arc_n as f32 * fan;
+                let a = -0.04 + (k as f32 + 0.5) / arc_n as f32 * fan;
                 let x = (ox + a.cos() * radius).round() as isize;
                 let y = (oy + a.sin() * radius * 0.58).round() as isize;
                 if x >= 0 && y >= 0 && x < self.w as isize && y < self.baseline as isize {
                     let col = Rgb::hex(0xfff7d6).scale((0.45 + 0.45 * (1.0 - phase)) * strength);
-                    canvas.set(x, y, if k % 5 == 0 { '*' } else { '·' }, col);
+                    canvas.set(x, y, if k % 5 == 0 { '*' } else { '.' }, col);
                     if lag == 0.0 && k % 3 == 0 {
                         canvas.add_light(x, y, Rgb::hex(0xfbbf24), 0.30, '.');
                     }
@@ -472,7 +480,7 @@ impl Scene for SolarScene {
         if self.w >= title.len() + 4 {
             canvas.put_str_gradient(2, 0, title, &[theme.c(2), theme.c(3), theme.c(4)]);
         }
-        let right = "9 PLANETS // 1 AU";
+        let right = "8 PLANETS // 1 AU";
         if self.w >= right.len() + 10 {
             canvas.put_str(
                 self.w as isize - right.len() as isize - 2,
@@ -491,7 +499,7 @@ mod tests {
     fn nine_planets_on_a_line() {
         let mut s = SolarScene::new(5);
         s.resize(120, 36);
-        assert_eq!(s.planets.len(), 9);
+        assert_eq!(s.planets.len(), 8);
         for p in &s.planets {
             assert!((p.x - p.x.round()).abs() < 1.0);
         }

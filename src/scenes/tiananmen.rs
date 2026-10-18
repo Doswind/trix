@@ -1,7 +1,7 @@
 //! 光芒万丈 — Tiananmen gate tower radiating light.
 //!
 //! A centered red gate tower with golden tiered roofs sits against a dawn
-//! sky; rays and particles fan upward.  Unicode by default, `--ascii` works.
+//! sky; rays and particles fan upward.  ASCII by default; `--unicode` works.
 
 use std::f32::consts::TAU;
 

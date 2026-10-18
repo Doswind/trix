@@ -150,11 +150,12 @@ impl Scene for TornadoScene {
             // fill the cone with rotating debris
             for y in top as isize..base as isize {
                 let tt = ((base - y as f32) / hgt).clamp(0.0, 1.0);
-                let radius = 0.7 + funnel.size * (0.25 + tt * 0.95 + tt * tt * 1.15);
+                // Top is 1.5–2x wider than before; bottom tapers to a point.
+                let radius = 0.15 + funnel.size * (tt * 1.0 + tt * tt * 2.8);
                 let curve =
-                    (tt * 4.8 + t * 1.3 + funnel.phase).sin() * funnel.size * (0.35 + tt * 0.85);
-                for k in 0..7 {
-                    let a = funnel.phase + tt * 5.0 + k as f32 / 7.0 * TAU;
+                    (tt * 7.0 + t * 1.5 + funnel.phase).sin() * funnel.size * (0.50 + tt * 1.20);
+                for k in 0..28 {
+                    let a = funnel.phase + tt * 5.0 + k as f32 / 28.0 * TAU;
                     let x = cx + curve + a.cos() * radius;
                     let yy = y as f32 + a.sin() * radius * 0.25;
                     let ch = if unicode {
@@ -170,23 +171,24 @@ impl Scene for TornadoScene {
                             _ => '~',
                         }
                     };
-                    canvas.set(x as isize, yy as isize, ch, FUNNEL.scale(0.22 + tt * 0.45));
+                    canvas.set(x as isize, yy as isize, ch, FUNNEL.scale(0.66 + tt * 0.72));
                 }
             }
             // bright spiral edges
-            for k in 0..40 {
-                let tt = k as f32 / 40.0;
+            for k in 0..100 {
+                let tt = k as f32 / 100.0;
                 let y = base - tt * hgt;
-                let radius = 0.7 + funnel.size * (0.25 + tt * 0.95 + tt * tt * 1.15);
+                // Top is 1.5–2x wider than before; bottom tapers to a point.
+                let radius = 0.15 + funnel.size * (tt * 1.0 + tt * tt * 2.8);
                 let curve =
-                    (tt * 4.8 + t * 1.3 + funnel.phase).sin() * funnel.size * (0.35 + tt * 0.85);
+                    (tt * 7.0 + t * 1.5 + funnel.phase).sin() * funnel.size * (0.50 + tt * 1.20);
                 let a = funnel.phase + tt * 9.0 + (t * 0.9).sin();
                 let x = cx + curve + a.cos() * radius;
                 canvas.set(
                     x as isize,
                     y as isize,
                     if unicode { '✦' } else { '*' },
-                    FUNNEL.scale(0.75),
+                    FUNNEL.scale(1.0),
                 );
                 canvas.set(
                     (cx + curve - a.cos() * radius) as isize,
@@ -196,34 +198,54 @@ impl Scene for TornadoScene {
                 );
             }
             // dust fan at the base and cloud cap
-            // a much larger debris fan kicked up at the base
-            for k in 0..28 {
-                let a = k as f32 / 28.0 * TAU + funnel.phase + (t * 1.2).sin() * 0.15;
-                let reach = funnel.size * (1.4 + (k % 5) as f32 * 0.22);
-                let x = cx + a.cos() * reach;
-                let y = base + (a.sin() * 2.2).abs() + (k % 3) as f32 * 0.35;
+            // Heavy debris that is lifted high into and around the funnel.
+            for k in 0..110 {
+                let tt = ((k * 37 + (funnel.phase * 100.0) as usize) % 100) as f32 / 100.0;
+                let y = base - tt * hgt * 1.06;
+                let radius = 0.2 + funnel.size * (tt * 1.0 + tt * tt * 2.8);
+                let curve =
+                    (tt * 7.0 + t * 1.5 + funnel.phase).sin() * funnel.size * (0.50 + tt * 1.20);
+                let a = funnel.phase * 1.7 + tt * 11.0 + k as f32 * 0.9 + t * 0.5;
+                let spread = radius * (1.15 + (k % 5) as f32 * 0.12);
+                let x = cx + curve + a.cos() * spread;
+                let yy = y + a.sin() * spread * 0.30;
                 let ch = if unicode {
-                    match k % 4 {
+                    match k % 6 {
                         0 => '░',
                         1 => '▒',
-                        2 => '·',
-                        _ => '✦',
+                        2 => '✦',
+                        3 => '·',
+                        4 => '▴',
+                        _ => ':',
                     }
-                } else if k % 4 == 0 {
+                } else if k % 3 == 0 {
                     '*'
                 } else {
                     ':'
                 };
+                let col = if tt > 0.55 {
+                    FUNNEL.scale(0.35 + 0.35 * (1.0 - tt))
+                } else {
+                    DUST.scale(0.45)
+                };
+                canvas.set(x as isize, yy as isize, ch, col);
+            }
+            for k in 0..52 {
+                let a = k as f32 / 52.0 * TAU + funnel.phase + (t * 1.2).sin() * 0.15;
+                let reach = funnel.size * (1.2 + (k % 6) as f32 * 0.30);
+                let x = cx + a.cos() * reach;
+                let y = base + (a.sin() * 2.6).abs() + (k % 3) as f32 * 0.45;
+                let ch = if unicode { '░' } else { ':' };
                 canvas.set(
                     x as isize,
                     y as isize,
                     ch,
-                    DUST.scale(0.35 + (k % 4) as f32 * 0.10),
+                    DUST.scale(0.35 + (k % 4) as f32 * 0.08),
                 );
             }
-            for k in 0..8 {
-                let x = cx + (k as f32 - 4.0) * funnel.size * 0.45;
-                let y = base + 1.0 + (k % 2) as f32;
+            for k in 0..18 {
+                let x = cx + (k as f32 - 9.0) * funnel.size * 0.55;
+                let y = base + 1.0 + (k % 3) as f32;
                 canvas.set(
                     x as isize,
                     y as isize,
@@ -232,7 +254,8 @@ impl Scene for TornadoScene {
                 );
             }
             let cap_y = (top as isize).max(1);
-            for dx in -9..=9 {
+            let cap_half = (funnel.size * 2.8) as isize;
+            for dx in -cap_half..=cap_half {
                 canvas.set(
                     cx as isize + dx,
                     cap_y,

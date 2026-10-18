@@ -26,10 +26,12 @@ const HAZE: Rgb = Rgb::hex(0xfde68a);
 #[derive(Clone)]
 struct Flower {
     x: f32,
+    root_x: f32,
     head_y: f32,
     size: f32,
     phase: f32,
     lean: f32,
+    curve: f32,
 }
 
 #[derive(Clone)]
@@ -73,9 +75,26 @@ impl DandelionScene {
         self.flowers.clear();
         // Three clumps; each clump has two stems growing from one root so the
         // stems converge at the base and fan out to different heights.
+        let center_base = self.w as f32 * (0.06 + 0.105);
         for c in 0..3 {
             let base = self.w as f32 * (0.06 + c as f32 * 0.105)
                 + self.rng.range(-0.01, 0.01) * self.w as f32;
+            // Only the outer clumps' roots shift/bend inward toward the middle
+            // clump.  Their heads, flower styles and upper stems stay unchanged.
+            let root_x = if c == 0 {
+                base + (center_base - base) * 0.52
+            } else if c == 2 {
+                base - (base - center_base) * 0.52
+            } else {
+                base
+            };
+            let curve = if c == 0 {
+                2.0
+            } else if c == 2 {
+                -2.0
+            } else {
+                0.0
+            };
             for st in 0..2 {
                 let want = (self.h as f32
                     * (0.16 + c as f32 * 0.095 + st as f32 * 0.16 + self.rng.range(-0.035, 0.035)))
@@ -89,10 +108,12 @@ impl DandelionScene {
                 };
                 self.flowers.push(Flower {
                     x: base,
+                    root_x,
                     head_y,
-                    size: 4.4 + (c * 2 + st) as f32 * 0.22,
+                    size: (4.4 + (c * 2 + st) as f32 * 0.22) * 1.5,
                     phase: self.rng.range(0.0, TAU),
                     lean: lean + self.rng.range(-0.35, 0.35),
+                    curve,
                 });
             }
         }
@@ -129,7 +150,7 @@ impl DandelionScene {
 
     fn draw_flower(&self, canvas: &mut Canvas, f: &Flower, unicode: bool, t: f32) {
         let sway = (t * 0.8 + f.phase).sin() * 1.4 + f.lean;
-        let base_x = f.x.round() as isize;
+        let base_x = f.root_x.round() as isize;
         let ground = self.ground.round() as isize;
         let head_x = (f.x + sway).round() as isize;
         let head_y = f.head_y.round() as isize;
@@ -146,7 +167,9 @@ impl DandelionScene {
         let steps = (ground - head_y).max(1);
         for k in 0..steps {
             let p = k as f32 / steps as f32;
-            let x = base_x + ((head_x - base_x) as f32 * p) as isize;
+            let x = base_x
+                + ((head_x - base_x) as f32 * p) as isize
+                + (f.curve * (1.0 - p) * (p * std::f32::consts::PI).sin()) as isize;
             canvas.set(x, ground - k, stem, STEM.scale(0.9));
         }
         // long, narrow leaves fanning from the stem

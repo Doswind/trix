@@ -303,14 +303,19 @@ impl Scene for BuddhaScene {
                 theme.c(2).scale(bright * tw * 0.35),
             );
         }
-        // large mandala rings
+        // The original three mandala particle rings, now animated: each ring
+        // keeps its dot style but expands outward in its own phase.
         let cx = self.cx;
         let cy = self.h as f32 * 0.5;
         for ring in 0..3 {
-            let r = self.w as f32 * (0.18 + ring as f32 * 0.12);
-            let n = (r * 3.0) as usize + 24;
+            let phase = (t * 0.055 + ring as f32 / 3.0).rem_euclid(1.0);
+            let fade = (1.0 - phase).powf(0.65);
+            let base = self.w as f32 * (0.14 + ring as f32 * 0.10);
+            let r = base + phase * self.w as f32 * 0.18;
+            let n = (r * 3.4) as usize + 28;
             for k in 0..n {
-                let a = k as f32 / n as f32 * TAU + t * (0.04 + ring as f32 * 0.03);
+                let a =
+                    k as f32 / n as f32 * TAU + t * (0.04 + ring as f32 * 0.03) + ring as f32 * 0.2;
                 let x = (cx + a.cos() * r).round() as isize;
                 let y = (cy + a.sin() * r * 0.55).round() as isize;
                 if x < 0 || y < 0 || x >= self.w as isize || y >= self.h as isize {
@@ -326,7 +331,7 @@ impl Scene for BuddhaScene {
                     } else {
                         '.'
                     },
-                    GOLD.scale(0.12 + 0.10 * (k as f32 * 0.2 + t).sin().abs()),
+                    GOLD.scale(0.18 + 0.24 * fade + 0.08 * (k as f32 * 0.2 + t).sin().abs()),
                 );
             }
         }

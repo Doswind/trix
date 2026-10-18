@@ -23,6 +23,7 @@ pub struct EcgScene {
     w: usize,
     h: usize,
     dust: Vec<(f32, f32, f32, f32)>,
+    pattern: Vec<f32>,
 }
 
 impl EcgScene {
@@ -33,6 +34,7 @@ impl EcgScene {
             w: 0,
             h: 0,
             dust: Vec::new(),
+            pattern: Vec::new(),
         }
     }
 
@@ -49,6 +51,28 @@ impl EcgScene {
                 self.rng.range(0.05, 0.22),
             ));
         }
+        // A scrolling waveform with irregular beat spacing, heights and flat
+        // segments.  The buffer wraps seamlessly, so the trace never restarts.
+        self.pattern.clear();
+        let target = (self.w * 5).max(640);
+        while self.pattern.len() < target {
+            let gap = self.rng.below(10) + 4;
+            for _ in 0..gap {
+                self.pattern.push(0.0);
+            }
+            let amp = 0.38 + 0.85 * self.rng.f32();
+            let width = 0.72 + 0.80 * self.rng.f32();
+            let flat = 0.04 + 0.20 * self.rng.f32();
+            let points = 10 + (width * 7.0) as usize;
+            for j in 0..points {
+                let local = j as f32 / points as f32;
+                self.pattern.push(beat_variable(local, amp, width, flat));
+            }
+            let tail = self.rng.below(10);
+            for _ in 0..tail {
+                self.pattern.push(0.0);
+            }
+        }
     }
 }
 
@@ -57,6 +81,7 @@ fn gauss(p: f32, mu: f32, sig: f32) -> f32 {
     (-0.5 * d * d).exp()
 }
 
+#[cfg(test)]
 fn beat(p: f32) -> f32 {
     let p = p.rem_euclid(1.0);
     // P, Q, R, S and T lobes of a stylized lead-II complex.
@@ -64,6 +89,22 @@ fn beat(p: f32) -> f32 {
         - 0.32 * gauss(p, 0.34, 0.014)
         + 0.24 * gauss(p, 0.52, 0.060)
         + 0.025 * (p * TAU * 7.0).sin()
+}
+
+fn beat_variable(p: f32, amp: f32, width: f32, flat: f32) -> f32 {
+    let p = p.rem_euclid(1.0);
+    let v = -0.12 * gauss(p, 0.18, 0.035 * width)
+        + 0.10 * gauss(p, 0.25, 0.020 * width)
+        + amp * gauss(p, 0.30, 0.012 * width)
+        - 0.32 * amp * gauss(p, 0.34, 0.014 * width)
+        + 0.24 * amp * gauss(p, 0.52, 0.060 * width)
+        + 0.025 * (p * TAU * 7.0).sin();
+    // Randomly lengthen/shorten the flat line between T and the next P wave.
+    if p > 0.58 && p < (0.58 + flat).min(0.92) {
+        0.0
+    } else {
+        v
+    }
 }
 
 impl Scene for EcgScene {
@@ -130,9 +171,18 @@ impl Scene for EcgScene {
 
         // main ECG trace: x maps to phase, so the complex scrolls right-to-left
         let mut prev: Option<(isize, isize)> = None;
+        let pat = &self.pattern;
+        let scroll = if pat.is_empty() {
+            0
+        } else {
+            (t * 28.0) as usize % pat.len()
+        };
         for x in 0..w {
-            let phase = (x as f32 * 0.057 - t * 2.4).rem_euclid(1.0);
-            let v = beat(phase);
+            let v = if pat.is_empty() {
+                0.0
+            } else {
+                pat[(x as usize + scroll) % pat.len()]
+            };
             let y = (base as f32 - v * amp).round() as isize;
             if let Some((px, py)) = prev {
                 canvas.line(px, py, x, y, if unicode { '█' } else { '*' }, GREEN_BRIGHT);
@@ -184,7 +234,7 @@ impl Scene for EcgScene {
             " ECG MONITOR // LEAD II "
         };
         canvas.put_str(2, 0, title, GREEN_BRIGHT);
-        let bpm = 72 + ((t * 0.15).sin() * 2.0) as i32;
+        let bpm = 56 + ((t * 0.15).sin() * 2.0) as i32;
         let hr = format!("HR {:3} BPM", bpm);
         let rx = (w - hr.len() as isize - 2).max(2);
         canvas.put_str(rx, 0, &hr, GREEN_BRIGHT);

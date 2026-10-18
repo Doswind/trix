@@ -19,6 +19,7 @@ struct Pile {
     phase: f32,
     drift: f32,
     rate: f32,
+    tilt: f32,
 }
 
 struct Spark {
@@ -73,28 +74,41 @@ impl FireScene {
         self.piles.clear();
         let unit = (self.w as f32 / 120.0).clamp(0.5, 1.7);
         let n = (self.w / 24).clamp(3, 5);
+        let cx = self.w as f32 * 0.5;
         for i in 0..n {
-            let slot = (i as f32 + 0.5) / n as f32 * self.w as f32;
-            let jitter = self.rng.range(-0.30, 0.30) * self.w as f32 / n as f32;
+            let slot = (i as f32 - (n as f32 - 1.0) * 0.5) / (n as f32 * 1.5);
+            let x = cx + slot * self.w as f32 + self.rng.range(-0.8, 0.8) * unit;
+            let is_center = i == n / 2;
             self.piles.push(Pile {
-                x: (slot + jitter).clamp(3.0, self.w as f32 - 4.0),
-                width: self.rng.range(3.0, 5.5) * unit,
-                heat: self.rng.range(42.0, 55.0),
+                x: x.clamp(4.0, self.w as f32 - 5.0),
+                width: if is_center {
+                    7.2
+                } else {
+                    self.rng.range(5.0, 7.5)
+                } * unit,
+                heat: if is_center {
+                    60.0
+                } else {
+                    self.rng.range(34.0, 48.0)
+                },
                 phase: self.rng.range(0.0, std::f32::consts::TAU),
-                drift: self.rng.range(1.5, 4.5) * unit,
+                drift: self.rng.range(1.0, 3.0) * unit,
                 rate: self.rng.range(0.6, 1.4),
+                tilt: if is_center {
+                    0.0
+                } else if slot < 0.0 {
+                    -self.rng.range(8.0, 15.0)
+                } else {
+                    self.rng.range(8.0, 15.0)
+                },
             });
         }
-        // The middle pile is always the tallest; the others surround it.
-        if let Some(center) = self.piles.iter_mut().min_by(|a, b| {
-            (a.x - self.w as f32 * 0.5)
-                .abs()
-                .partial_cmp(&(b.x - self.w as f32 * 0.5).abs())
-                .unwrap_or(std::cmp::Ordering::Equal)
-        }) {
-            center.x = self.w as f32 * 0.5;
+        // Exactly one pile owns the tall center flame.
+        if let Some(center) = self.piles.get_mut(n / 2) {
+            center.x = cx;
             center.heat = 60.0;
-            center.width = 5.8 * unit;
+            center.width = 7.2 * unit;
+            center.tilt = 0.0;
         }
         // Warm start: a soft column of heat so the first frame already glows
         // instead of fading in from black.
@@ -102,7 +116,10 @@ impl FireScene {
             let depth = (y + 1) as f32 / self.h as f32;
             for x in 0..self.w {
                 let n = (hash2(x as i64, y as i64, self.seed) & 0xff) as f32 / 255.0;
-                self.heat[y * self.w + x] = ((depth.powf(3.0) * 34.0 + n * 3.0).min(36.0)) as u8;
+                let mound = (1.0 - (x as f32 - self.w as f32 * 0.5).abs() / (self.w as f32 * 0.50))
+                    .max(0.0);
+                self.heat[y * self.w + x] =
+                    ((depth.powf(3.0) * (8.0 + 26.0 * mound) + n * 3.0).min(36.0)) as u8;
             }
         }
     }
@@ -121,7 +138,9 @@ impl FireScene {
         // instead of one central bonfire.
         for x in 0..w {
             let xf = x as f32;
-            let mut v = 16.0;
+            let center = self.w as f32 * 0.5;
+            let dxc = (xf - center) / (self.w as f32 * 0.44);
+            let mut v = 5.0 + 22.0 * (-dxc * dxc).exp();
             for pile in &self.piles {
                 let cx = pile.x + (t * pile.rate + pile.phase).sin() * pile.drift;
                 let d = (xf - cx) / pile.width;
@@ -248,7 +267,8 @@ impl Scene for FireScene {
                 env = env * 0.95 + 0.04;
                 // Bottom bed: the piles merge into one continuous fire line,
                 // while the tops above remain separate tongues.
-                let bed = 0.98 * depth.powf(5.0);
+                let dxc = (xf - self.w as f32 * 0.5) / (self.w as f32 * 0.48);
+                let bed = 0.98 * depth.powf(5.0) * (-dxc * dxc).exp();
                 env = env.max(bed);
                 let top_fade = (y as f32 / 1.5).clamp(0.0, 1.0) * 0.25 + 0.75;
                 raw *= env * top_fade;

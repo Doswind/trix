@@ -198,7 +198,9 @@ impl BlackHoleScene {
     fn draw_disk(&self, canvas: &mut Canvas, theme: &Theme, t: f32, dust: bool) {
         let list = if dust { &self.dust } else { &self.disk };
         for p in list {
-            let a = p.a + t * p.speed * (self.radius / p.r.max(0.1)).powf(0.9);
+            // Every ring now uses only the simulated angle.  The old extra
+            // `t * ...` term bypassed `spin` for the disk (and, earlier, dust).
+            let a = p.a;
             let r = p.r;
             let x = self.cx + a.cos() * r;
             let y = self.cy + a.sin() * r * 0.53;
@@ -231,7 +233,7 @@ impl BlackHoleScene {
         let _ = theme;
     }
 
-    fn draw_ring(&self, canvas: &mut Canvas, theme: &Theme, t: f32) {
+    fn draw_ring(&self, canvas: &mut Canvas, theme: &Theme, t: f32, spin: f32) {
         let cx = self.cx;
         let cy = self.cy;
         let r = self.radius;
@@ -252,7 +254,7 @@ impl BlackHoleScene {
         }
         // four bright polar flares
         for k in 0..4 {
-            let a = k as f32 / 4.0 * TAU + t * 0.05;
+            let a = k as f32 / 4.0 * TAU + t * 0.05 * spin * 0.18;
             let sx = (cx + a.cos() * r).round() as isize;
             let sy = (cy + a.sin() * r * 0.5).round() as isize;
             for d in 1..=4 {
@@ -270,7 +272,7 @@ impl BlackHoleScene {
         }
         // outer lensed ring
         for k in 0..140 {
-            let a = k as f32 / 140.0 * TAU + t * 0.15;
+            let a = k as f32 / 140.0 * TAU + t * 0.15 * spin * 0.18;
             let rr = r * 1.12;
             let x = (cx + a.cos() * rr).round() as isize;
             let y = (cy + a.sin() * rr * 0.55).round() as isize;
@@ -286,7 +288,7 @@ impl BlackHoleScene {
             let rr = r * (1.45 + band as f32 * 0.55);
             let n = 90 + band * 20;
             for k in 0..n {
-                let a = k as f32 / n as f32 * TAU + t * (0.35 - band as f32 * 0.07);
+                let a = k as f32 / n as f32 * TAU + t * (0.35 - band as f32 * 0.07) * spin * 0.18;
                 let x = (cx + a.cos() * rr).round() as isize;
                 let y = (cy + a.sin() * rr * 0.42).round() as isize;
                 if (k + band) % 3 == 0 {
@@ -376,7 +378,7 @@ impl Scene for BlackHoleScene {
         let mut respawn_disk = Vec::new();
         for (i, p) in self.disk.iter_mut().enumerate() {
             p.r -= dt * (0.25 + 0.9 * self.radius / p.r.max(0.3));
-            p.a += dt * p.speed * 3.0 * spin;
+            p.a += dt * p.speed * 0.75 * spin;
             if p.r <= self.radius * 0.95 {
                 self.consumed += 1;
                 self.flash = 1.0;
@@ -389,14 +391,15 @@ impl Scene for BlackHoleScene {
             self.disk[i] = p;
         }
         for p in self.dust.iter_mut() {
-            // Outer stars orbit at half the old angular speed.
-            p.a += dt * p.speed * 0.35 * spin;
+            // Final slow-down after fixing the render-side extra rotation.
+            p.a += dt * p.speed * 0.0875 * spin;
         }
         let mut respawn_infall = Vec::new();
         for (i, p) in self.infall.iter_mut().enumerate() {
             p.life -= dt;
             p.r -= dt * (1.0 + 2.0 * self.radius / p.r.max(0.3));
-            p.a += dt * p.speed * spin;
+            // Bright infalling stars also get one final half-speed pass.
+            p.a += dt * p.speed * spin * 0.25;
             if p.r <= self.radius || p.life <= 0.0 {
                 self.consumed += 1;
                 self.flash = 1.0;
@@ -445,7 +448,7 @@ impl Scene for BlackHoleScene {
                 }
             }
         }
-        self.draw_ring(canvas, theme, t);
+        self.draw_ring(canvas, theme, t, f.tune.spin.clamp(0.05, 4.0));
 
         // Infalling stars, with a bright trail pointing at the horizon.
         for p in &self.infall {

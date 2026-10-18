@@ -236,7 +236,7 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                 "charset" => {
                     let v = take_value(args, &mut i, inline, "--charset")?;
                     opts.charset = Some(Charset::parse(&v).ok_or_else(|| {
-                        format!("invalid --charset '{v}' (expected kana or ascii)")
+                        format!("invalid --charset '{v}' (expected kana, ascii or unicode)")
                     })?);
                 }
                 "color" => {
@@ -477,17 +477,22 @@ EFFECTS
   galaxy    满天星河    full-screen Milky Way starfield
   buddha    佛光普照    glowing Buddha, halo and lotus mandala
   tomjerry  猫和老鼠    Tom chasing Jerry through a space station
-  mario     超级马里奥  mushroom-bumping platformer (Unicode / --ascii)
-  ecg       心率跳动    glowing ECG monitor (Unicode / --ascii)
+  mario     超级马里奥  mushroom-bumping platformer (ASCII; --unicode)
+  ecg       心率跳动    glowing ECG monitor (ASCII; --unicode)
   dandelion 蒲公英      clustered stems, staggered blooms, drifting seeds
   fish      鱼缸        colorful aquarium fish in every direction
   landscape 五光十色    mountains, lake, boat, geese and jungle
-  shanghai  东方明珠    Shanghai Bund and Oriental Pearl (ASCII default)
+  shanghai  东方明珠    Shanghai Bund and Oriental Pearl
   tiananmen 光芒万丈    Tiananmen gate radiating light
   traffic   车水马龙    city street with cars; --street horizontal|vertical
   fairy     仙女散花    flying fairy scattering petals
   tornado   龙卷风      twisted funnels, 2x wider tops, heavy base debris
   storm     电闪雷鸣    rain, clouds and full-screen lightning flashes
+  monalisa  蒙娜丽莎      living Mona Lisa oil painting: gaze, blink, smile
+  ballet    舞动芭蕾    hand-in-hand duet dancing across the whole stage
+  demoneye  恶魔之眼    giant watching eye with random gaze and blinks
+
+  Dual-form effects start in ASCII; add --unicode for the Unicode variant.
 
 OPTIONS
   -e, --effect <name>     Effect to run; omit to loop all effects
@@ -497,9 +502,9 @@ OPTIONS
   -s, --speed <0.05-8>    Animation speed multiplier           [default: 1.0]
       --chase-speed <f>   Alias of --speed (Tom & Jerry chase)
   -t, --theme <name>      Color theme, see below               [effect default]
-      --charset <mode>    kana | ascii | unicode              [see effect defaults]
-      --unicode           Force Unicode single-cell glyphs
-      --ascii             Force ASCII fallback
+      --charset <mode>    kana | ascii | unicode                [default: ascii]
+      --unicode           Opt in to Unicode single-cell glyphs
+      --ascii             Force ASCII glyphs (the default)
       --color <mode>      auto | truecolor | 256 | 16 | mono   [default: auto]
       --density <f>       beams/fireworks/galaxy density      [default: 1.0]
       --spin <f>          black hole rotation speed            [default: 0.5]
@@ -535,10 +540,11 @@ THEMES
 
 KEYS (interactive)
   q / Esc   quit            space   pause
-  n / p     next/prev      1-9,0,[ ]  first 12 effects; m/e/d more
+  n / p     next/prev      1-9,0,[ ]  first 12 effects; letters more
   m/e/d     Mario/ECG/Dandelion
   f/l/b/j   Fish/Landscape/Bund/Gate
   c/x/z/k   Traffic/Fairy/Tornado/Storm
+  o/v/g     Mona Lisa/Ballet/Demon eye
   t         next theme     + / -   speed
   r         restart        i       status line
   h         help overlay
@@ -550,13 +556,16 @@ EXAMPLES
   trix fire --fps 60 --theme ember
   trix dragon -f 45 -t gold
   trix map --theme ice
-  trix matrix --ascii
+  trix matrix --unicode
   trix map --snapshot earth.ans --size 120x36 --frames 150
-  trix mario --ascii
+  trix mario --unicode
   trix dandelion --seed-count 180 --seed-speed 1.4
   trix traffic --street vertical
   trix fairy --petal-count 160 --petal-speed 1.5
   trix tornado --tornado-count 5 --tornado-speed 1.6
+  trix monalisa
+  trix ballet --speed 1.3
+  trix demoneye
 "#,
         VERSION = VERSION,
         themes = theme::THEMES

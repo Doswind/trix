@@ -428,7 +428,10 @@ fn interactive(opts: Options) -> i32 {
                     | 'c'
                     | 'x'
                     | 'z'
-                    | 'k'),
+                    | 'k'
+                    | 'o'
+                    | 'v'
+                    | 'g'),
                 ) => {
                     let idx = match c {
                         '0' => 9,
@@ -445,6 +448,9 @@ fn interactive(opts: Options) -> i32 {
                         'x' => 20,
                         'z' => 21,
                         'k' => 22,
+                        'o' => 23,
+                        'v' => 24,
+                        'g' => 25,
                         _ => c as usize - '1' as usize,
                     };
                     let target = EffectId::from_index(idx);
@@ -763,6 +769,7 @@ fn draw_help(
         ("m / e / d", "Mario / ECG / Dandelion".into()),
         ("f l b j", "Fish / Landscape / Bund / Gate".into()),
         ("c x z k", "Traffic / Fairy / Tornado / Storm".into()),
+        ("o v g", "Mona Lisa / Ballet / Demon eye".into()),
         ("t", "cycle theme".into()),
         ("+ / -", format!("speed  {:.2}x", speed)),
         ("r", "restart current effect".into()),

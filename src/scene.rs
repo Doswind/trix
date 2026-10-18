@@ -3,10 +3,10 @@
 use crate::canvas::Canvas;
 use crate::cli::Charset;
 use crate::scenes::{
-    BeamsScene, BlackHoleScene, BuddhaScene, DandelionScene, DragonScene, EcgScene, FairyScene,
-    FireScene, FireworksScene, FishScene, GalaxyScene, LandscapeScene, MapScene, MarioScene,
-    MatrixScene, RainScene, ShanghaiScene, SolarScene, StormScene, TiananmenScene, TomJerryScene,
-    TornadoScene, TrafficScene,
+    BalletScene, BeamsScene, BlackHoleScene, BuddhaScene, DandelionScene, DemonEyeScene,
+    DragonScene, EcgScene, FairyScene, FireScene, FireworksScene, FishScene, GalaxyScene,
+    LandscapeScene, MapScene, MarioScene, MatrixScene, MonaLisaScene, RainScene, ShanghaiScene,
+    SolarScene, StormScene, TiananmenScene, TomJerryScene, TornadoScene, TrafficScene,
 };
 use crate::theme::{self, Theme};
 
@@ -35,10 +35,13 @@ pub enum EffectId {
     Fairy,
     Tornado,
     Storm,
+    MonaLisa,
+    Ballet,
+    DemonEye,
 }
 
 impl EffectId {
-    pub const ALL: [EffectId; 23] = [
+    pub const ALL: [EffectId; 26] = [
         EffectId::Rain,
         EffectId::Fire,
         EffectId::Dragon,
@@ -62,6 +65,9 @@ impl EffectId {
         EffectId::Fairy,
         EffectId::Tornado,
         EffectId::Storm,
+        EffectId::MonaLisa,
+        EffectId::Ballet,
+        EffectId::DemonEye,
     ];
 
     pub fn key(self) -> &'static str {
@@ -89,6 +95,9 @@ impl EffectId {
             EffectId::Fairy => "fairy",
             EffectId::Tornado => "tornado",
             EffectId::Storm => "storm",
+            EffectId::MonaLisa => "monalisa",
+            EffectId::Ballet => "ballet",
+            EffectId::DemonEye => "demoneye",
         }
     }
 
@@ -117,6 +126,9 @@ impl EffectId {
             EffectId::Fairy => "Fairy petals",
             EffectId::Tornado => "Tornado",
             EffectId::Storm => "Thunderstorm",
+            EffectId::MonaLisa => "Mona Lisa",
+            EffectId::Ballet => "Ballet duet",
+            EffectId::DemonEye => "Demon eye",
         }
     }
 
@@ -145,11 +157,14 @@ impl EffectId {
             EffectId::Fairy => "仙女散花",
             EffectId::Tornado => "龙卷风",
             EffectId::Storm => "电闪雷鸣",
+            EffectId::MonaLisa => "蒙娜丽莎",
+            EffectId::Ballet => "舞动芭蕾",
+            EffectId::DemonEye => "恶魔之眼",
         }
     }
 
     pub fn parse(s: &str) -> Option<Self> {
-        match s.to_ascii_lowercase().replace(['_', '-'], "").as_str() {
+        match s.to_ascii_lowercase().replace(['_', '-', ' '], "").as_str() {
             "rain" | "code" | "coderain" | "codefall" => Some(EffectId::Rain),
             "fire" | "flame" | "firestorm" => Some(EffectId::Fire),
             "dragon" | "long" | "coil" | "orbit" => Some(EffectId::Dragon),
@@ -181,6 +196,15 @@ impl EffectId {
             "fairy" | "apsara" | "petals" | "flowerfall" => Some(EffectId::Fairy),
             "tornado" | "twister" | "cyclone" => Some(EffectId::Tornado),
             "storm" | "thunder" | "lightning" | "rainstorm" => Some(EffectId::Storm),
+            "monalisa" | "mona" | "lisa" | "gioconda" | "davinci" | "leonardo" | "louvre" => {
+                Some(EffectId::MonaLisa)
+            }
+            "ballet" | "dance" | "dancers" | "duet" | "pasdedeux" | "ballerina" | "waltz" => {
+                Some(EffectId::Ballet)
+            }
+            "demoneye" | "eye" | "demon" | "evileye" | "watcher" | "oculus" | "gaze" => {
+                Some(EffectId::DemonEye)
+            }
             _ => None,
         }
     }
@@ -226,25 +250,18 @@ impl EffectId {
             EffectId::Fairy => "plasma",
             EffectId::Tornado => "ice",
             EffectId::Storm => "ice",
+            EffectId::MonaLisa => "gold",
+            EffectId::Ballet => "aurora",
+            EffectId::DemonEye => "ember",
         })
         .unwrap_or(&theme::THEMES[0])
     }
 
+    /// Effects that support both glyph sets start in ASCII.  Unicode is an
+    /// explicit opt-in (`--unicode` / `--charset unicode`) so the default
+    /// works in every terminal and every font.
     pub fn default_charset(self) -> Charset {
-        match self {
-            EffectId::Matrix
-            | EffectId::Mario
-            | EffectId::Ecg
-            | EffectId::Dandelion
-            | EffectId::FishTank
-            | EffectId::Landscape
-            | EffectId::Tiananmen
-            | EffectId::Fairy
-            | EffectId::Tornado
-            | EffectId::Storm => Charset::Unicode,
-            EffectId::Shanghai | EffectId::Traffic => Charset::Ascii,
-            _ => Charset::Ascii,
-        }
+        Charset::Ascii
     }
 }
 
@@ -332,6 +349,9 @@ pub fn build(id: EffectId, seed: u64) -> Box<dyn Scene> {
         EffectId::Fairy => Box::new(FairyScene::new(seed)),
         EffectId::Tornado => Box::new(TornadoScene::new(seed)),
         EffectId::Storm => Box::new(StormScene::new(seed)),
+        EffectId::MonaLisa => Box::new(MonaLisaScene::new(seed)),
+        EffectId::Ballet => Box::new(BalletScene::new(seed)),
+        EffectId::DemonEye => Box::new(DemonEyeScene::new(seed)),
     }
 }
 
@@ -348,7 +368,17 @@ mod tests {
         assert_eq!(EffectId::parse("supermario"), Some(EffectId::Mario));
         assert_eq!(EffectId::parse("heartbeat"), Some(EffectId::Ecg));
         assert_eq!(EffectId::parse("dandy"), Some(EffectId::Dandelion));
+        assert_eq!(EffectId::parse("mona-lisa"), Some(EffectId::MonaLisa));
+        assert_eq!(EffectId::parse("pas de deux"), Some(EffectId::Ballet));
+        assert_eq!(EffectId::parse("evil_eye"), Some(EffectId::DemonEye));
         assert_eq!(EffectId::parse("nope"), None);
+    }
+
+    #[test]
+    fn every_effect_defaults_to_ascii() {
+        for id in EffectId::ALL {
+            assert_eq!(id.default_charset(), Charset::Ascii, "{:?}", id);
+        }
     }
 
     #[test]
@@ -376,6 +406,14 @@ mod tests {
                 scene.draw(&mut canvas, &frame);
             }
             assert!(canvas.ink() > 20, "{:?} drew {} cells", id, canvas.ink());
+            for cell in &canvas.cells {
+                assert!(
+                    cell.ch.is_ascii(),
+                    "{:?} leaked non-ASCII glyph {:?} in its default charset",
+                    id,
+                    cell.ch
+                );
+            }
             let ansi = canvas.render_ansi(ColorMode::True);
             assert!(ansi.len() > 100);
         }
