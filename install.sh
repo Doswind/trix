@@ -6,6 +6,7 @@
 # Environment:
 #   TRIX_VERSION      release version to install (default: latest)
 #   TRIX_INSTALL_DIR  destination directory (default: ~/.local/bin)
+#   TRIX_BASE_URL     override the release download base (for mirrors/tests)
 set -euo pipefail
 
 REPO="Doswind/trix-tui"
@@ -18,6 +19,7 @@ die() { printf 'trix-tui installer: %s\n' "$*" >&2; exit 1; }
 
 command -v curl >/dev/null 2>&1 || die "curl is required"
 command -v tar >/dev/null 2>&1 || die "tar is required"
+CURL=(curl -fsSL --retry 3 --retry-delay 1 --http1.1)
 
 case "$(uname -s)" in
     Darwin) OS="macos" ;;
@@ -40,7 +42,7 @@ esac
 
 if [ -z "$VERSION" ]; then
     say "Looking up the latest trix-tui release..."
-    VERSION="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
+    VERSION="$("${CURL[@]}" "https://api.github.com/repos/$REPO/releases/latest" \
         | sed -n 's/.*"tag_name": *"v\{0,1\}\([^"]*\)".*/\1/p' \
         | head -n 1)"
     [ -n "$VERSION" ] || die "could not determine the latest version; set TRIX_VERSION"
@@ -48,14 +50,14 @@ fi
 VERSION="${VERSION#v}"
 
 ASSET="trix-tui-${VERSION}-${PLATFORM}.tar.gz"
-BASE="https://github.com/$REPO/releases/download/v${VERSION}"
+BASE="${TRIX_BASE_URL:-https://github.com/$REPO/releases/download/v${VERSION}}"
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 say "Downloading $ASSET..."
-curl -fsSL "$BASE/$ASSET" -o "$TMP/$ASSET" || die "download failed: $BASE/$ASSET"
-curl -fsSL "$BASE/SHA256SUMS" -o "$TMP/SHA256SUMS" || die "could not download SHA256SUMS"
+"${CURL[@]}" "$BASE/$ASSET" -o "$TMP/$ASSET" || die "download failed: $BASE/$ASSET"
+"${CURL[@]}" "$BASE/SHA256SUMS" -o "$TMP/SHA256SUMS" || die "could not download SHA256SUMS"
 
 if command -v shasum >/dev/null 2>&1; then
     HASH_CMD="shasum -a 256"
@@ -65,8 +67,10 @@ else
     die "neither shasum nor sha256sum is available; cannot verify the download"
 fi
 
-LINE="$(grep " $ASSET\$" "$TMP/SHA256SUMS" || true)"
+LINE="$(grep -F "$ASSET" "$TMP/SHA256SUMS" | head -n 1 || true)"
 [ -n "$LINE" ] || die "SHA256SUMS does not list $ASSET"
+# The release job writes paths as ./, while tar extracts to the temp dir root.
+LINE="${LINE//  .\//  }"
 ( cd "$TMP" && printf '%s\n' "$LINE" | $HASH_CMD -c - ) || die "checksum verification failed"
 
 tar -xzf "$TMP/$ASSET" -C "$TMP" || die "could not extract $ASSET"
