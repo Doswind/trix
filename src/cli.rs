@@ -58,8 +58,6 @@ pub struct Options {
     pub seed_count: u32,
     pub seed_speed: f32,
     pub street_vertical: bool,
-    pub petal_count: u32,
-    pub petal_speed: f32,
     pub tornado_count: u32,
     pub tornado_speed: f32,
     pub life_cycle: f32,
@@ -102,8 +100,6 @@ impl Default for Options {
             seed_count: 90,
             seed_speed: 1.0,
             street_vertical: false,
-            petal_count: 80,
-            petal_speed: 1.0,
             tornado_count: 3,
             tornado_speed: 1.0,
             life_cycle: 120.0,
@@ -201,14 +197,6 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                     };
                 }
                 "vertical" => opts.street_vertical = true,
-                "petal-count" | "petals" => {
-                    let v = take_value(args, &mut i, inline, "--petal-count")?;
-                    opts.petal_count = parse_num(&v, "--petal-count")?;
-                }
-                "petal-speed" | "fall-speed" => {
-                    let v = take_value(args, &mut i, inline, "--petal-speed")?;
-                    opts.petal_speed = parse_num(&v, "--petal-speed")?;
-                }
                 "tornado-count" => {
                     let v = take_value(args, &mut i, inline, "--tornado-count")?;
                     opts.tornado_count = parse_num(&v, "--tornado-count")?;
@@ -497,12 +485,6 @@ fn validate(opts: &mut Options) -> Result<(), String> {
     if !opts.transition_secs.is_finite() || !(0.0..=5.0).contains(&opts.transition_secs) {
         return Err("--transition-secs must be between 0 and 5 seconds".into());
     }
-    if !(1..=300).contains(&opts.petal_count) {
-        return Err("--petal-count must be between 1 and 300".into());
-    }
-    if !opts.petal_speed.is_finite() || !(0.05..=4.0).contains(&opts.petal_speed) {
-        return Err("--petal-speed must be between 0.05 and 4.0".into());
-    }
     if !(1..=8).contains(&opts.tornado_count) {
         return Err("--tornado-count must be between 1 and 8".into());
     }
@@ -545,7 +527,6 @@ EFFECTS
   shanghai  东方明珠    Shanghai Bund and Oriental Pearl
   tiananmen 光芒万丈    Tiananmen gate radiating light
   traffic   车水马龙    city street with cars; --street horizontal|vertical
-  fairy     仙女散花    flying fairy scattering petals
   tornado   龙卷风      twisted funnels, 2x wider tops, heavy base debris
   storm     电闪雷鸣    rain, clouds and full-screen lightning flashes
   monalisa  蒙娜丽莎      Mona Lisa cut-out: ANSI cells + ASCII, static; --ghost
@@ -580,8 +561,6 @@ OPTIONS
       --seed-count <n>    dandelion drifting seeds            [default: 90]
       --seed-speed <f>    dandelion seed drift speed          [default: 1.0]
       --street <dir>      traffic street: horizontal|vertical [default: horizontal]
-      --petal-count <n>   fairy falling petals                [default: 80]
-      --petal-speed <f>   fairy petal fall speed              [default: 1.0]
       --tornado-count <n> tornado count                        [default: 3]
       --tornado-speed <f> tornado travel speed                 [default: 1.0]
       --life-cycle <secs> life: 0-100 cycle length            [default: 120]
@@ -613,7 +592,7 @@ KEYS (interactive)
   n / p     next/prev      1-9,0,[ ]  first 12 effects; letters more
   m/e/d     Mario/ECG/Dandelion
   f/l/b/j   Fish/Landscape/Bund/Gate
-  c/x/z/k   Traffic/Fairy/Tornado/Storm
+  c/z/k     Traffic/Tornado/Storm
   o/v/g     Mona Lisa/Ballet/Demon eye
   y         Life trajectory
   t         next theme     + / -   speed
@@ -633,7 +612,6 @@ EXAMPLES
   trix mario --unicode
   trix dandelion --seed-count 180 --seed-speed 1.4
   trix traffic --street vertical
-  trix fairy --petal-count 160 --petal-speed 1.5
   trix tornado --tornado-count 5 --tornado-speed 1.6
   trix monalisa
   trix ballet --speed 1.3
@@ -742,7 +720,7 @@ mod tests {
     #[test]
     fn parses_playlist_and_street() {
         let Parsed::Run(o) = parse_args(&args(
-            "--playlist random --switch 8 --street vertical --petal-count 150 --petal-speed 1.5 --tornado-count 5 --tornado-speed 1.8 --life-cycle 90",
+            "--playlist random --switch 8 --street vertical --tornado-count 5 --tornado-speed 1.8 --life-cycle 90",
         ))
         .unwrap()
         else {
@@ -751,7 +729,6 @@ mod tests {
         assert_eq!(o.playlist, PlaylistMode::Random);
         assert!((o.switch_secs - 8.0).abs() < f32::EPSILON);
         assert!(o.street_vertical);
-        assert_eq!(o.petal_count, 150);
         assert_eq!(o.tornado_count, 5);
         assert!((o.life_cycle - 90.0).abs() < f32::EPSILON);
     }
@@ -820,7 +797,6 @@ mod tests {
         assert!(parse_args(&args("--playlist sideways")).is_err());
         assert!(parse_args(&args("--switch 0")).is_err());
         assert!(parse_args(&args("traffic --street diagonal")).is_err());
-        assert!(parse_args(&args("fairy --petal-count 0")).is_err());
         assert!(parse_args(&args("tornado --tornado-count 9")).is_err());
         assert!(parse_args(&args("life --life-cycle 4")).is_err());
         assert!(parse_args(&args("life --life-cycle 601")).is_err());

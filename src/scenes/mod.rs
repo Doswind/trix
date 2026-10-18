@@ -8,7 +8,8 @@ pub mod dandelion;
 pub mod demoneye;
 pub mod dragon;
 pub mod ecg;
-pub mod fairy;
+// `fairy` is intentionally left out of the build for now; its source stays in
+// this directory so the effect can be finished and re-enabled later.
 pub mod fire;
 pub mod fireworks;
 pub mod fish;
@@ -37,7 +38,6 @@ pub use dandelion::DandelionScene;
 pub use demoneye::DemonEyeScene;
 pub use dragon::DragonScene;
 pub use ecg::EcgScene;
-pub use fairy::FairyScene;
 pub use fire::FireScene;
 pub use fireworks::FireworksScene;
 pub use fish::FishScene;

@@ -4,14 +4,14 @@
 
 > 前身：texiao（原项目名）；从 v0.5.0 起正式更名为 **trix**。
 
-> 终端里的科幻 ASCII / Unicode 特效引擎 — 代码雨、火焰、巨龙、世界地图、NASA 登录、黑洞、光束、烟花、太阳系、银河、佛光、Tom & Jerry、超级马里奥、心率跳动、蒲公英、水族馆、山水、东方明珠、天安门、车水马龙、仙女散花、龙卷风、电闪雷鸣、蒙娜丽莎、冰上芭蕾、恶魔之眼、生命的轨迹。
-> Rust 单线程、无异步运行时、diff 渲染，启动约 **2 ms**，常驻内存约 **2.1–2.3 MB**，30 FPS 下 CPU 约 **0.2–1.4%** 单核。当前 **v0.8.0**；开发版新增「生命的轨迹」，共 **27** 个特效，双字形特效默认 ASCII。
+> 终端里的科幻 ASCII / Unicode 特效引擎 — 代码雨、火焰、巨龙、世界地图、NASA 登录、黑洞、光束、烟花、太阳系、银河、佛光、Tom & Jerry、超级马里奥、心率跳动、蒲公英、水族馆、山水、东方明珠、天安门、车水马龙、龙卷风、电闪雷鸣、蒙娜丽莎、冰上芭蕾、恶魔之眼、生命的轨迹。
+> Rust 单线程、无异步运行时、diff 渲染，启动约 **2 ms**，常驻内存约 **2.1–2.3 MB**，30 FPS 下 CPU 约 **0.2–1.4%** 单核。当前 **v0.8.0**；开发版新增「生命的轨迹」，共 **26** 个特效，双字形特效默认 ASCII。
 
 ![release](https://github.com/Doswind/trix/actions/workflows/release.yml/badge.svg)
 
 ![trix overview](docs/overview.png)
 
-> 动图/预览：[代码雨](docs/rain.gif) · [火焰](docs/fire.gif) · [巨龙](docs/dragon.gif) · [NASA 登录](docs/matrix.gif) · [黑洞](docs/blackhole.gif) · [光束](docs/beams.gif) · [烟花](docs/fireworks.gif) · [太阳系](docs/solar.gif) · [银河](docs/galaxy.gif) · [佛光](docs/buddha.gif) · [Tom & Jerry](docs/tomjerry.gif) · [马里奥](docs/mario.gif) · [心电](docs/ecg.gif) · [蒲公英](docs/dandelion.gif) · [水族馆](docs/fish.gif) · [山水](docs/landscape.gif) · [东方明珠](docs/shanghai.gif) · [天安门](docs/tiananmen.gif) · [车水马龙](docs/traffic.gif) · [仙女](docs/fairy.gif) · [龙卷风](docs/tornado.gif) · [电闪雷鸣](docs/storm.gif) · [蒙娜丽莎](docs/monalisa.png) · [鬼影版](docs/monalisa-ghost.gif) · [冰上芭蕾](docs/ballet.gif) · [恶魔之眼](docs/demoneye.gif) · [生命的轨迹](docs/life.gif)
+> 动图/预览：[代码雨](docs/rain.gif) · [火焰](docs/fire.gif) · [巨龙](docs/dragon.gif) · [NASA 登录](docs/matrix.gif) · [黑洞](docs/blackhole.gif) · [光束](docs/beams.gif) · [烟花](docs/fireworks.gif) · [太阳系](docs/solar.gif) · [银河](docs/galaxy.gif) · [佛光](docs/buddha.gif) · [Tom & Jerry](docs/tomjerry.gif) · [马里奥](docs/mario.gif) · [心电](docs/ecg.gif) · [蒲公英](docs/dandelion.gif) · [水族馆](docs/fish.gif) · [山水](docs/landscape.gif) · [东方明珠](docs/shanghai.gif) · [天安门](docs/tiananmen.gif) · [车水马龙](docs/traffic.gif) · [龙卷风](docs/tornado.gif) · [电闪雷鸣](docs/storm.gif) · [蒙娜丽莎](docs/monalisa.png) · [鬼影版](docs/monalisa-ghost.gif) · [冰上芭蕾](docs/ballet.gif) · [恶魔之眼](docs/demoneye.gif) · [生命的轨迹](docs/life.gif)
 
 ## 特效
 
@@ -39,7 +39,6 @@
 | `shanghai` | 东方明珠 | Oriental Pearl |
 | `tiananmen` | 光芒万丈 | Tiananmen Radiance |
 | `traffic` | 车水马龙 | Traffic Flow |
-| `fairy` | 仙女散花 | Fairy Scattering Petals |
 | `tornado` | 龙卷风 | Tornado |
 | `storm` | 电闪雷鸣 | Thunderstorm |
 | `monalisa` | 蒙娜丽莎 | Mona Lisa |
@@ -71,17 +70,17 @@
 | --- | --- | --- |
 | ![fish](docs/fish.png) | ![landscape](docs/landscape.png) | ![shanghai](docs/shanghai.png) |
 
-| 光芒万丈 (Tiananmen Radiance) `tiananmen` | 车水马龙 (Traffic Flow) `traffic` | 仙女散花 (Fairy Scattering Petals) `fairy` |
+| 光芒万丈 (Tiananmen Radiance) `tiananmen` | 车水马龙 (Traffic Flow) `traffic` | 龙卷风 (Tornado) `tornado` |
 | --- | --- | --- |
-| ![tiananmen](docs/tiananmen.png) | ![traffic](docs/traffic.png) | ![fairy](docs/fairy.png) |
+| ![tiananmen](docs/tiananmen.png) | ![traffic](docs/traffic.png) | ![tornado](docs/tornado.png) |
 
-| 龙卷风 (Tornado) `tornado` | 电闪雷鸣 (Thunderstorm) `storm` | 蒙娜丽莎 (Mona Lisa) `monalisa` |
+| 电闪雷鸣 (Thunderstorm) `storm` | 蒙娜丽莎 (Mona Lisa) `monalisa` | 冰上芭蕾 (Ice Ballet) `ballet` |
 | --- | --- | --- |
-| ![tornado](docs/tornado.png) | ![storm](docs/storm.png) | ![monalisa](docs/monalisa.png) |
+| ![storm](docs/storm.png) | ![monalisa](docs/monalisa.png) | ![ballet](docs/ballet.png) |
 
-| 冰上芭蕾 (Ice Ballet) `ballet` | 恶魔之眼 (Demon Eye) `demoneye` | 生命的轨迹 (Threads of Life) `life` |
-| --- | --- | --- |
-| ![ballet](docs/ballet.png) | ![demoneye](docs/demoneye.png) | ![life](docs/life.png) |
+| 恶魔之眼 (Demon Eye) `demoneye` | 生命的轨迹 (Threads of Life) `life` |
+| --- | --- |
+| ![demoneye](docs/demoneye.png) | ![life](docs/life.png) |
 
 | 特效 | 说明 |
 | --- | --- |
@@ -105,7 +104,6 @@
 | 东方明珠 (Oriental Pearl) `shanghai` | 上海外滩夜景、东方明珠、高楼霓虹、黄浦江倒影；**江面随机两条大小/形状/位置都不同的船**（帆船 / 货轮 / 渡轮三种船型，含甲板、舷窗、船楼窗光、烟囱冒烟、桅杆航灯、尾迹与水面倒影）；**每 3–5 秒夜空中飘出 1–2 颗流星**（白热头部 + 渐隐尾迹）；**默认 ASCII**，`--unicode` 可切换 |
 | 光芒万丈 (Tiananmen Radiance) `tiananmen` | 放大到约 92% 宽 / 62% 高的天安门：双层金瓦飞檐、红柱城楼与国徽、红墙、白石门套五门洞、白框标语与中央画像、红旗与两侧小楼；金色光束先从城楼后方向外向上生成，再按光束由内向外依次循环点亮 |
 | 车水马龙 (Traffic Flow) `traffic` | 城市街道两侧高楼、霓虹、车流；横向 3 行车（车顶/车身/车轮，8–16 格长）分 4–5 条车道、车道间有虚线，方向按车道交替；纵向 6 列俯视车（5–9 行，带前后灯与侧轮）；`--street horizontal\|vertical`；`--density` 调车流密度；**默认 ASCII**，`--unicode` 可切换 |
-| 仙女散花 (Fairy Scattering Petals) `fairy` | 30×34 手工像素仕女（低发髻、侧脸眉眼、举篮、收臂、交领蓝襟、白裙裙裾）；缓慢椭圆环绕 + 每 24 秒一次 6 秒的转身（`scaleX`，不翻跟斗）；花瓣从篮口跟随抛出后四散飘落；`--petal-count` / `--petal-speed` |
 | 龙卷风 (Tornado) `tornado` | 1–8 股龙卷风从左向右；扭曲、底部收尖、顶部更宽；整体比原来**更矮一档**（0.28～0.58 屏高）且**更淡更疏**（亮度 0.42～0.85、每行 20 颗）；底部有 30 颗碎屑**向外飘散** |
 | 电闪雷鸣 (Thunderstorm) `storm` | 乌云、斜雨、城市剪影、闪电；屏幕上方叠一层**灰白、不规则的高云**（较密、底部淡出、**缓慢向右飘移**（约 3 列/秒））与原有云带形成层次；落雷时全屏白色亮闪（[效果图](docs/storm-flash.png)） |
 | 蒙娜丽莎 (Mona Lisa) `monalisa` | 去背景人物像：从参考像素画烘焙的人物（头发、脸、颈肩、交叠双手），ANSI 色块承载肤色/明暗 + ASCII 字符勾细节；没有山水/画框/浮尘；人物横向加宽约 12%，更接近原作体态；**画面静态，不眨眼**；`--unicode` 用半块提高垂直分辨率；`--ghost` 进入原纯 ASCII“鬼影”版（无背景色块、保留眨眼，[静态预览](docs/monalisa-ghost.png) / [动图](docs/monalisa-ghost.gif)）；可选 `--gallery` 在人物后方加淡暖色展厅光晕与地面微光（[预览](docs/monalisa-gallery.png)） |
@@ -123,7 +121,7 @@
 
 ### ASCII / Unicode 双版本
 
-**所有同时支持两种字形的特效默认以 ASCII 启动**：`matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`tiananmen`、`fairy`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`life`、`shanghai`、`traffic`。需要 Unicode 时显式加 `--unicode`（或 `--charset unicode`）；`--ascii` 可再次强制 ASCII。`monalisa` 的默认色块人物像是静态的；`monalisa --ghost` 是另一套纯 ASCII 字符画（保留眨眼），不输出 Unicode 或背景色块。
+**所有同时支持两种字形的特效默认以 ASCII 启动**：`matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`tiananmen`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`life`、`shanghai`、`traffic`。需要 Unicode 时显式加 `--unicode`（或 `--charset unicode`）；`--ascii` 可再次强制 ASCII。`monalisa` 的默认色块人物像是静态的；`monalisa --ghost` 是另一套纯 ASCII 字符画（保留眨眼），不输出 Unicode 或背景色块。
 
 `mario` / `ecg` 两种字形：
 
@@ -156,7 +154,7 @@ trix ecg --unicode      # Unicode 心电监护
 
 ## 特性
 
-- **27 个可切换特效**：支持命令行参数、运行时热切换与主题。
+- **26 个可切换特效**：支持命令行参数、运行时热切换与主题。
 - **平滑换场**：每次切换特效都可以选择渐隐渐显或交叉溶解（`--transition fade|dissolve|none`，默认 0.6 秒）；旧场景在淡出期间继续动画。
 - **ASCII 优先**：同时支持 ASCII / Unicode 的特效默认以 ASCII 启动；需要 Unicode 时显式加 `--unicode`。
 - **低资源**：单线程、无 async、无事件循环框架；默认 30 FPS；仅依赖 `libc`。
@@ -209,7 +207,6 @@ trix landscape                     # 五光十色山水
 trix shanghai                      # 东方明珠（ASCII）
 trix tiananmen                     # 光芒万丈
 trix traffic --street vertical     # 车水马龙纵向
-trix fairy                         # 仙女散花
 trix tornado                       # 龙卷风
 trix storm                         # 电闪雷鸣
 trix monalisa                      # 蒙娜丽莎人物像（色块 + 字符，静态）
@@ -234,7 +231,6 @@ trix ecg --unicode                          # 心电 Unicode 版
 trix dandelion --seed-count 180 --seed-speed 1.4
 trix shanghai --unicode                       # 东方明珠 Unicode
 trix traffic --street vertical --unicode      # 纵向 Unicode
-trix fairy --petal-count 160 --petal-speed 1.5
 trix tornado --tornado-count 5 --tornado-speed 1.6
 trix monalisa --unicode                      # 半块 Unicode 版（更细腻）
 trix monalisa --ghost                        # 纯字符鬼影版（会眨眼）
@@ -245,7 +241,7 @@ trix demoneye                                # 恶魔之眼
 
 ## 直接运行：自动循环播放
 
-不带特效名直接运行 `trix`，会在**当前终端循环播放全部 27 个特效**：
+不带特效名直接运行 `trix`，会在**当前终端循环播放全部 26 个特效**：
 
 ```bash
 trix                                   # 默认 cycle，每 12 秒切换
@@ -291,8 +287,6 @@ trix <effect> [options]
       --seed-count <n>    dandelion seed count                [默认: 90]
       --seed-speed <f>    dandelion seed drift speed          [默认: 1.0]
       --street <dir>      horizontal | vertical               [默认: horizontal]
-      --petal-count <n>   仙女散花花瓣数量                    [默认: 80]
-      --petal-speed <f>   花瓣下落速度                        [默认: 1.0]
       --tornado-count <n> 龙卷风数量                          [默认: 3]
       --tornado-speed <f> 龙卷风移动速度                      [默认: 1.0]
       --jump              Tom & Jerry jumps                  [默认: off]
@@ -320,7 +314,7 @@ trix <effect> [options]
 | `1`–`9`、`0`、`[`、`]` | 前 12 个特效 |
 | `m` / `e` / `d` | 超级马里奥 / 心率跳动 / 蒲公英 |
 | `f` / `l` / `b` / `j` | 水族馆 / 山水 / 东方明珠 / 天安门 |
-| `c` / `x` / `z` / `k` | 车水马龙 / 仙女散花 / 龙卷风 / 电闪雷鸣 |
+| `c` / `z` / `k` | 车水马龙 / 龙卷风 / 电闪雷鸣 |
 | `o` / `v` / `g` | 蒙娜丽莎 / 冰上芭蕾 / 恶魔之眼 |
 | `y` | 生命的轨迹 |
 | `t` | 循环主题 |
@@ -329,7 +323,7 @@ trix <effect> [options]
 | `i` | 显示 / 隐藏状态行（FPS、耗时、主题、尺寸、种子） |
 | `h` / `?` | 帮助面板 |
 
-数字键顺序：`1 rain`、`2 fire`、`3 dragon`、`4 map`、`5 matrix`、`6 blackhole`、`7 beams`、`8 fireworks`、`9 solar`、`0 galaxy`、`[ buddha`、`] tomjerry`；字母键：`m mario`、`e ecg`、`d dandelion`、`f fish`、`l landscape`、`b shanghai`、`j tiananmen`、`c traffic`、`x fairy`、`z tornado`、`k storm`、`o monalisa`、`v ballet`、`g demoneye`、`y life`。
+数字键顺序：`1 rain`、`2 fire`、`3 dragon`、`4 map`、`5 matrix`、`6 blackhole`、`7 beams`、`8 fireworks`、`9 solar`、`0 galaxy`、`[ buddha`、`] tomjerry`；字母键：`m mario`、`e ecg`、`d dandelion`、`f fish`、`l landscape`、`b shanghai`、`j tiananmen`、`c traffic`、`z tornado`、`k storm`、`o monalisa`、`v ballet`、`g demoneye`、`y life`。
 
 ## 主题
 
@@ -398,7 +392,6 @@ git push origin v0.8.0
 | shanghai | 0.032 ms | 0.036 ms | 3.3 KiB/帧 |
 | tiananmen | 0.095 ms | 0.105 ms | 7.0 KiB/帧 |
 | traffic | 0.029 ms | 0.036 ms | 1.7 KiB/帧 |
-| fairy | 0.018 ms | 0.022 ms | 2.0 KiB/帧 |
 | tornado | 0.043 ms | 0.051 ms | 7.8 KiB/帧 |
 | storm | 0.109 ms | 0.122 ms | 29.9 KiB/帧 |
 | monalisa | 0.021 ms | 0.032 ms | 0.0 KiB/帧（静态后） |
@@ -430,7 +423,6 @@ git push origin v0.8.0
 | shanghai | 0.32% | 2.09 MiB | 0.3 MiB |
 | tiananmen | 0.35% | 2.08 MiB | 0.8 MiB |
 | traffic | 0.26% | 2.14 MiB | 0.3 MiB |
-| fairy | 0.18% | 2.08 MiB | 0.1 MiB |
 | tornado | 0.27% | 2.08 MiB | 0.7 MiB |
 | storm | 0.63% | 2.19 MiB | 3.6 MiB |
 
@@ -493,7 +485,7 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-当前 **144 个**单元/集成测试：颜色转换、按键解析、CLI/新参数校验、Canvas 裁剪/差分、地图掩膜、27 个特效多尺寸/主题/颜色/Unicode 降级、默认字符集 ASCII-only、小终端不 panic、确定性种子、Tom & Jerry 速度/跳跃、龙卷风高不见顶/恶魔之眼 8～15 秒眨眼节奏/注视/看出去再回正/瞳孔不被高光遮挡/静止开关、芭蕾牵手/满屏路径、生命的轨迹世代/时间轴/狗猫/符号/核心 0 次变轨/死亡头部/终点符号等。
+当前 **158 个**单元/集成测试：颜色转换、按键解析、CLI/新参数校验、Canvas 裁剪/差分、地图掩膜、26 个特效多尺寸/主题/颜色/Unicode 降级、默认字符集 ASCII-only、小终端不 panic、确定性种子、Tom & Jerry 速度/跳跃、龙卷风高不见顶/恶魔之眼 8～15 秒眨眼节奏/注视/看出去再回正/瞳孔不被高光遮挡/静止开关、芭蕾牵手/满屏路径、生命的轨迹世代/时间轴/狗猫/符号/核心 0 次变轨/死亡头部/终点符号等。
 
 真实 PTY 实测：`q`/`Esc`/`Ctrl-C`/`SIGTERM`、暂停、帮助、数字/`[`/`]` 切换、`i` 状态、缩放、`--no-alt`、颜色降级、退出恢复。
 

@@ -93,8 +93,6 @@ fn tune_for(opts: &Options) -> Tune {
         seed_count: opts.seed_count,
         seed_speed: opts.seed_speed,
         street_vertical: opts.street_vertical,
-        petal_count: opts.petal_count,
-        petal_speed: opts.petal_speed,
         tornado_count: opts.tornado_count,
         tornado_speed: opts.tornado_speed,
         life_cycle: opts.life_cycle,
@@ -457,7 +455,6 @@ fn interactive(opts: Options) -> i32 {
                     | 'b'
                     | 'j'
                     | 'c'
-                    | 'x'
                     | 'z'
                     | 'k'
                     | 'o'
@@ -477,13 +474,12 @@ fn interactive(opts: Options) -> i32 {
                         'b' => 17,
                         'j' => 18,
                         'c' => 19,
-                        'x' => 20,
-                        'z' => 21,
-                        'k' => 22,
-                        'o' => 23,
-                        'v' => 24,
-                        'g' => 25,
-                        'y' => 26,
+                        'z' => 20,
+                        'k' => 21,
+                        'o' => 22,
+                        'v' => 23,
+                        'g' => 24,
+                        'y' => 25,
                         _ => c as usize - '1' as usize,
                     };
                     let target = EffectId::from_index(idx);
@@ -868,7 +864,7 @@ fn draw_help(
         ("1-9,0,[ ]", "first 12 effects".into()),
         ("m / e / d", "Mario / ECG / Dandelion".into()),
         ("f l b j", "Fish / Landscape / Bund / Gate".into()),
-        ("c x z k", "Traffic / Fairy / Tornado / Storm".into()),
+        ("c z k", "Traffic / Tornado / Storm".into()),
         ("o v g y", "Mona / Ballet / Eye / Life".into()),
         ("t", "cycle theme".into()),
         ("+ / -", format!("speed  {:.2}x", speed)),

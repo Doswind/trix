@@ -4,10 +4,9 @@ use crate::canvas::Canvas;
 use crate::cli::Charset;
 use crate::scenes::{
     BalletScene, BeamsScene, BlackHoleScene, BuddhaScene, DandelionScene, DemonEyeScene,
-    DragonScene, EcgScene, FairyScene, FireScene, FireworksScene, FishScene, GalaxyScene,
-    LandscapeScene, LifeScene, MapScene, MarioScene, MatrixScene, MonaLisaScene, RainScene,
-    ShanghaiScene, SolarScene, StormScene, TiananmenScene, TomJerryScene, TornadoScene,
-    TrafficScene,
+    DragonScene, EcgScene, FireScene, FireworksScene, FishScene, GalaxyScene, LandscapeScene,
+    LifeScene, MapScene, MarioScene, MatrixScene, MonaLisaScene, RainScene, ShanghaiScene,
+    SolarScene, StormScene, TiananmenScene, TomJerryScene, TornadoScene, TrafficScene,
 };
 use crate::theme::{self, Theme};
 
@@ -33,7 +32,6 @@ pub enum EffectId {
     Shanghai,
     Tiananmen,
     Traffic,
-    Fairy,
     Tornado,
     Storm,
     MonaLisa,
@@ -43,7 +41,7 @@ pub enum EffectId {
 }
 
 impl EffectId {
-    pub const ALL: [EffectId; 27] = [
+    pub const ALL: [EffectId; 26] = [
         EffectId::Rain,
         EffectId::Fire,
         EffectId::Dragon,
@@ -64,7 +62,6 @@ impl EffectId {
         EffectId::Shanghai,
         EffectId::Tiananmen,
         EffectId::Traffic,
-        EffectId::Fairy,
         EffectId::Tornado,
         EffectId::Storm,
         EffectId::MonaLisa,
@@ -95,7 +92,6 @@ impl EffectId {
             EffectId::Shanghai => "shanghai",
             EffectId::Tiananmen => "tiananmen",
             EffectId::Traffic => "traffic",
-            EffectId::Fairy => "fairy",
             EffectId::Tornado => "tornado",
             EffectId::Storm => "storm",
             EffectId::MonaLisa => "monalisa",
@@ -127,7 +123,6 @@ impl EffectId {
             EffectId::Shanghai => "Oriental Pearl",
             EffectId::Tiananmen => "Tiananmen Radiance",
             EffectId::Traffic => "Traffic Flow",
-            EffectId::Fairy => "Fairy Scattering Petals",
             EffectId::Tornado => "Tornado",
             EffectId::Storm => "Thunderstorm",
             EffectId::MonaLisa => "Mona Lisa",
@@ -159,7 +154,6 @@ impl EffectId {
             EffectId::Shanghai => "东方明珠",
             EffectId::Tiananmen => "光芒万丈",
             EffectId::Traffic => "车水马龙",
-            EffectId::Fairy => "仙女散花",
             EffectId::Tornado => "龙卷风",
             EffectId::Storm => "电闪雷鸣",
             EffectId::MonaLisa => "蒙娜丽莎",
@@ -199,7 +193,6 @@ impl EffectId {
             "shanghai" | "bund" | "orientalpearl" | "pearl" => Some(EffectId::Shanghai),
             "tiananmen" | "gate" | "radiance" | "light" => Some(EffectId::Tiananmen),
             "traffic" | "street" | "city" | "cars" => Some(EffectId::Traffic),
-            "fairy" | "apsara" | "petals" | "flowerfall" => Some(EffectId::Fairy),
             "tornado" | "twister" | "cyclone" => Some(EffectId::Tornado),
             "storm" | "thunder" | "lightning" | "rainstorm" => Some(EffectId::Storm),
             "monalisa" | "mona" | "lisa" | "gioconda" | "davinci" | "leonardo" | "louvre" => {
@@ -254,7 +247,6 @@ impl EffectId {
             EffectId::Shanghai => "neon",
             EffectId::Tiananmen => "gold",
             EffectId::Traffic => "neon",
-            EffectId::Fairy => "plasma",
             EffectId::Tornado => "ice",
             EffectId::Storm => "ice",
             EffectId::MonaLisa => "gold",
@@ -286,8 +278,6 @@ pub struct Tune {
     pub seed_count: u32,
     pub seed_speed: f32,
     pub street_vertical: bool,
-    pub petal_count: u32,
-    pub petal_speed: f32,
     pub tornado_count: u32,
     pub tornado_speed: f32,
     pub life_cycle: f32,
@@ -310,8 +300,6 @@ impl Default for Tune {
             seed_count: 90,
             seed_speed: 1.0,
             street_vertical: false,
-            petal_count: 80,
-            petal_speed: 1.0,
             tornado_count: 3,
             tornado_speed: 1.0,
             life_cycle: 120.0,
@@ -364,7 +352,6 @@ pub fn build(id: EffectId, seed: u64) -> Box<dyn Scene> {
         EffectId::Shanghai => Box::new(ShanghaiScene::new(seed)),
         EffectId::Tiananmen => Box::new(TiananmenScene::new(seed)),
         EffectId::Traffic => Box::new(TrafficScene::new(seed)),
-        EffectId::Fairy => Box::new(FairyScene::new(seed)),
         EffectId::Tornado => Box::new(TornadoScene::new(seed)),
         EffectId::Storm => Box::new(StormScene::new(seed)),
         EffectId::MonaLisa => Box::new(MonaLisaScene::new(seed)),

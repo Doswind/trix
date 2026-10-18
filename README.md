@@ -4,14 +4,14 @@
 
 > Formerly **texiao** (the original project name); renamed to **trix** starting with v0.5.0.
 
-> A sci-fi ASCII / Unicode effects engine for the terminal — code rain, fire, a flying dragon, a world map, a NASA login, a black hole, light beams, fireworks, the solar system, a galaxy, Buddha's halo, Tom & Jerry, Super Mario, a heartbeat, a dandelion, an aquarium, a landscape, the Oriental Pearl, Tiananmen, traffic, a petal-scattering fairy, tornadoes, a thunderstorm, Mona Lisa, ice ballet, a demon eye, and the threads of life.
-> Single-threaded Rust, no async runtime, diff rendering. Starts in about **2 ms**, resident memory around **2.1–2.3 MB**, CPU around **0.2–1.4%** of one core at 30 FPS. Current release **v0.8.0**; the development build adds “Threads of Life”, for **27** effects total. Effects that support both glyph sets start in ASCII.
+> A sci-fi ASCII / Unicode effects engine for the terminal — code rain, fire, a flying dragon, a world map, a NASA login, a black hole, light beams, fireworks, the solar system, a galaxy, Buddha's halo, Tom & Jerry, Super Mario, a heartbeat, a dandelion, an aquarium, a landscape, the Oriental Pearl, Tiananmen, traffic, tornadoes, a thunderstorm, Mona Lisa, ice ballet, a demon eye, and the threads of life.
+> Single-threaded Rust, no async runtime, diff rendering. Starts in about **2 ms**, resident memory around **2.1–2.3 MB**, CPU around **0.2–1.4%** of one core at 30 FPS. Current release **v0.8.0**; the development build adds “Threads of Life”, for **26** effects total. Effects that support both glyph sets start in ASCII.
 
 ![release](https://github.com/Doswind/trix/actions/workflows/release.yml/badge.svg)
 
 ![trix overview](docs/overview.png)
 
-> GIFs / previews: [Code Rain](docs/rain.gif) · [Blazing Fire](docs/fire.gif) · [Coiling Dragon](docs/dragon.gif) · [NASA Login](docs/matrix.gif) · [Black Hole](docs/blackhole.gif) · [Light Beams](docs/beams.gif) · [Fireworks](docs/fireworks.gif) · [Solar System](docs/solar.gif) · [Starry Galaxy](docs/galaxy.gif) · [Buddha's Halo](docs/buddha.gif) · [Tom & Jerry](docs/tomjerry.gif) · [Super Mario](docs/mario.gif) · [Heartbeat](docs/ecg.gif) · [Dandelion](docs/dandelion.gif) · [Aquarium](docs/fish.gif) · [Landscape](docs/landscape.gif) · [Oriental Pearl](docs/shanghai.gif) · [Tiananmen](docs/tiananmen.gif) · [Traffic Flow](docs/traffic.gif) · [Fairy](docs/fairy.gif) · [Tornado](docs/tornado.gif) · [Thunderstorm](docs/storm.gif) · [Mona Lisa](docs/monalisa.png) · [Ghost edition](docs/monalisa-ghost.gif) · [Ice Ballet](docs/ballet.gif) · [Demon Eye](docs/demoneye.gif) · [Threads of Life](docs/life.gif)
+> GIFs / previews: [Code Rain](docs/rain.gif) · [Blazing Fire](docs/fire.gif) · [Coiling Dragon](docs/dragon.gif) · [NASA Login](docs/matrix.gif) · [Black Hole](docs/blackhole.gif) · [Light Beams](docs/beams.gif) · [Fireworks](docs/fireworks.gif) · [Solar System](docs/solar.gif) · [Starry Galaxy](docs/galaxy.gif) · [Buddha's Halo](docs/buddha.gif) · [Tom & Jerry](docs/tomjerry.gif) · [Super Mario](docs/mario.gif) · [Heartbeat](docs/ecg.gif) · [Dandelion](docs/dandelion.gif) · [Aquarium](docs/fish.gif) · [Landscape](docs/landscape.gif) · [Oriental Pearl](docs/shanghai.gif) · [Tiananmen](docs/tiananmen.gif) · [Traffic Flow](docs/traffic.gif) · [Tornado](docs/tornado.gif) · [Thunderstorm](docs/storm.gif) · [Mona Lisa](docs/monalisa.png) · [Ghost edition](docs/monalisa-ghost.gif) · [Ice Ballet](docs/ballet.gif) · [Demon Eye](docs/demoneye.gif) · [Threads of Life](docs/life.gif)
 
 ## Effects
 
@@ -39,7 +39,6 @@ Every effect name below is given in English and Chinese.
 | `shanghai` | Oriental Pearl | 东方明珠 |
 | `tiananmen` | Tiananmen Radiance | 光芒万丈 |
 | `traffic` | Traffic Flow | 车水马龙 |
-| `fairy` | Fairy Scattering Petals | 仙女散花 |
 | `tornado` | Tornado | 龙卷风 |
 | `storm` | Thunderstorm | 电闪雷鸣 |
 | `monalisa` | Mona Lisa | 蒙娜丽莎 |
@@ -71,17 +70,17 @@ Every effect name below is given in English and Chinese.
 | --- | --- | --- |
 | ![fish](docs/fish.png) | ![landscape](docs/landscape.png) | ![shanghai](docs/shanghai.png) |
 
-| Tiananmen Radiance (光芒万丈) `tiananmen` | Traffic Flow (车水马龙) `traffic` | Fairy Scattering Petals (仙女散花) `fairy` |
+| Tiananmen Radiance (光芒万丈) `tiananmen` | Traffic Flow (车水马龙) `traffic` | Tornado (龙卷风) `tornado` |
 | --- | --- | --- |
-| ![tiananmen](docs/tiananmen.png) | ![traffic](docs/traffic.png) | ![fairy](docs/fairy.png) |
+| ![tiananmen](docs/tiananmen.png) | ![traffic](docs/traffic.png) | ![tornado](docs/tornado.png) |
 
-| Tornado (龙卷风) `tornado` | Thunderstorm (电闪雷鸣) `storm` | Mona Lisa (蒙娜丽莎) `monalisa` |
+| Thunderstorm (电闪雷鸣) `storm` | Mona Lisa (蒙娜丽莎) `monalisa` | Ice Ballet (冰上芭蕾) `ballet` |
 | --- | --- | --- |
-| ![tornado](docs/tornado.png) | ![storm](docs/storm.png) | ![monalisa](docs/monalisa.png) |
+| ![storm](docs/storm.png) | ![monalisa](docs/monalisa.png) | ![ballet](docs/ballet.png) |
 
-| Ice Ballet (冰上芭蕾) `ballet` | Demon Eye (恶魔之眼) `demoneye` | Threads of Life (生命的轨迹) `life` |
-| --- | --- | --- |
-| ![ballet](docs/ballet.png) | ![demoneye](docs/demoneye.png) | ![life](docs/life.png) |
+| Demon Eye (恶魔之眼) `demoneye` | Threads of Life (生命的轨迹) `life` |
+| --- | --- |
+| ![demoneye](docs/demoneye.png) | ![life](docs/life.png) |
 
 | Effect | Description |
 | --- | --- |
@@ -105,7 +104,6 @@ Every effect name below is given in English and Chinese.
 | Oriental Pearl (东方明珠) `shanghai` | The Shanghai Bund at night, the Oriental Pearl Tower, neon high-rises, Huangpu River reflections; **two random boats on the river, each with a different size, shape and position** (sailboat / freighter / ferry, with deck, portholes, lit cabin windows, smoking funnel, mast lights, wake and water reflection); **1–2 meteors cross the night sky every 3–5 seconds** (white-hot head plus fading tail); **ASCII by default**, `--unicode` available |
 | Tiananmen Radiance (光芒万丈) `tiananmen` | Tiananmen gate enlarged to about **92% of the width and 62% of the height**: double golden-tile eaves with upturned corners, a red-pillared gate tower with the national emblem, red walls, five archways with white stone surrounds, white-framed slogans and the central portrait, red flags and side buildings; golden beams first grow outward and upward from behind the roof, then light up in order from the inside out, cycling |
 | Traffic Flow (车水马龙) `traffic` | City street with high-rises on both sides, neon and traffic; horizontal traffic is 3 rows of cars (roof / body / wheels, 8–16 cells long) across 4–5 lanes with dashed dividers and alternating directions; vertical traffic is 6 columns of top-down cars (5–9 rows, front/rear lights and side wheels); `--street horizontal\|vertical`; `--density` controls traffic density; **ASCII by default**, `--unicode` available |
-| Fairy Scattering Petals (仙女散花) `fairy` | A 30×34 hand-pixelled lady (low bun, profile brows and eyes, raised basket, folded arm, crossed blue collar, white skirt hem); a slow elliptical orbit plus a 6-second turn every 24 seconds (`scaleX`, no somersault); petals are thrown from the basket, follow her, then scatter and fall; `--petal-count` / `--petal-speed` |
 | Tornado (龙卷风) `tornado` | 1–8 tornadoes move from left to right; twisted, pointed at the base and wider at the top; overall **one step shorter** than before (0.28–0.58 of the screen height) and **lighter and sparser** (brightness 0.42–0.85, 20 particles per row); 30 debris particles **drift outward** at the base |
 | Thunderstorm (电闪雷鸣) `storm` | Dark clouds, slanting rain, a city silhouette, lightning; a layer of **gray-white, irregular high cloud** sits above the screen (denser, fading out at the bottom, **drifting slowly to the right** at about 3 columns per second) to add depth against the existing cloud band; lightning lights the whole screen white ([still](docs/storm-flash.png)) |
 | Mona Lisa (蒙娜丽莎) `monalisa` | A background-free portrait: the figure (hair, face, neck and shoulders, folded hands) is baked from a reference pixel painting; ANSI color blocks carry skin tones and shading, with ASCII glyphs for detail; no landscape, frame or floating dust; the figure is about 12% wider, closer to the original proportions; **the default block version is static and does not blink**; `--unicode` uses half blocks for more vertical resolution; `--ghost` switches to the original pure-ASCII “ghost” version (no background blocks, blinking kept, [still](docs/monalisa-ghost.png) / [GIF](docs/monalisa-ghost.gif)); optional `--gallery` adds a faint warm gallery halo and floor glow behind the portrait ([preview](docs/monalisa-gallery.png)) |
@@ -123,7 +121,7 @@ Light Beams has two motion modes:
 
 ### ASCII / Unicode editions
 
-**Every effect that supports both glyph sets starts in ASCII**: `matrix`, `mario`, `ecg`, `dandelion`, `fish`, `landscape`, `tiananmen`, `fairy`, `tornado`, `storm`, `monalisa`, `ballet`, `demoneye`, `life`, `shanghai`, `traffic`. Add `--unicode` (or `--charset unicode`) to opt in; `--ascii` forces ASCII again. `monalisa`'s default block portrait is static; `monalisa --ghost` is a separate pure-ASCII drawing (blinking kept) that emits neither Unicode nor background blocks.
+**Every effect that supports both glyph sets starts in ASCII**: `matrix`, `mario`, `ecg`, `dandelion`, `fish`, `landscape`, `tiananmen`, `tornado`, `storm`, `monalisa`, `ballet`, `demoneye`, `life`, `shanghai`, `traffic`. Add `--unicode` (or `--charset unicode`) to opt in; `--ascii` forces ASCII again. `monalisa`'s default block portrait is static; `monalisa --ghost` is a separate pure-ASCII drawing (blinking kept) that emits neither Unicode nor background blocks.
 
 `mario` / `ecg` in both glyph sets:
 
@@ -156,7 +154,7 @@ trix ecg --unicode      # Unicode ECG monitor
 
 ## Features
 
-- **27 switchable effects**: command-line arguments, runtime hot-switching and themes.
+- **26 switchable effects**: command-line arguments, runtime hot-switching and themes.
 - **Smooth hand-off**: every effect change can fade through black or cross-dissolve (`--transition fade|dissolve|none`, 0.6 s by default); the outgoing scene keeps animating while it fades.
 - **ASCII first**: effects that support both ASCII and Unicode start in ASCII; opt into Unicode explicitly with `--unicode`.
 - **Low resource use**: single-threaded, no async, no event-loop framework; 30 FPS by default; `libc` is the only dependency.
@@ -209,7 +207,6 @@ trix landscape                     # colorful landscape
 trix shanghai                      # Oriental Pearl (ASCII)
 trix tiananmen                     # Tiananmen Radiance
 trix traffic --street vertical     # vertical Traffic Flow
-trix fairy                         # Fairy Scattering Petals
 trix tornado                       # Tornado
 trix storm                         # Thunderstorm
 trix monalisa                      # Mona Lisa portrait (blocks + glyphs, static)
@@ -234,7 +231,6 @@ trix ecg --unicode                          # ECG Unicode edition
 trix dandelion --seed-count 180 --seed-speed 1.4
 trix shanghai --unicode                       # Oriental Pearl Unicode
 trix traffic --street vertical --unicode      # vertical Unicode
-trix fairy --petal-count 160 --petal-speed 1.5
 trix tornado --tornado-count 5 --tornado-speed 1.6
 trix monalisa --unicode                      # half-block Unicode edition (finer detail)
 trix monalisa --ghost                        # pure-ASCII ghost edition (still blinks)
@@ -245,7 +241,7 @@ trix demoneye                                # Demon Eye
 
 ## Run with no arguments: automatic playback
 
-Running `trix` without an effect name **loops through all 27 effects in the current terminal**:
+Running `trix` without an effect name **loops through all 26 effects in the current terminal**:
 
 ```bash
 trix                                   # cycle by default, 12 s per effect
@@ -291,8 +287,6 @@ trix <effect> [options]
       --seed-count <n>    dandelion seed count                [default: 90]
       --seed-speed <f>    dandelion seed drift speed          [default: 1.0]
       --street <dir>      horizontal | vertical               [default: horizontal]
-      --petal-count <n>   fairy petals                        [default: 80]
-      --petal-speed <f>   petal fall speed                    [default: 1.0]
       --tornado-count <n> number of tornadoes                 [default: 3]
       --tornado-speed <f> tornado travel speed                [default: 1.0]
       --jump              Tom & Jerry jumps                  [default: off]
@@ -320,7 +314,7 @@ Recording / benchmarking
 | `1`–`9`, `0`, `[`, `]` | First 12 effects |
 | `m` / `e` / `d` | Super Mario / Heartbeat Monitor / Dandelion |
 | `f` / `l` / `b` / `j` | Aquarium / Landscape / Oriental Pearl / Tiananmen |
-| `c` / `x` / `z` / `k` | Traffic Flow / Fairy Scattering Petals / Tornado / Thunderstorm |
+| `c` / `z` / `k` | Traffic Flow / Tornado / Thunderstorm |
 | `o` / `v` / `g` | Mona Lisa / Ice Ballet / Demon Eye |
 | `y` | Threads of Life |
 | `t` | Cycle themes |
@@ -329,7 +323,7 @@ Recording / benchmarking
 | `i` | Show / hide the status line (FPS, elapsed, theme, size, seed) |
 | `h` / `?` | Help panel |
 
-Number keys: `1 rain`, `2 fire`, `3 dragon`, `4 map`, `5 matrix`, `6 blackhole`, `7 beams`, `8 fireworks`, `9 solar`, `0 galaxy`, `[ buddha`, `] tomjerry`; letter keys: `m mario`, `e ecg`, `d dandelion`, `f fish`, `l landscape`, `b shanghai`, `j tiananmen`, `c traffic`, `x fairy`, `z tornado`, `k storm`, `o monalisa`, `v ballet`, `g demoneye`, `y life`.
+Number keys: `1 rain`, `2 fire`, `3 dragon`, `4 map`, `5 matrix`, `6 blackhole`, `7 beams`, `8 fireworks`, `9 solar`, `0 galaxy`, `[ buddha`, `] tomjerry`; letter keys: `m mario`, `e ecg`, `d dandelion`, `f fish`, `l landscape`, `b shanghai`, `j tiananmen`, `c traffic`, `z tornado`, `k storm`, `o monalisa`, `v ballet`, `g demoneye`, `y life`.
 
 ## Themes
 
@@ -398,7 +392,6 @@ Canvas 160×48, 240-frame offscreen benchmark:
 | shanghai | 0.032 ms | 0.036 ms | 3.3 KiB/frame |
 | tiananmen | 0.095 ms | 0.105 ms | 7.0 KiB/frame |
 | traffic | 0.029 ms | 0.036 ms | 1.7 KiB/frame |
-| fairy | 0.018 ms | 0.022 ms | 2.0 KiB/frame |
 | tornado | 0.043 ms | 0.051 ms | 7.8 KiB/frame |
 | storm | 0.109 ms | 0.122 ms | 29.9 KiB/frame |
 | monalisa | 0.021 ms | 0.032 ms | 0.0 KiB/frame (after going static) |
@@ -430,7 +423,6 @@ Real PTY, truecolor, 120×36, 30 FPS, 5 seconds (CPU = child process `utime+stim
 | shanghai | 0.32% | 2.09 MiB | 0.3 MiB |
 | tiananmen | 0.35% | 2.08 MiB | 0.8 MiB |
 | traffic | 0.26% | 2.14 MiB | 0.3 MiB |
-| fairy | 0.18% | 2.08 MiB | 0.1 MiB |
 | tornado | 0.27% | 2.08 MiB | 0.7 MiB |
 | storm | 0.63% | 2.19 MiB | 3.6 MiB |
 
@@ -493,7 +485,7 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-There are currently **144** unit / integration tests: color conversion, key parsing, CLI / new-argument validation, canvas clipping / diffing, the map mask, 27 effects across sizes / themes / colors / Unicode fallback, ASCII-only default charsets, no panic in small terminals, deterministic seeds, Tom & Jerry speed / jump, tornado height, Demon Eye blink rhythm (8–15 s) / gaze / dart-and-return / pupil never covered by the highlight / still switch, ballet hand-holding / full-screen path, and Threads of Life generations / timeline / dog and cat / symbols / zero lane changes for the core / death heads / end markers.
+There are currently **158** unit / integration tests: color conversion, key parsing, CLI / new-argument validation, canvas clipping / diffing, the map mask, 26 effects across sizes / themes / colors / Unicode fallback, ASCII-only default charsets, no panic in small terminals, deterministic seeds, Tom & Jerry speed / jump, tornado height, Demon Eye blink rhythm (8–15 s) / gaze / dart-and-return / pupil never covered by the highlight / still switch, ballet hand-holding / full-screen path, and Threads of Life generations / timeline / dog and cat / symbols / zero lane changes for the core / death heads / end markers.
 
 Real-PTY checks: `q` / `Esc` / `Ctrl-C` / `SIGTERM`, pause, help, number / `[` / `]` switching, `i` status, resize, `--no-alt`, color fallback, and terminal restoration on exit.
 
