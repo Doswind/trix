@@ -131,7 +131,7 @@ impl EffectId {
             EffectId::Tornado => "Tornado",
             EffectId::Storm => "Thunderstorm",
             EffectId::MonaLisa => "Mona Lisa",
-            EffectId::Ballet => "Ballet duet",
+            EffectId::Ballet => "Ice ballet duet",
             EffectId::DemonEye => "Demon eye",
             EffectId::Life => "Life trajectory",
         }
@@ -163,7 +163,7 @@ impl EffectId {
             EffectId::Tornado => "龙卷风",
             EffectId::Storm => "电闪雷鸣",
             EffectId::MonaLisa => "蒙娜丽莎",
-            EffectId::Ballet => "舞动芭蕾",
+            EffectId::Ballet => "冰上芭蕾",
             EffectId::DemonEye => "恶魔之眼",
             EffectId::Life => "生命的轨迹",
         }
@@ -205,9 +205,8 @@ impl EffectId {
             "monalisa" | "mona" | "lisa" | "gioconda" | "davinci" | "leonardo" | "louvre" => {
                 Some(EffectId::MonaLisa)
             }
-            "ballet" | "dance" | "dancers" | "duet" | "pasdedeux" | "ballerina" | "waltz" => {
-                Some(EffectId::Ballet)
-            }
+            "ballet" | "dance" | "dancers" | "duet" | "pasdedeux" | "ballerina" | "waltz"
+            | "ice" | "iceballet" | "iceskate" | "skating" | "rink" => Some(EffectId::Ballet),
             "demoneye" | "eye" | "demon" | "evileye" | "watcher" | "oculus" | "gaze" => {
                 Some(EffectId::DemonEye)
             }

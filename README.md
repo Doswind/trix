@@ -2,14 +2,14 @@
 
 > 前身：texiao（原项目名）；从 v0.5.0 起正式更名为 **trix**。
 
-> 终端里的科幻 ASCII / Unicode 特效引擎 — 代码雨、火焰、巨龙、世界地图、NASA 登录、黑洞、光束、烟花、太阳系、银河、佛光、Tom & Jerry、超级马里奥、心率跳动、蒲公英、鱼缸、山水、东方明珠、天安门、车水马龙、仙女散花、龙卷风、电闪雷鸣、蒙娜丽莎、舞动芭蕾、恶魔之眼、生命的轨迹。
+> 终端里的科幻 ASCII / Unicode 特效引擎 — 代码雨、火焰、巨龙、世界地图、NASA 登录、黑洞、光束、烟花、太阳系、银河、佛光、Tom & Jerry、超级马里奥、心率跳动、蒲公英、鱼缸、山水、东方明珠、天安门、车水马龙、仙女散花、龙卷风、电闪雷鸣、蒙娜丽莎、冰上芭蕾、恶魔之眼、生命的轨迹。
 > Rust 单线程、无异步运行时、diff 渲染，启动约 **2 ms**，常驻内存约 **2.1–2.3 MB**，30 FPS 下 CPU 约 **0.2–1.4%** 单核。当前 **v0.8.0**；开发版新增「生命的轨迹」，共 **27** 个特效，双字形特效默认 ASCII。
 
 ![release](https://github.com/Doswind/trix/actions/workflows/release.yml/badge.svg)
 
 ![trix overview](docs/overview.png)
 
-> 动图：[代码雨](docs/rain.gif) · [火焰](docs/fire.gif) · [巨龙](docs/dragon.gif) · [NASA 登录](docs/matrix.gif) · [黑洞](docs/blackhole.gif) · [光束](docs/beams.gif) · [烟花](docs/fireworks.gif) · [太阳系](docs/solar.gif) · [银河](docs/galaxy.gif) · [佛光](docs/buddha.gif) · [Tom & Jerry](docs/tomjerry.gif) · [马里奥](docs/mario.gif) · [心电](docs/ecg.gif) · [蒲公英](docs/dandelion.gif) · [鱼缸](docs/fish.gif) · [山水](docs/landscape.gif) · [东方明珠](docs/shanghai.gif) · [天安门](docs/tiananmen.gif) · [车水马龙](docs/traffic.gif) · [仙女](docs/fairy.gif) · [龙卷风](docs/tornado.gif) · [电闪雷鸣](docs/storm.gif) · [蒙娜丽莎](docs/monalisa.gif) · [舞动芭蕾](docs/ballet.gif) · [恶魔之眼](docs/demoneye.gif) · [生命的轨迹](docs/life.gif)
+> 动图：[代码雨](docs/rain.gif) · [火焰](docs/fire.gif) · [巨龙](docs/dragon.gif) · [NASA 登录](docs/matrix.gif) · [黑洞](docs/blackhole.gif) · [光束](docs/beams.gif) · [烟花](docs/fireworks.gif) · [太阳系](docs/solar.gif) · [银河](docs/galaxy.gif) · [佛光](docs/buddha.gif) · [Tom & Jerry](docs/tomjerry.gif) · [马里奥](docs/mario.gif) · [心电](docs/ecg.gif) · [蒲公英](docs/dandelion.gif) · [鱼缸](docs/fish.gif) · [山水](docs/landscape.gif) · [东方明珠](docs/shanghai.gif) · [天安门](docs/tiananmen.gif) · [车水马龙](docs/traffic.gif) · [仙女](docs/fairy.gif) · [龙卷风](docs/tornado.gif) · [电闪雷鸣](docs/storm.gif) · [蒙娜丽莎](docs/monalisa.gif) · [冰上芭蕾](docs/ballet.gif) · [恶魔之眼](docs/demoneye.gif) · [生命的轨迹](docs/life.gif)
 
 ## 特效
 
@@ -45,7 +45,7 @@
 | --- | --- | --- |
 | ![tornado](docs/tornado.png) | ![storm](docs/storm.png) | ![monalisa](docs/monalisa.png) |
 
-| 舞动芭蕾 `ballet` | 恶魔之眼 `demoneye` | 生命的轨迹 `life` |
+| 冰上芭蕾 `ballet` | 恶魔之眼 `demoneye` | 生命的轨迹 `life` |
 | --- | --- | --- |
 | ![ballet](docs/ballet.png) | ![demoneye](docs/demoneye.png) | ![life](docs/life.png) |
 
@@ -76,14 +76,14 @@
 | `landscape` 五光十色 | 层叠远山、平湖、小船、白鹅、两侧丛林；水面/雾气/花瓣动态 |
 | `shanghai` 东方明珠 | 上海外滩夜景、东方明珠、高楼霓虹、黄浦江倒影；**默认 ASCII**，`--unicode` 可切换 |
 | `tiananmen` 光芒万丈 | 放大到约 92% 宽 / 62% 高的天安门：双层金瓦飞檐、红柱城楼与国徽、红墙、白石门套五门洞、白框标语与中央画像、红旗与两侧小楼；金色光束先从城楼后方向外向上生成，再按光束由内向外依次循环点亮 |
-| `traffic` 车水马龙 | 城市街道两侧高楼、霓虹、车流；`--street horizontal\|vertical`；**默认 ASCII**，`--unicode` 可切换 |
-| `fairy` 仙女散花 | 空中飞天侍女、花篮、飘带、满屏花瓣；`--petal-count` / `--petal-speed` |
+| `traffic` 车水马龙 | 城市街道两侧高楼、霓虹、车流；横向 3 行车（车顶/车身/车轮，8–16 格长）分 4–5 条车道、车道间有虚线，方向按车道交替；纵向 6 列俯视车（5–9 行，带前后灯与侧轮）；`--street horizontal\|vertical`；`--density` 调车流密度；**默认 ASCII**，`--unicode` 可切换 |
+| `fairy` 仙女散花 | 30×34 手工像素仕女（低发髻、侧脸眉眼、举篮、收臂、交领蓝襟、白裙裙裾）；缓慢椭圆环绕 + 每 24 秒一次 6 秒的转身（`scaleX`，不翻跟斗）；花瓣从篮口跟随抛出后四散飘落；`--petal-count` / `--petal-speed` |
 | `tornado` 龙卷风 | 1–8 股龙卷风从左向右；扭曲、底部收尖、顶部更宽；整体比原来**更矮一档**（0.28～0.58 屏高）且**更淡更疏**（亮度 0.42～0.85、每行 20 颗）；底部有 30 颗碎屑**向外飘散** |
 | `storm` 电闪雷鸣 | 乌云、斜雨、城市剪影、闪电；屏幕上方叠一层**灰白、不规则的高云**（较密、底部淡出、**缓慢向右飘移**（约 3 列/秒））与原有云带形成层次；落雷时全屏白色亮闪（[效果图](docs/storm-flash.png)） |
 | `monalisa` 蒙娜丽莎 | 整屏动态油画：sfumato 山水、金框、深色衣裙与交叠双手；呼吸、眼神游移/眨眼、若隐若现的微笑、油彩微光与浮尘 |
-| `ballet` 舞动芭蕾 | 男女双人舞者始终保持牵手；Lissajous 路径飞越整屏，足尖、tutu、tunic、飘带、聚光灯与浮尘；`--speed` 调速 |
+| `ballet` 冰上芭蕾 | 冰场双人舞：39 秒编舞循环 13 个舞段（滑行、压步、arabesque、promenade、**头顶托举**、联合旋转、death spiral、sissonne 跳跃、Ina Bauer、收势），关节用两骨 IK 求解、牵手自动对齐，四肢带柔边并延迟跟随躯干；整场滑行覆盖大部分画面，围板后有三排会摇晃/举手/打闪光灯的观众，冰面留下冰刀刻痕与倒影；`--speed` 调速 |
 | `demoneye` 恶魔之眼 | 整屏一只巨大血眼：眨眼每 8～15 秒一次、单眨或双眨（约 7:3），每两次眨眼之间只甩出 1～2 次（两次跳动相隔 ≥5 秒），约 0.1 秒到位、0.45～0.85 秒内必回正中直视观众；竖瞳缩放、眼睑压暗、血丝与眨眼冲击波；`--eye-motion dart\|still`（默认 dart），`--eye-still` 让眼球钉在正中 |
-| `life` 生命的轨迹 | 0～100 岁时间轴与左右生命线；人类统一 `@` 符号 + 同排彩色大写简写；近期为长光束、早期为不消失的可见暗点；`GPA/GMA` 从 -3/-4/-5 随机取相邻两行，结束后行位可复用；`DOG` 终身在 -1 紧挨我；`PAL/UNI` 在 +1 另一侧，`WORK/FRIEND` 婚前同样 +1；有未成年 KID 时 `WORK/FRIEND` 退到 -5，孩子成年后回到 -1；`ME 0 / WIFE +1`；`KID1 +2`、`KID2 -2`、`KID3 -4`，`GRAND1 +3`、`GRAND2 -3` 紧贴父辈；`CAT +4` 与第一个孩子同时出现；`DAD/MOM +3/+4` 在孩子出现后让位到 +5/+6，`BRO +5→+7`；死亡点保留 `@` + 名称并以每秒 2 次显现/消失；所有死亡角色升到顶部按死亡顺序隔行排列，终点标签在流星抵达后 0.5 秒淡入；人类 `*`、猫狗 `+` 闪烁；GF 靠近后 1～2 年变 WIFE；WIFE 75～90 岁、晚于我化星；AGE 无前导零；`--life-cycle` 控制一轮秒数 |
+| `life` 生命的轨迹 | 0～100 岁时间轴与左右生命线；人类统一 `@` 符号 + 同排彩色大写简写 + **家属本人年龄**（非亲属朋友不带年龄）；亮光束随年龄增长（年长后可覆盖大部分生命），由尾部的暗点/短划线渐亮到 `=`，头部为 `****@` 彗尾；生命最初约 22%～42%（最多约 22 年）保留为稀疏暗淡的点；每条轨迹结束后其行位可被后来者复用（学龄 `PAL/UNI` 的 +1 行 → GF/WIFE，`DOG` 的 -1 行 → KID2，猫/父母的行位也会被后来的朋友接回）；`DOG` 终身在 -1 紧挨我；`PAL/UNI/WORK/FRIEND` 同时出现时**共用同一行**：学龄期在 +1 另一侧，有未成年 KID 时整组退到 KID/CAT 外侧最近的空行（通常为 +4；只让出孩子/宠物实际占用的行，不再固定 -5/-7），所有 KID 成年后回到内侧；`ME 0 / WIFE +1`；`KID1 +2`、`KID2 -1`（复用 DOG 让出的紧邻行）、`KID3 -2`；成年前 `KID3 -2 / KID2 -1 / ME 0 / WIFE +1 / KID1 +2` **连续无空行**，`GRAND1/GRAND2` 始终紧贴父辈一行（父辈成年漂移后随之移动）；`CAT +3` 与第一个孩子同时出生，紧贴 KID1 下方；`DAD/MOM +3/+4` 在孩子出生前两年开始让位到 `+5/+6`，`BRO +5→+7` 紧随让位；GPA/GMA/DAD/MOM 在我 0 岁时随机得到合适起始年龄（58～70 / 56～68 / 25～33 / 23～31），BRO 0～4，ME 0；KID/GRAND/CAT/DOG 从各自出生起算，GF/WIFE 与我同龄上下 2 岁；所有行固定为 1 个终端行（不随终端高度缩放，高终端也不会因取整出现空行）；`ME` 结束时触发约 6 秒的**超新星终章**（回闪与星屑放慢、彗星保持原速；白光核心、一生回闪、冲击波、星屑、加亮彗星与顶部永久光晕；回闪扫描光柱到达 ME 的停止线后以三列宽永久保留，不再消失）；死亡点与顶部星标保留 `@` + 名称 + 最终年龄，并以每秒 1 次同步显现/消失；所有死亡角色升到顶部按死亡顺序隔行排列，终点标签在流星抵达后 0.5 秒淡入；人类 `*`、猫狗 `+` 闪烁；GF 用 2 年靠近、再停留 1～2 年变 WIFE；WIFE 75～90 岁、晚于我化星；AGE 无前导零；`--life-cycle` 控制一轮秒数 |
 
 > 截图均为 120×36、truecolor、离屏渲染；部分截图/动图展示 Unicode 字形，实际运行默认 ASCII（加 `--unicode` 切换）。
 
@@ -177,7 +177,7 @@ trix fairy                         # 仙女散花
 trix tornado                       # 龙卷风
 trix storm                         # 电闪雷鸣
 trix monalisa                      # 蒙娜丽莎动态油画
-trix ballet --speed 1.3            # 舞动芭蕾（双人牵手满屏舞动）
+trix ballet --speed 1.3            # 冰上芭蕾（双人冰舞，48 秒编舞循环）
 trix demoneye                      # 恶魔之眼（随机注视 / 眨眼）
 trix demoneye --eye-still          # 眼球钉在正中，只保留眨眼与瞳孔动态
 trix life                          # 生命的轨迹（默认 120 秒一轮）
@@ -233,7 +233,7 @@ trix <effect> [options]
       --unicode           Opt in to Unicode single-cell glyphs
       --ascii             Force ASCII glyphs (the default)
       --color <mode>      auto | truecolor | 256 | 16 | mono [默认: auto]
-      --density <f>       beams/fireworks/galaxy density    [默认: 1.0]
+      --density <f>       beams/fireworks/galaxy/traffic 密度  [默认: 1.0]
       --spin <f>          black hole rotation speed          [默认: 0.5]
       --twinkle <f>       galaxy twinkle rate                [默认: 1.0]
       --meteors <n>       black hole / galaxy meteors        [默认: 3]
@@ -276,7 +276,7 @@ trix <effect> [options]
 | `m` / `e` / `d` | 超级马里奥 / 心率跳动 / 蒲公英 |
 | `f` / `l` / `b` / `j` | 鱼缸 / 山水 / 东方明珠 / 天安门 |
 | `c` / `x` / `z` / `k` | 车水马龙 / 仙女散花 / 龙卷风 / 电闪雷鸣 |
-| `o` / `v` / `g` | 蒙娜丽莎 / 舞动芭蕾 / 恶魔之眼 |
+| `o` / `v` / `g` | 蒙娜丽莎 / 冰上芭蕾 / 恶魔之眼 |
 | `y` | 生命的轨迹 |
 | `t` | 循环主题 |
 | `+` / `-` | 加速 / 减速（0.1×–8×），Tom & Jerry 同样生效 |
@@ -350,8 +350,8 @@ git push origin v0.8.0
 | landscape | 0.038 ms | 0.043 ms | 1.7 KiB/帧 |
 | shanghai | 0.032 ms | 0.036 ms | 3.3 KiB/帧 |
 | tiananmen | 0.095 ms | 0.105 ms | 7.0 KiB/帧 |
-| traffic | 0.024 ms | 0.028 ms | 2.9 KiB/帧 |
-| fairy | 0.015 ms | 0.032 ms | 0.4 KiB/帧 |
+| traffic | 0.029 ms | 0.036 ms | 1.7 KiB/帧 |
+| fairy | 0.018 ms | 0.022 ms | 2.0 KiB/帧 |
 | tornado | 0.043 ms | 0.051 ms | 7.8 KiB/帧 |
 | storm | 0.109 ms | 0.122 ms | 29.9 KiB/帧 |
 | monalisa | 0.380 ms | 0.489 ms | 15.3 KiB/帧 |

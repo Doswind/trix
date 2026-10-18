@@ -511,7 +511,7 @@ EFFECTS
   tornado   龙卷风      twisted funnels, 2x wider tops, heavy base debris
   storm     电闪雷鸣    rain, clouds and full-screen lightning flashes
   monalisa  蒙娜丽莎      living Mona Lisa oil painting: gaze, blink, smile
-  ballet    舞动芭蕾    hand-in-hand duet dancing across the whole stage
+  ballet    冰上芭蕾    ice-ballet duet: lift, spiral, spin, spread eagle
   demoneye  恶魔之眼    giant blood eye; eyeball darts between blinks
   life      生命的轨迹  a 0-100 life timeline of family, love and generations
 
@@ -529,7 +529,7 @@ OPTIONS
       --unicode           Opt in to Unicode single-cell glyphs
       --ascii             Force ASCII glyphs (the default)
       --color <mode>      auto | truecolor | 256 | 16 | mono   [default: auto]
-      --density <f>       beams/fireworks/galaxy density      [default: 1.0]
+      --density <f>       beams/fireworks/galaxy/traffic density [default: 1.0]
       --spin <f>          black hole rotation speed            [default: 0.5]
       --twinkle <f>       galaxy twinkle rate                  [default: 1.0]
       --meteors <n>       black hole / galaxy meteors          [default: 3]

@@ -42,6 +42,36 @@ const C_FRIEND: Rgb = Rgb::hex(0x94a3b8);
 const C_DOG: Rgb = Rgb::hex(0xc2410c);
 const C_CAT: Rgb = Rgb::hex(0xf0abfc);
 
+/// Friend lanes are planned on a small integer grid around my row.  A
+/// trajectory that ends frees its row, so a later character can be slotted
+/// into exactly the same lane.
+const LANE_MIN: i32 = -10;
+const LANE_MAX: i32 = 10;
+
+/// A child counts as a minor until this age.  While a minor exists, friends
+/// and colleagues stay outside the child on their own side of my row.
+const KID_MINOR_AGE: f32 = 20.0;
+
+/// The shared friend row moves a little before a newcomer arrives, after the
+/// parents have finished sliding down.  Half a year is enough to clear the row
+/// by the time the KID / pet / grandchild actually appears.
+const FRIEND_LOOKAHEAD: f32 = 0.5;
+const FRIEND_SIM_STEP: f32 = 0.25;
+
+/// Parents and the brother slide to their new row over this many years.
+const YIELD_GLIDE: f32 = 1.5;
+
+/// The end-point symbol and name blink once every second.
+const DEATH_BLINK_SECS: f32 = 1.0;
+
+/// The oldest part of a life stays as dim, scattered dots.  The bright beam
+/// grows with the life, but the early section is capped so a very long life
+/// does not lose its whole opening.
+const EARLY_DOTS_MAX: f32 = 22.0;
+
+/// The main character's supernova sequence, measured in real seconds.
+const ME_FINALE_SECS: f32 = 6.0;
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Role {
     Me,
@@ -80,6 +110,9 @@ struct Actor {
     end: EndKind,
     anchor: Anchor,
     base: f32,
+    /// Age added to the timeline age for family roles: their age at my age
+    /// zero, or `-birth` for characters born later in the timeline.
+    age_offset: f32,
     amp: f32,
     phase: f32,
     freq: f32,
@@ -103,6 +136,25 @@ impl Actor {
             self.label
         }
     }
+
+    fn shows_age(&self) -> bool {
+        self.role != Role::Friend
+    }
+
+    /// The character's own age at timeline age `my_age`.
+    fn age_at(&self, my_age: f32) -> f32 {
+        (my_age + self.age_offset).max(0.0)
+    }
+
+    /// `NAME AGE` for relatives, plain `NAME` for classmates and colleagues.
+    fn display_label(&self, my_age: f32) -> String {
+        let label = self.label(my_age);
+        if self.shows_age() {
+            format!("{label} {}", self.age_at(my_age).round() as i32)
+        } else {
+            label.to_string()
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -118,11 +170,21 @@ struct Pos {
     y: f32,
 }
 
+/// A friend's row over time.  Lane changes are deliberate, rare steps: the
+/// friend steps outside a new minor child on its side, yields a row a child or
+/// pet actually takes, and moves back inward after all children grow up.
+#[derive(Clone, Copy)]
+struct LaneKf {
+    age: f32,
+    lane: f32,
+}
+
 struct Plan {
     actors: Vec<Actor>,
     events: Vec<Event>,
     wife_at: f32,
-    first_child: f32,
+    /// Per-actor lane keyframes.  Empty for everyone except friends.
+    lane_keys: Vec<Vec<LaneKf>>,
 }
 
 pub struct LifeScene {
@@ -155,6 +217,7 @@ fn base_actor(
         end,
         anchor,
         base,
+        age_offset: 0.0,
         amp: 0.8,
         phase: 0.0,
         freq: 0.35,
@@ -175,6 +238,10 @@ impl Plan {
     fn generate(seed: u64, cycle: u64) -> Self {
         let mut rng =
             Rng::new(seed ^ 0x4c49_4645_5f54_5241 ^ cycle.wrapping_mul(0x9e37_79b9_7f4a_7c15));
+        // A separate stream keeps the ages independent from the existing
+        // death/birth/lane plan, so adding ages does not reshuffle the scene.
+        let mut age_rng =
+            Rng::new(seed ^ 0x4147_4553_5f41_4745 ^ cycle.wrapping_mul(0xd1b5_4a32_d192_ed03));
 
         // Death ages.  Grandparents go first, then parents, brother and me.
         let (mut g1, mut g2) = (rng.range(15.5, 22.0), rng.range(25.0, 30.0));
@@ -193,18 +260,23 @@ impl Plan {
         let me_death = rng.range(75.0, 85.0);
         let bro_diverge = rng.range(20.0, 24.0);
 
-        // Love, marriage and three children.  The three- and four-year gaps
-        // are kept, so the birth order tells a coherent story.
+        // Love, marriage and three children.  The girlfriend takes two years
+        // to reach my row, stays beside me for another one or two years, and
+        // only then becomes WIFE.  The children follow two or three years
+        // after the wedding, which leaves the parents time to step back.
         let spouse_birth = rng.range(25.0, 34.0);
-        let wife_at = spouse_birth + 3.2 + rng.range(1.0, 2.0);
+        let wife_at = spouse_birth + 2.0 + rng.range(1.0, 2.0);
         let wife_death = rng.range((me_death + 2.0).max(75.0), 90.0);
-        let first_child = wife_at + rng.range(1.0, 2.0);
+        let first_child = wife_at + rng.range(2.0, 3.0);
         let second_child = first_child + rng.range(3.0, 4.0);
         let third_child = second_child + rng.range(3.0, 4.0);
         let child_births = [first_child, second_child, third_child];
 
         let dog_birth = rng.range(1.0, 3.0);
         let dog_death = dog_birth + rng.range(10.0, 12.0);
+        // The cat arrives with the first child.  The parents have already
+        // finished sliding down, so CAT can sit directly under KID1 with no
+        // empty row between them.
         let cat_birth = first_child;
         let cat_death = cat_birth + rng.range(10.0, 12.0);
 
@@ -234,6 +306,7 @@ impl Plan {
             Anchor::Main,
             core_top,
         );
+        gpa.age_offset = age_rng.range(58.0, 70.0);
         gpa.amp = 0.0;
         gpa.phase = 0.4;
         gpa.trail_len = 36.0;
@@ -249,6 +322,7 @@ impl Plan {
             Anchor::Main,
             core_top - 1.0,
         );
+        gma.age_offset = age_rng.range(56.0, 68.0);
         gma.amp = 0.0;
         gma.phase = 2.1;
         gma.trail_len = 36.0;
@@ -264,10 +338,14 @@ impl Plan {
             Anchor::Main,
             3.0,
         );
+        dad.age_offset = age_rng.range(25.0, 33.0);
         dad.amp = 0.0;
         dad.phase = 1.3;
         dad.trail_len = 36.0;
-        dad.yield_at = first_child;
+        // The parents start moving two years before the first child, so by the
+        // birth their block has already cleared the rows the child and cat
+        // will use.  BRO keeps the same offset and follows them down.
+        dad.yield_at = first_child - 2.0;
         dad.yield_by = 2.0;
         actors.push(dad);
 
@@ -281,10 +359,11 @@ impl Plan {
             Anchor::Main,
             4.0,
         );
+        mom.age_offset = age_rng.range(23.0, 31.0);
         mom.amp = 0.0;
         mom.phase = 3.4;
         mom.trail_len = 36.0;
-        mom.yield_at = first_child;
+        mom.yield_at = first_child - 2.0;
         mom.yield_by = 2.0;
         actors.push(mom);
 
@@ -298,10 +377,13 @@ impl Plan {
             Anchor::Main,
             5.0,
         );
+        // BRO is the sibling born around my age zero, usually a few years
+        // older.
+        bro.age_offset = age_rng.range(0.0, 4.0);
         bro.amp = 0.0;
         bro.phase = 4.0;
         bro.freq = 0.27;
-        bro.yield_at = first_child;
+        bro.yield_at = first_child - 2.0;
         bro.yield_by = 2.0;
         bro.diverge_at = bro_diverge;
         bro.diverge = 6.0;
@@ -321,11 +403,15 @@ impl Plan {
         );
         wife.alt_label = "WIFE";
         wife.alt_at = wife_at;
+        // GF/WIFE is a peer, so her age tracks mine within about two years.
+        wife.age_offset = age_rng.range(-2.0, 2.0);
         wife.amp = 0.0;
         wife.phase = 1.1;
         wife.freq = 0.30;
         wife.entry_side = if rng.chance(0.5) { -1.0 } else { 1.0 };
-        wife.entry_dur = 3.2;
+        // Two years to reach my row, then one or two years as GF before the
+        // label changes to WIFE (handled by alt_at = wife_at).
+        wife.entry_dur = 2.0;
         wife.trail_len = 28.0;
         actors.push(wife);
 
@@ -338,7 +424,13 @@ impl Plan {
         let exit_child = 2;
 
         let mut child_actor = [usize::MAX; 3];
-        let kid_rows = [2.0f32, -2.0, -4.0];
+        // A gapless stack around ME/WIFE:
+        //   KID3 -2 / KID2 -1 / ME 0 / WIFE +1 / KID1 +2
+        // KID2 is the second child and takes the dog's freed -1 row; KID3
+        // arrives later one row above KID2.  Before KID3 is born, KID2 stays
+        // at -1, so there is never a blank row between a minor child and the
+        // couple.
+        let kid_rows = [2.0f32, -1.0, -2.0];
         for i in 0..3 {
             let birth = child_births[i];
             let mut child = base_actor(
@@ -355,6 +447,7 @@ impl Plan {
                 Anchor::Main,
                 kid_rows[i],
             );
+            child.age_offset = -birth;
             child.amp = 0.0;
             child.phase = i as f32 * 1.7 + 0.5;
             child.freq = 0.31 + i as f32 * 0.04;
@@ -363,7 +456,9 @@ impl Plan {
             child.trail_len = 24.0;
 
             if i == stay_child {
-                child.diverge = if rng.chance(0.5) { 4.5 } else { -4.5 };
+                // Always drift downwards, away from the KID2/KID3 stack above
+                // ME, so GRAND1 never crosses into KID2's row.
+                child.diverge = 4.5;
             } else if i == drift_child {
                 child.diverge = if rng.chance(0.5) { 12.0 } else { -12.0 };
             } else {
@@ -386,6 +481,10 @@ impl Plan {
             }
             let label = if grand_no == 0 { "GRAND1" } else { "GRAND2" };
             let parent_base = actors[child_actor[child_i]].base;
+            // Grandchildren always sit one row outside their parent.  By the
+            // time GRAND2 is born, KID2 has already drifted away from the
+            // childhood stack, so the fixed -1 offset cannot collide with
+            // KID3; the grandchild follows the parent's drifted position.
             let grand_base = if parent_base > 0.0 { 1.0 } else { -1.0 };
             let mut grand = base_actor(
                 Role::Grandchild,
@@ -397,6 +496,7 @@ impl Plan {
                 Anchor::Child(child_actor[child_i]),
                 grand_base,
             );
+            grand.age_offset = -birth;
             grand.amp = 0.0;
             grand.phase = grand_no as f32 * 2.3 + 1.0;
             grand.freq = 0.38;
@@ -418,6 +518,7 @@ impl Plan {
             Anchor::Main,
             -1.0,
         );
+        dog.age_offset = -dog_birth;
         dog.amp = 0.0;
         dog.phase = rng.range(0.0, 2.0 * PI);
         dog.freq = 0.30;
@@ -425,10 +526,12 @@ impl Plan {
         actors.push(dog);
 
         let cat_child = 0;
+        // CAT is one row under KID1 (+3), never two: KID1 +2 / CAT +3 /
+        // shared friends +4 / DAD +5 / MOM +6 / BRO +7.
         let cat_side = if actors[child_actor[cat_child]].base > 0.0 {
-            2.0
+            1.0
         } else {
-            -2.0
+            -1.0
         };
         let mut cat = base_actor(
             Role::Cat,
@@ -440,6 +543,7 @@ impl Plan {
             Anchor::Child(child_actor[cat_child]),
             cat_side,
         );
+        cat.age_offset = -cat_birth;
         cat.amp = 0.0;
         cat.yield_at = first_child;
         cat.yield_by = 0.0;
@@ -483,6 +587,11 @@ impl Plan {
             }
         }
 
+        // Friends do not get a hard-coded row.  Their lanes are planned
+        // against the whole cast below, using the rows freed by earlier
+        // characters and yielding only the rows a child or pet actually takes.
+        let lane_keys = plan_friend_lanes(&actors);
+
         // Story captions.  They are short enough for a terminal HUD and make
         // each life feel authored rather than merely procedural.
         let mut events = vec![
@@ -522,12 +631,12 @@ impl Plan {
                 color: C_CHILD[0],
             },
             Event {
-                age: first_child + 1.0,
-                text: "GRANDPARENTS STEP BACK FOR THE CHILD",
+                age: first_child - 1.8,
+                text: "PARENTS STEP BACK FOR THE CHILD",
                 color: C_DAD,
             },
             Event {
-                age: first_child + 1.5,
+                age: first_child - 0.8,
                 text: "FRIENDS MAKE ROOM FOR THE CHILD",
                 color: C_FRIEND,
             },
@@ -640,7 +749,7 @@ impl Plan {
             actors,
             events,
             wife_at,
-            first_child,
+            lane_keys,
         }
     }
 
@@ -651,19 +760,10 @@ impl Plan {
         let x0 = 2.0;
         let x1 = (w as f32 - 3.0).max(x0 + 1.0);
         let x = x0 + (age / 100.0).clamp(0.0, 1.0) * (x1 - x0);
-        let scale = (hh / 36.0).clamp(0.55, 1.35);
-        let child_around = self.actors.iter().any(|c| {
-            if c.role != Role::Child {
-                return false;
-            }
-            let until = if c.end == EndKind::Exit {
-                c.death + c.exit_dur
-            } else {
-                c.birth + 20.0 + c.diverge_dur
-            };
-            age >= c.birth && age < until
-        });
-        let child_started = self.first_child <= age;
+        // One lane is exactly one terminal row at every terminal size.  Never
+        // scale this: rounding a 1.2-row lane gap can silently leave an empty
+        // row between WIFE/KID1 or KID1/CAT.
+        let gap = 1.0;
         for i in 0..self.actors.len() {
             let a = self.actors[i];
             if age < a.birth || age >= 100.0 {
@@ -685,23 +785,17 @@ impl Plan {
                     .map(|p| p.y)
                     .unwrap_or(main),
             };
-            let mut base = a.base;
-            if a.role == Role::Friend && (a.label == "WORK" || a.label == "FRIEND") {
-                base = if child_started && child_around {
-                    -7.0
-                } else {
-                    2.0
-                };
-            }
+            // Friends use their planned row; everyone else keeps the authored
+            // base row (and any staged yield).
+            let mut base = self.lane_of(i, age);
             if age > a.yield_at {
-                let p = smoothstep(((age - a.yield_at) / 2.0).clamp(0.0, 1.0));
-                base += a.yield_by * p;
+                base += a.yield_by * yield_progress(&a, age);
             }
-            let mut y = anchor + (base + a.amp * (age * a.freq + a.phase).sin()) * scale;
+            let mut y = anchor + (base + a.amp * (age * a.freq + a.phase).sin()) * gap;
 
             if age > a.diverge_at {
                 let p = smoothstep((age - a.diverge_at) / a.diverge_dur.max(0.1));
-                y += a.diverge * scale * p;
+                y += a.diverge * gap * p;
             }
 
             if a.entry_side != 0.0 && age < a.birth + a.entry_dur {
@@ -723,6 +817,13 @@ impl Plan {
         out
     }
 
+    fn lane_of(&self, i: usize, age: f32) -> f32 {
+        match self.lane_keys.get(i) {
+            Some(keys) if !keys.is_empty() => lane_at(keys, age),
+            _ => self.actors[i].base,
+        }
+    }
+
     fn latest_event(&self, age: f32) -> Option<Event> {
         self.events
             .iter()
@@ -730,6 +831,276 @@ impl Plan {
             .find(|e| age >= e.age && age - e.age <= 4.5)
             .copied()
     }
+}
+
+fn actor_end(a: &Actor) -> f32 {
+    match a.end {
+        EndKind::Star => a.death,
+        EndKind::Exit => a.death + a.exit_dur,
+        EndKind::Continue => 100.0,
+    }
+}
+
+/// Length in years of the bright part of a life thread.  It scales with how
+/// much life has already passed, so an old life keeps a long glowing beam;
+/// the earliest years stay behind as dim, scattered dots.
+fn beam_span(actor: &Actor, beam_age: f32) -> f32 {
+    let lived = (beam_age - actor.birth).max(0.0);
+    // The authored trail length is now a weight: main characters keep a
+    // slightly longer bright section than friends and pets.
+    let fraction = (0.58 + actor.trail_len / 170.0).clamp(0.58, 0.78);
+    let early = (lived * (1.0 - fraction)).min(EARLY_DOTS_MAX);
+    (lived - early).max(0.1)
+}
+
+/// Real seconds since the main character's death, while the supernova
+/// sequence is playing.  `None` before death or after the finale has ended.
+fn me_finale_elapsed(age: f32, death: f32, cycle_secs: f32) -> Option<f32> {
+    let real = (age - death) * cycle_secs / 100.0;
+    (0.0..=ME_FINALE_SECS).contains(&real).then_some(real)
+}
+
+fn active_at(a: &Actor, age: f32) -> bool {
+    age >= a.birth && age < actor_end(a) && age < 100.0
+}
+
+/// The row an actor would occupy on its own, before any smooth yielding.
+/// Anchored actors (cat, grandchildren) are one or two rows outside a parent.
+fn lane_offset(actors: &[Actor], i: usize) -> f32 {
+    match actors[i].anchor {
+        Anchor::Main => actors[i].base,
+        Anchor::Child(parent) => actors[parent].base + actors[i].base,
+    }
+}
+
+/// How far through a staged row change an actor is, from 0 to 1.
+fn yield_progress(a: &Actor, age: f32) -> f32 {
+    smoothstep(((age - a.yield_at) / YIELD_GLIDE).clamp(0.0, 1.0))
+}
+
+/// The outermost minor child on each side of me.  Friends must stay outside
+/// this boundary on whichever side they occupy, but they only have to give up
+/// a row that a child or pet actually takes.
+#[derive(Clone, Copy)]
+struct Guards {
+    pos: i32,
+    neg: i32,
+}
+
+impl Guards {
+    fn active(self) -> bool {
+        self.pos > 0 || self.neg > 0
+    }
+}
+
+fn guards(actors: &[Actor], age: f32) -> Guards {
+    let mut g = Guards { pos: 0, neg: 0 };
+    for (i, a) in actors.iter().enumerate() {
+        if a.role != Role::Child {
+            continue;
+        }
+        let due = a.birth <= age + FRIEND_LOOKAHEAD;
+        let minor = age < a.birth + KID_MINOR_AGE;
+        let alive = age < actor_end(a);
+        if !(due && minor && alive) {
+            continue;
+        }
+        let lane = lane_offset(actors, i).round() as i32;
+        if lane > 0 {
+            g.pos = g.pos.max(lane);
+        } else if lane < 0 {
+            g.neg = g.neg.max(-lane);
+        }
+    }
+    g
+}
+
+fn lane_violates(lane: i32, g: Guards) -> bool {
+    if lane > 0 {
+        g.pos > 0 && lane <= g.pos
+    } else if lane < 0 {
+        g.neg > 0 && lane >= -g.neg
+    } else {
+        true
+    }
+}
+
+/// Rows unavailable to the shared friend row at `age`.  Friends themselves are
+/// skipped: they all sit on one row, so only the authored cast can block it.
+/// Dead trajectories are omitted on purpose: their end marker stays at the age
+/// they left, so a later life can start on the same row without ever
+/// overlapping the older line.
+fn occupied_lanes(actors: &[Actor], age: f32, g: Guards) -> Vec<i32> {
+    let mut occ = Vec::with_capacity(24);
+    let mut push = |lane: i32| {
+        if !occ.contains(&lane) {
+            occ.push(lane);
+        }
+    };
+    push(0);
+    for (i, a) in actors.iter().enumerate() {
+        if a.role == Role::Friend {
+            continue;
+        }
+        let soon = a.birth > age && a.birth <= age + FRIEND_LOOKAHEAD;
+        // The cat is part of the first child's rows; hold its lane as soon as
+        // the child era starts, even though the cat itself arrives a little
+        // later.
+        let cat_early = a.role == Role::Cat && g.active() && age < a.birth;
+        if !(active_at(a, age) || soon || cat_early) {
+            continue;
+        }
+        let lane = lane_offset(actors, i).round() as i32;
+        if a.role == Role::Family && matches!(a.label, "DAD" | "MOM" | "BRO") {
+            // DAD/MOM/BRO move as one block.  Reserve the row the block is
+            // currently on and the row it is heading for, so the shared
+            // friend row can take a row the block has already cleared without
+            // sitting in its path.
+            let base = lane_offset(actors, i);
+            let current = base + a.yield_by * yield_progress(a, age);
+            let target = base + a.yield_by;
+            let lo = current.min(target).round() as i32;
+            let hi = current.max(target).round() as i32;
+            for l in lo..=hi {
+                push(l);
+            }
+        } else {
+            push(lane);
+        }
+    }
+    occ
+}
+
+fn choose_friend_lane(occ: &[i32], g: Guards, prefer_side: i32) -> i32 {
+    let mut best: Option<(u8, i32, u8, i32)> = None;
+    for lane in LANE_MIN..=LANE_MAX {
+        if lane == 0 || occ.contains(&lane) || lane_violates(lane, g) {
+            continue;
+        }
+        let side_pen = if prefer_side != 0 && lane.signum() != prefer_side {
+            1
+        } else {
+            0
+        };
+        let key = (side_pen, lane.abs(), if lane > 0 { 0u8 } else { 1u8 }, lane);
+        if best.map_or(true, |b| key < b) {
+            best = Some(key);
+        }
+    }
+    best.map(|(_, _, _, lane)| lane)
+        .unwrap_or(if prefer_side < 0 { -1 } else { 1 })
+}
+
+fn lane_at(keys: &[LaneKf], age: f32) -> f32 {
+    let mut lane = keys.first().map(|k| k.lane).unwrap_or(0.0);
+    for k in keys {
+        if k.age <= age {
+            lane = k.lane;
+        } else {
+            break;
+        }
+    }
+    lane
+}
+
+/// Plan the single row shared by every classmate, colleague and friend.  All
+/// active friends travel on the same trajectory row; when one category joins
+/// while another is still present they simply share that row.  The row is
+/// chosen against the authored cast, steps outward just before a minor child
+/// or pet needs it, and moves back inward after every child has grown up.
+fn plan_friend_lanes(actors: &[Actor]) -> Vec<Vec<LaneKf>> {
+    let mut keys = vec![Vec::new(); actors.len()];
+    let friends: Vec<usize> = actors
+        .iter()
+        .enumerate()
+        .filter(|(_, a)| a.role == Role::Friend)
+        .map(|(i, _)| i)
+        .collect();
+    if friends.is_empty() {
+        return keys;
+    }
+
+    let start = friends
+        .iter()
+        .map(|&i| actors[i].birth)
+        .fold(f32::INFINITY, f32::min);
+    let max_age = friends
+        .iter()
+        .map(|&i| actor_end(&actors[i]))
+        .fold(0.0f32, f32::max)
+        .min(100.0);
+    let mut shared: Vec<LaneKf> = Vec::new();
+    let mut cur: Option<i32> = None;
+    let mut prev_guard_active = false;
+    let mut prev_age = start - 0.001;
+    let mut age = start;
+    loop {
+        // A newcomer can appear between two simulation steps.  Activate the
+        // shared row at the exact birth so the friend is never briefly drawn
+        // on the row it is about to vacate.
+        if cur.is_none() {
+            let birth = friends
+                .iter()
+                .map(|&i| actors[i].birth)
+                .filter(|b| *b > prev_age && *b <= age + 0.0001)
+                .fold(f32::INFINITY, f32::min);
+            if birth.is_finite() {
+                let g = guards(actors, birth);
+                let occ = occupied_lanes(actors, birth, g);
+                // The first choice is the other side of the dog, as close to
+                // me as the current cast allows.
+                let lane = choose_friend_lane(&occ, g, 1);
+                cur = Some(lane);
+                shared.push(LaneKf {
+                    age: birth,
+                    lane: lane as f32,
+                });
+            }
+        }
+
+        let active = friends.iter().any(|&i| active_at(&actors[i], age));
+        let g = guards(actors, age);
+        let guard_active = g.active();
+        let return_now = prev_guard_active && !guard_active;
+        let occ = occupied_lanes(actors, age, g);
+
+        if active {
+            if let Some(lane) = cur {
+                let forced = return_now || lane_violates(lane, g) || occ.contains(&lane);
+                if forced {
+                    let side = if lane > 0 { 1 } else { -1 };
+                    let want = if return_now {
+                        Guards { pos: 0, neg: 0 }
+                    } else {
+                        g
+                    };
+                    let next = choose_friend_lane(&occ, want, side);
+                    if next != lane {
+                        cur = Some(next);
+                        shared.push(LaneKf {
+                            age,
+                            lane: next as f32,
+                        });
+                    }
+                }
+            }
+        } else {
+            // Nobody is on the row; the next arrival will choose afresh.
+            cur = None;
+        }
+
+        prev_guard_active = guard_active;
+        prev_age = age;
+        if age >= max_age {
+            break;
+        }
+        age = (age + FRIEND_SIM_STEP).min(max_age);
+    }
+
+    for &i in &friends {
+        keys[i] = shared.clone();
+    }
+    keys
 }
 
 impl LifeScene {
@@ -952,7 +1323,8 @@ impl LifeScene {
     }
 
     /// The distant past is only a faint field of dots; it stays on screen as
-    /// a memory of the path instead of a hard line.
+    /// a memory of the path instead of a hard line.  Towards the beam the dots
+    /// start mixing with dim dashes, so the hand-off is gradual.
     fn draw_history(&self, canvas: &mut Canvas, age: f32, unicode: bool, fade: f32) {
         for (i, actor) in self.plan.actors.iter().enumerate() {
             let start = actor.birth.max(0.0);
@@ -960,12 +1332,12 @@ impl LifeScene {
                 EndKind::Star | EndKind::Exit => actor.death.min(age),
                 EndKind::Continue => age.min(100.0),
             };
-            let old_end = (end - actor.trail_len).max(start);
+            let old_end = (end - beam_span(actor, end)).max(start);
             if old_end <= start {
                 continue;
             }
             let span = old_end - start;
-            let steps = ((span / 1.2).ceil() as usize).clamp(6, 96);
+            let steps = ((span / 0.6).ceil() as usize).clamp(10, 160);
             for k in 0..=steps {
                 let f = k as f32 / steps as f32;
                 let a = start + span * f;
@@ -973,18 +1345,30 @@ impl LifeScene {
                 if let Some(Some(p)) = past.get(i) {
                     let x = p.x.round() as isize;
                     let y = p.y.round() as isize;
-                    let col = actor.color.scale((0.18 + f * 0.13) * fade);
-                    canvas.set(x, y, if unicode { '·' } else { '.' }, col);
-                    if k % 7 == 0 {
-                        canvas.add_light(x, y, actor.color, 0.06 * fade, ' ');
+                    let ch = if f > 0.72 && k % 2 == 0 {
+                        if unicode {
+                            '─'
+                        } else {
+                            '-'
+                        }
+                    } else if unicode {
+                        '·'
+                    } else {
+                        '.'
+                    };
+                    let col = actor.color.scale((0.08 + f * 0.12) * fade);
+                    canvas.set(x, y, ch, col);
+                    if k % 9 == 0 {
+                        canvas.add_light(x, y, actor.color, 0.035 * fade, ' ');
                     }
                 }
             }
         }
     }
 
-    /// Recent life is drawn as a bright beam.  Early life is intentionally
-    /// left as faint dots above; the beam is what carries the eye.
+    /// The recent life is a long bright beam.  Its tail fades into the dim
+    /// dots of the early history, so the whole trajectory reads as one
+    /// continuous thread: scattered dots → dashes → bright `=` → `****@`.
     fn draw_beams(
         &self,
         canvas: &mut Canvas,
@@ -1006,8 +1390,12 @@ impl LifeScene {
                 continue;
             }
             let beam_age = memory_end.unwrap_or(age);
-            let beam_len = actor.trail_len.min(beam_age - actor.birth + 0.01).max(0.1);
-            let steps = ((beam_len * 2.5).ceil() as usize).clamp(8, 36);
+            // The bright beam now grows with the life instead of being a short
+            // fixed tail.  The opening years stay as dim dots above.
+            let beam_len = beam_span(actor, beam_age)
+                .min(beam_age - actor.birth + 0.01)
+                .max(0.1);
+            let steps = ((beam_len * 2.2).ceil() as usize).clamp(12, 84);
             let mut prev: Option<(isize, isize)> = None;
             for k in 0..=steps {
                 let f = k as f32 / steps as f32;
@@ -1020,34 +1408,35 @@ impl LifeScene {
                     let x = p.x.round() as isize;
                     let y = p.y.round() as isize;
                     let dim = if memory_end.is_some() { 0.45 } else { 1.0 };
-                    let col = actor.color.scale((0.30 + f * 0.52) * fade * dim);
+                    // Dim at the tail, bright at the living head.
+                    let col = actor.color.scale((0.16 + f * 0.74) * fade * dim);
                     if let Some((px, py)) = prev {
                         let dx = x - px;
                         let dy = y - py;
-                        let ch = beam_glyph(dx, dy, f > 0.55, unicode);
-                        canvas.line(px, py, x, y, ch, col);
-                        if dx.abs() >= dy.abs() * 2 {
-                            canvas.line(
-                                px,
-                                py + 1,
-                                x,
-                                y + 1,
-                                if unicode { '~' } else { '-' },
-                                col.scale(0.30),
-                            );
+                        // The history already supplied the early dots; the
+                        // beam itself is dashes that brighten into `=`.
+                        let mut ch = beam_glyph(dx, dy, f > 0.62, unicode);
+                        // A few wave glyphs break up long horizontal runs, the
+                        // way the reference thread mixes `-` and `~`.
+                        if f > 0.18 && k % 11 == 5 && matches!(ch, '-' | '=') {
+                            ch = if unicode { '≈' } else { '~' };
                         }
+                        canvas.line(px, py, x, y, ch, col);
                     } else {
                         canvas.set(x, y, if unicode { '·' } else { '.' }, col);
                     }
-                    if k % 5 == 0 && f > 0.15 {
-                        sparkles.push((x, y, actor.color.scale((0.55 + f * 0.40) * fade * dim)));
+                    if k < steps && steps - k <= 4 {
+                        // Four stars immediately behind the @ head.
+                        sparkles.push((x, y, actor.color.scale(0.95 * fade * dim)));
                     }
-                    if k % 5 == 0 {
+                    if k % 4 == 0 && f > 0.20 {
                         canvas.add_light(
                             x,
                             y,
                             actor.color,
-                            0.20 * fade * if memory_end.is_some() { 0.55 } else { 1.0 },
+                            (0.05 + f * 0.14)
+                                * fade
+                                * if memory_end.is_some() { 0.55 } else { 1.0 },
                             ' ',
                         );
                     }
@@ -1292,6 +1681,415 @@ impl LifeScene {
         }
     }
 
+    /// Supernova finale for ME: white-hot core, a life-review sweep, rings,
+    /// star dust, a brighter comet and a permanent halo on the final star.
+    fn draw_me_finale(
+        &self,
+        canvas: &mut Canvas,
+        age: f32,
+        t: f32,
+        cycle_secs: f32,
+        unicode: bool,
+        fade: f32,
+    ) {
+        let Some(me_i) = self.plan.actors.iter().position(|a| a.role == Role::Me) else {
+            return;
+        };
+        let me = self.plan.actors[me_i];
+        if age < me.death {
+            return;
+        }
+        let death_age = (me.death - 0.001).max(0.0);
+        let Some(dp) = self
+            .plan
+            .positions(death_age, self.w, self.h)
+            .get(me_i)
+            .and_then(|p| *p)
+        else {
+            return;
+        };
+        let comet_end = comet_end(&me);
+        let top_x = self.x1() - 1.0;
+        let top_y = star_top_y(self.star_rank(me_i), self.h);
+        let gold = C_ME.lerp(C_END, 0.55);
+        let cx = dp.x.round() as isize;
+        let cy = dp.y.round() as isize;
+
+        if let Some(real) = me_finale_elapsed(age, me.death, cycle_secs) {
+            // 1. White-hot core plus a short radial glow.
+            if real < 0.30 {
+                let k = (1.0 - real / 0.30).clamp(0.0, 1.0) * fade;
+                for dy in -6..=6 {
+                    for dx in -10..=10 {
+                        let d = ((dx as f32 / 10.0).powi(2) + (dy as f32 / 6.0).powi(2)).sqrt();
+                        if d <= 1.0 {
+                            canvas.add_light(cx + dx, cy + dy, C_ME, (1.0 - d) * 0.45 * k, ' ');
+                        }
+                    }
+                }
+                for (dx, dy) in [
+                    (-1, 0),
+                    (1, 0),
+                    (0, -1),
+                    (0, 1),
+                    (-1, -1),
+                    (1, 1),
+                    (-1, 1),
+                    (1, -1),
+                ] {
+                    canvas.set(
+                        cx + dx,
+                        cy + dy,
+                        if unicode { '✦' } else { '*' },
+                        C_ME.scale((0.35 + k * 0.65).min(1.2)),
+                    );
+                }
+                canvas.set(
+                    cx,
+                    cy,
+                    if unicode { '✧' } else { '*' },
+                    C_ME.scale(k.max(0.2)),
+                );
+                canvas.add_light(cx, cy, C_ME, 1.2 * k, ' ');
+                if real < 0.22 {
+                    let burst = (1.0 - real / 0.22).clamp(0.0, 1.0) * fade;
+                    for dx in -9..=9isize {
+                        let a = (1.0 - dx.abs() as f32 / 10.0) * burst;
+                        let ch = if dx.abs() <= 2 {
+                            '*'
+                        } else if unicode {
+                            '─'
+                        } else {
+                            '-'
+                        };
+                        canvas.set(cx + dx, cy, ch, C_ME.scale(a));
+                    }
+                    for dy in -4..=4isize {
+                        let a = (1.0 - dy.abs() as f32 / 5.0) * burst;
+                        let ch = if dy.abs() <= 1 {
+                            '*'
+                        } else if unicode {
+                            '│'
+                        } else {
+                            '|'
+                        };
+                        canvas.set(cx, cy + dy, ch, C_ME.scale(a));
+                    }
+                    for kk in 0..16 {
+                        let ang = kk as f32 / 16.0 * 2.0 * PI;
+                        let x = cx + (ang.cos() * 7.0).round() as isize;
+                        let y = cy + (ang.sin() * 3.0).round() as isize;
+                        canvas.set(
+                            x,
+                            y,
+                            if unicode { '✦' } else { '*' },
+                            C_ME.scale(burst * 0.8),
+                        );
+                    }
+                }
+            }
+
+            // 2. Life review: a scan line travels from BIRTH to the death
+            // point and re-lights ME's thread behind it.
+            let review_start = 0.15;
+            let review_end = 2.75;
+            if real >= review_start && real <= review_end {
+                let p = smoothstep(((real - review_start) / 2.60).clamp(0.0, 1.0));
+                let sweep_age = me.death * p;
+                let sx = self.x_for_age(sweep_age).round() as isize;
+                let main = main_y(age, self.h).round() as isize;
+                let axis = self.axis_y() as isize;
+                for y in 2..axis {
+                    if y % 2 == 0 || y == main {
+                        for dx in -1..=1isize {
+                            let a = (0.32 - dx.abs() as f32 * 0.10) * fade;
+                            canvas.set(sx + dx, y, if unicode { '│' } else { '|' }, C_ME.scale(a));
+                        }
+                    }
+                }
+                let steps = 40;
+                for k in 0..=steps {
+                    let f = k as f32 / steps as f32;
+                    let a = sweep_age * f;
+                    let past = self.plan.positions(a, self.w, self.h);
+                    if let Some(Some(pos)) = past.get(me_i) {
+                        let x = pos.x.round() as isize;
+                        let y = pos.y.round() as isize;
+                        let col = if f > 0.70 {
+                            C_ME.lerp(C_END, 0.45)
+                        } else {
+                            me.color
+                        };
+                        let ch = if f > 0.90 {
+                            if unicode {
+                                '✧'
+                            } else {
+                                '*'
+                            }
+                        } else if f > 0.50 {
+                            if unicode {
+                                '═'
+                            } else {
+                                '='
+                            }
+                        } else if unicode {
+                            '─'
+                        } else {
+                            '-'
+                        };
+                        canvas.set(x, y, ch, col.scale((0.35 + f * 0.65) * fade));
+                        if k % 8 == 0 {
+                            canvas.add_light(x, y, col, 0.25 * fade, ' ');
+                        }
+                    }
+                }
+                canvas.set(sx, main, if unicode { '✧' } else { '*' }, C_ME.scale(0.95));
+                canvas.add_light(sx, main, C_ME, 0.9 * fade, ' ');
+                for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
+                    canvas.set(
+                        sx + dx,
+                        main + dy,
+                        if unicode { '✦' } else { '*' },
+                        C_ME.scale(0.55),
+                    );
+                }
+
+                // As the sweep crosses an already-finished family member,
+                // their top star gets a brief sympathetic pulse.
+                for (j, other) in self.plan.actors.iter().enumerate() {
+                    if j == me_i || other.end != EndKind::Star || other.death > sweep_age + 0.5 {
+                        continue;
+                    }
+                    let ox = self.x_for_age(other.death);
+                    if (ox - self.x_for_age(sweep_age)).abs() <= 2.5 {
+                        let oy = star_top_y(self.star_rank(j), self.h);
+                        canvas.add_light(
+                            top_x.round() as isize,
+                            oy.round() as isize,
+                            other.color,
+                            0.9 * fade,
+                            ' ',
+                        );
+                    }
+                }
+            }
+
+            // 3. Expanding shockwave rings.
+            for ring in 0..4 {
+                let lt = real - (0.20 + ring as f32 * 0.15);
+                let life = 1.3;
+                if lt < 0.0 || lt > life {
+                    continue;
+                }
+                let u = lt / life;
+                let radius = 2.0 + u * (16.0 + ring as f32 * 2.0);
+                let alpha = (1.0 - u) * 0.65 * fade;
+                for pass in 0..2 {
+                    let rr = radius * if pass == 0 { 1.0 } else { 0.55 };
+                    let aa = alpha * if pass == 0 { 1.0 } else { 0.45 };
+                    let n = if pass == 0 { 28 } else { 20 };
+                    for k in 0..n {
+                        let ang = k as f32 / n as f32 * 2.0 * PI;
+                        let x = dp.x + ang.cos() * rr * 2.0;
+                        let y = dp.y + ang.sin() * rr;
+                        let ch = if k % 4 == 0 {
+                            if unicode {
+                                '✦'
+                            } else {
+                                '*'
+                            }
+                        } else if unicode {
+                            '·'
+                        } else {
+                            '.'
+                        };
+                        canvas.set(x.round() as isize, y.round() as isize, ch, gold.scale(aa));
+                        if k % 6 == 0 {
+                            canvas.add_light(
+                                x.round() as isize,
+                                y.round() as isize,
+                                gold,
+                                0.30 * aa,
+                                ' ',
+                            );
+                        }
+                    }
+                }
+            }
+
+            // 4. Deterministic star-dust burst.
+            let spark_t = real - 0.25;
+            if spark_t >= 0.0 {
+                for k in 0..64i64 {
+                    let h1 = hash01(k, 1, self.seed ^ self.cycle);
+                    let h2 = hash01(k, 2, self.seed ^ self.cycle);
+                    let h3 = hash01(k, 3, self.seed ^ self.cycle);
+                    let h4 = hash01(k, 4, self.seed ^ self.cycle);
+                    let life = 3.2 + h3 * 1.3;
+                    if spark_t > life {
+                        continue;
+                    }
+                    let u = spark_t / life;
+                    let angle = h1 * 2.0 * PI;
+                    let speed = 9.0 + h2 * 18.0;
+                    let x = dp.x + angle.cos() * speed * spark_t * 1.35;
+                    let y = dp.y + angle.sin() * speed * 0.65 * spark_t + 1.1 * spark_t * spark_t;
+                    let col = C_ME.lerp(C_END, h4).scale((1.0 - u) * fade);
+                    let ch = if h4 > 0.66 {
+                        if unicode {
+                            '✧'
+                        } else {
+                            '*'
+                        }
+                    } else if h4 > 0.33 {
+                        '+'
+                    } else if unicode {
+                        '·'
+                    } else {
+                        '.'
+                    };
+                    let xi = x.round() as isize;
+                    let yi = y.round() as isize;
+                    canvas.set(xi, yi, ch, col);
+                    if k % 4 == 0 {
+                        canvas.add_light(xi, yi, col, 0.35 * (1.0 - u), ' ');
+                    }
+                }
+            }
+        }
+
+        if age < comet_end {
+            // 5. A thicker, white-gold comet for ME.
+            let p =
+                smoothstep(((age - me.death) / (comet_end - me.death).max(0.1)).clamp(0.0, 1.0));
+            let hx = dp.x + (top_x - 1.5 - dp.x) * p;
+            let hy = dp.y + (top_y - dp.y) * p;
+            for k in 0..6 {
+                let q = (p - k as f32 * 0.020).max(0.0);
+                let x = dp.x + (top_x - 1.5 - dp.x) * q;
+                let y = dp.y + (top_y - dp.y) * q;
+                let ch = if k == 0 {
+                    if unicode {
+                        '✧'
+                    } else {
+                        '*'
+                    }
+                } else if unicode {
+                    '·'
+                } else {
+                    '.'
+                };
+                canvas.set(
+                    x.round() as isize,
+                    y.round() as isize,
+                    ch,
+                    gold.scale((1.0 - k as f32 / 6.0) * 0.9 * fade),
+                );
+                if k > 0 {
+                    let xi = x.round() as isize;
+                    let yi = y.round() as isize;
+                    for off in [-1isize, 1isize] {
+                        canvas.set(
+                            xi,
+                            yi + off,
+                            if unicode { '·' } else { '.' },
+                            gold.scale((1.0 - k as f32 / 6.0) * 0.35 * fade),
+                        );
+                    }
+                }
+            }
+            canvas.add_light(
+                hx.round() as isize,
+                hy.round() as isize,
+                C_ME,
+                1.1 * fade,
+                ' ',
+            );
+        } else {
+            // 6. Permanent halo on ME's finished star, breathing at 1 Hz.
+            let pulse = (t * 2.0 * PI).sin() * 0.5 + 0.5;
+            let x = top_x.round() as isize;
+            let y = top_y.round() as isize;
+            let col = C_ME
+                .lerp(C_END, 0.35 + pulse * 0.35)
+                .scale(0.55 + pulse * 0.40);
+            for (dx, dy) in [
+                (-2, 0),
+                (2, 0),
+                (0, -2),
+                (0, 2),
+                (-1, -1),
+                (1, 1),
+                (-1, 1),
+                (1, -1),
+            ] {
+                canvas.set(x + dx, y + dy, if unicode { '✧' } else { '*' }, col);
+            }
+            self.ring(
+                canvas,
+                x as f32,
+                y as f32,
+                2.0 + pulse * 1.8,
+                gold,
+                (0.18 + pulse * 0.22) * fade,
+                unicode,
+            );
+            self.ring(
+                canvas,
+                x as f32,
+                y as f32,
+                3.2 + pulse * 1.5,
+                gold,
+                (0.10 + pulse * 0.15) * fade,
+                unicode,
+            );
+            for (dx, dy) in [(-3, 0), (3, 0), (0, -3), (0, 3)] {
+                canvas.set(
+                    x + dx,
+                    y + dy,
+                    if unicode { '·' } else { '.' },
+                    col.scale(0.55),
+                );
+            }
+            canvas.add_light(x, y, C_ME, 1.0 + pulse * 0.7, ' ');
+        }
+
+        // The life-review scan does not vanish when it reaches ME's stop
+        // line: park the same three-column beam there and keep it for the
+        // rest of the cycle, breathing gently instead of blinking out.
+        let since_death = (age - me.death) * cycle_secs / 100.0;
+        if since_death >= 2.75 {
+            let pulse = (t * 2.0 * PI).sin() * 0.5 + 0.5;
+            let axis = self.axis_y() as isize;
+            let stop_main = main_y(age, self.h).round() as isize;
+            let stop_x = cx;
+            let beam = C_ME.lerp(C_END, 0.22);
+            for y in 2..axis {
+                let distance = (y - stop_main).abs() as f32 / (self.h as f32 * 0.5).max(1.0);
+                let fade_y = (1.0 - distance * 0.55).clamp(0.35, 1.0);
+                let center = (0.20 + pulse * 0.10) * fade_y * fade;
+                let side = (0.11 + pulse * 0.05) * fade_y * fade;
+                canvas.set(
+                    stop_x,
+                    y,
+                    if unicode { '│' } else { '|' },
+                    beam.scale(center),
+                );
+                for dx in [-1isize, 1isize] {
+                    canvas.set(
+                        stop_x + dx,
+                        y,
+                        if unicode { '│' } else { '|' },
+                        beam.scale(side),
+                    );
+                }
+                if y % 5 == 0 {
+                    canvas.add_light(stop_x, y, C_ME, 0.08 * fade_y * fade, ' ');
+                }
+            }
+        }
+    }
+
     /// All names are painted after every core/trail/star, so no glyph or trail
     /// can cut holes in the middle of a label.
     fn draw_labels(
@@ -1304,7 +2102,8 @@ impl LifeScene {
     ) {
         let mut rows: Vec<(isize, isize, isize)> = Vec::new();
         for (i, actor) in self.plan.actors.iter().enumerate() {
-            let (pos, reveal) = if actor.end == EndKind::Star && age >= actor.death {
+            let is_star = actor.end == EndKind::Star && age >= actor.death;
+            let (pos, reveal) = if is_star {
                 let end = comet_end(actor);
                 if age < end {
                     (None, 0.0)
@@ -1329,14 +2128,15 @@ impl LifeScene {
             if py < 1.0 || py > self.h as f32 - 1.0 {
                 continue;
             }
-            let label = actor.label(age);
+            // A finished life keeps its final age; a living one keeps
+            // counting up with the timeline.
+            let label = actor.display_label(if is_star { actor.death } else { age });
             let len = label.len() as isize;
             let mut row = py.round() as isize;
             let hi = (self.h as isize - 5).max(1);
             if row > hi {
                 row = hi;
             }
-            let is_star = actor.end == EndKind::Star && age >= actor.death;
             let head = px.round() as isize;
             // Moving beams carry their name at the leading edge.  Stars have
             // the finish line to their right, so their name sits just inside.
@@ -1364,13 +2164,13 @@ impl LifeScene {
                     .any(|&(r, a, b)| r == row && lx <= b && end >= a);
                 if !clash {
                     rows.push((row, lx, end));
-                    canvas.put_str(lx, row, label, actor.color.scale(0.74 * fade * reveal));
+                    canvas.put_str(lx, row, &label, actor.color.scale(0.74 * fade * reveal));
                     placed = true;
                     break;
                 }
             }
             if !placed {
-                canvas.put_str(anchor, row, label, actor.color.scale(0.74 * fade * reveal));
+                canvas.put_str(anchor, row, &label, actor.color.scale(0.74 * fade * reveal));
             }
         }
     }
@@ -1385,10 +2185,18 @@ impl LifeScene {
             }
             let death_age = (actor.death - 0.001).max(0.0);
             if let Some(Some(dp)) = self.plan.positions(death_age, self.w, self.h).get(i) {
-                let x = dp.x.round() as isize + 2;
+                // The final age is part of the blinking end label.
+                let label = actor.display_label(actor.death);
+                let len = label.len() as isize;
+                let dx = dp.x.round() as isize;
+                let x = if dx + 2 + len >= self.w as isize - 1 {
+                    (dx - len - 1).max(1)
+                } else {
+                    dx + 2
+                };
                 let y = dp.y.round() as isize;
                 if y >= 1 && y <= self.h as isize - 5 {
-                    canvas.put_str(x, y, actor.label(age), actor.color.scale(0.58 * fade));
+                    canvas.put_str(x, y, &label, actor.color.scale(0.58 * fade));
                 }
             }
         }
@@ -1481,6 +2289,7 @@ impl Scene for LifeScene {
         self.draw_life_lines(canvas, t, age, unicode);
         self.draw_actors(canvas, &positions, age, unicode, fade);
         self.draw_departures(canvas, age, t, unicode, fade);
+        self.draw_me_finale(canvas, age, t, cycle_secs, unicode, fade);
         self.draw_labels(canvas, &positions, age, cycle_secs, fade);
         self.draw_death_labels(canvas, age, t, fade);
         self.draw_hud(canvas, age, cycle_secs, unicode);
@@ -1543,9 +2352,10 @@ fn comet_end(actor: &Actor) -> f32 {
     actor.death + (2.0 + (actor.phase.sin().abs()) * 0.6) * 2.0
 }
 
-/// The end-point marker is alternated on/off in place.
-fn death_marker_visible(t: f32, actor: &Actor) -> bool {
-    (t * 4.0 * PI + actor.phase * 2.0).sin() > 0.0
+/// The end-point marker and its name blink together, on for half a second and
+/// off for half a second: exactly one blink per second.
+fn death_marker_visible(t: f32, _actor: &Actor) -> bool {
+    (t / DEATH_BLINK_SECS).rem_euclid(1.0) < 0.5
 }
 
 fn actor_glyph(role: Role, unicode: bool) -> char {
@@ -1590,6 +2400,50 @@ fn smoothstep(x: f32) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The row an actor is planned to occupy at `age`, including staged
+    /// yields and anchors but ignoring the temporary entry/exit/diverge
+    /// animations.
+    fn current_lane(p: &Plan, i: usize, age: f32) -> Option<f32> {
+        let a = p.actors[i];
+        if !active_at(&a, age) {
+            return None;
+        }
+        let mut lane = p.lane_of(i, age);
+        if age > a.yield_at {
+            lane += a.yield_by * yield_progress(&a, age);
+        }
+        match a.anchor {
+            Anchor::Main => Some(lane),
+            Anchor::Child(parent) => {
+                let mut parent_lane = current_lane(p, parent, age)?;
+                let pa = p.actors[parent];
+                if age > pa.diverge_at {
+                    let t = smoothstep((age - pa.diverge_at) / pa.diverge_dur.max(0.1));
+                    parent_lane += pa.diverge * t;
+                }
+                Some(parent_lane + lane)
+            }
+        }
+    }
+
+    /// Unlike the planner's lookahead version, this only counts children who
+    /// actually exist at `age`; that is the rule the audience sees.
+    fn active_guards(p: &Plan, age: f32) -> Guards {
+        let mut g = Guards { pos: 0, neg: 0 };
+        for (i, a) in p.actors.iter().enumerate() {
+            if a.role != Role::Child || !active_at(a, age) || age >= a.birth + KID_MINOR_AGE {
+                continue;
+            }
+            let lane = lane_offset(&p.actors, i).round() as i32;
+            if lane > 0 {
+                g.pos = g.pos.max(lane);
+            } else if lane < 0 {
+                g.neg = g.neg.max(-lane);
+            }
+        }
+        g
+    }
 
     #[test]
     fn three_children_and_family_plan() {
@@ -1680,12 +2534,25 @@ mod tests {
             assert!(wife.death > me.death);
             assert!((75.0..=90.0).contains(&wife.death));
             assert!(wife.alt_at >= wife.birth + wife.entry_dur + 0.99);
-            assert!(first_child >= wife.alt_at + 1.0);
+            assert!(wife.alt_at <= wife.birth + wife.entry_dur + 2.01);
+            assert!(first_child >= wife.alt_at + 1.99);
+            assert!(first_child <= wife.alt_at + 3.01);
+            assert_eq!(wife.label(wife.alt_at - 0.1), "GF");
+            assert_eq!(wife.label(wife.alt_at + 0.1), "WIFE");
 
             // Rows closest to me: children first, then dog/cat, then
             // classmates/friends.  All rows are measured from my baseline.
             let dog = p.actors.iter().find(|a| a.role == Role::Dog).expect("dog");
             assert!((dog.base + 1.0).abs() < 0.01);
+            let dad = p.actors.iter().find(|a| a.label == "DAD").expect("dad");
+            let mom = p.actors.iter().find(|a| a.label == "MOM").expect("mom");
+            let bro = p.actors.iter().find(|a| a.label == "BRO").expect("bro");
+            assert!((mom.base - dad.base - 1.0).abs() < 0.01);
+            assert!((bro.base - mom.base - 1.0).abs() < 0.01);
+            for a in [dad, mom, bro] {
+                assert!(a.yield_at <= first_child - 1.0);
+                assert!((a.yield_by - 2.0).abs() < 0.01);
+            }
             let first_child = p
                 .actors
                 .iter()
@@ -1716,11 +2583,113 @@ mod tests {
                 .map(|a| a.base)
                 .collect();
             assert!((kids[0] - 2.0).abs() < 0.01);
-            assert!((kids[1] + 2.0).abs() < 0.01);
-            assert!((kids[2] + 4.0).abs() < 0.01);
+            assert!((kids[1] + 1.0).abs() < 0.01);
+            assert!((kids[2] + 2.0).abs() < 0.01);
             for a in &p.actors {
                 assert_eq!(a.amp, 0.0, "{} should follow the shared track", a.label);
             }
+        }
+    }
+
+    #[test]
+    fn beams_grow_with_the_life_and_keep_early_dots() {
+        let p = Plan::generate(7, 0);
+        let me = p.actors.iter().find(|a| a.role == Role::Me).unwrap();
+        let young = beam_span(me, 20.0);
+        let old = beam_span(me, 90.0);
+        assert!(old > 60.0, "an old life should keep a long beam: {old}");
+        assert!(old > young, "the beam should grow with the life");
+        assert!(90.0 - old > 5.0, "early life should stay as dots");
+        assert!((90.0 - old) <= EARLY_DOTS_MAX + 0.01);
+        let friend = p.actors.iter().find(|a| a.role == Role::Friend).unwrap();
+        assert!(
+            beam_span(friend, 90.0) > 40.0,
+            "friends should also get a longer thread"
+        );
+    }
+
+    #[test]
+    fn family_labels_carry_their_own_ages() {
+        for cycle in 0..5 {
+            let p = Plan::generate(7, cycle);
+            let find = |label: &str| p.actors.iter().find(|a| a.label == label).unwrap();
+
+            let me = find("ME");
+            assert_eq!(me.display_label(0.0), "ME 0");
+            assert_eq!(me.display_label(40.0), "ME 40");
+
+            let gpa = find("GPA");
+            let gma = find("GMA");
+            let dad = find("DAD");
+            let mom = find("MOM");
+            assert!((58.0..=70.0).contains(&gpa.age_offset));
+            assert!((56.0..=68.0).contains(&gma.age_offset));
+            assert!((25.0..=33.0).contains(&dad.age_offset));
+            assert!((23.0..=31.0).contains(&mom.age_offset));
+            assert!(gpa.age_offset > dad.age_offset + 20.0);
+            assert!(gma.age_offset > mom.age_offset + 20.0);
+            assert_eq!(
+                gpa.display_label(gpa.death),
+                format!("GPA {}", (gpa.age_offset + gpa.death).round() as i32),
+                "the end label should keep the final age"
+            );
+
+            // Born-later relatives count from their own birth.
+            let kid1 = find("KID1");
+            assert_eq!(kid1.display_label(kid1.birth), "KID1 0");
+            assert_eq!(kid1.display_label(kid1.birth + 7.0), "KID1 7");
+            let grand1 = find("GRAND1");
+            assert_eq!(grand1.display_label(grand1.birth), "GRAND1 0");
+            let cat = p.actors.iter().find(|a| a.role == Role::Cat).unwrap();
+            assert_eq!(cat.display_label(cat.birth), "CAT 0");
+            assert_eq!(
+                cat.display_label(cat.death),
+                format!("CAT {}", (cat.death - cat.birth).round() as i32),
+                "the end label should keep the pet's final age"
+            );
+            let dog = p.actors.iter().find(|a| a.role == Role::Dog).unwrap();
+            assert_eq!(dog.display_label(dog.birth + 5.0), "DOG 5");
+            assert_eq!(
+                dog.display_label(dog.death),
+                format!("DOG {}", (dog.death - dog.birth).round() as i32)
+            );
+
+            // GF/WIFE is a peer, not a newborn.
+            let wife = find("GF");
+            assert!((-2.0..=2.0).contains(&wife.age_offset));
+            assert!((38.0..=42.0).contains(&wife.age_at(40.0)));
+
+            // Non-relatives never get an age suffix.
+            let friend = p.actors.iter().find(|a| a.role == Role::Friend).unwrap();
+            assert_eq!(friend.display_label(50.0), friend.label(50.0));
+        }
+    }
+
+    #[test]
+    fn me_finale_timing_and_draw() {
+        assert_eq!(me_finale_elapsed(80.0, 80.0, 100.0), Some(0.0));
+        assert_eq!(me_finale_elapsed(79.9, 80.0, 100.0), None);
+        assert!((me_finale_elapsed(81.0, 80.0, 100.0).unwrap() - 1.0).abs() < 0.001);
+        assert!(me_finale_elapsed(84.1, 80.0, 100.0).is_some());
+        assert_eq!(me_finale_elapsed(86.1, 80.0, 100.0), None);
+
+        let mut s = LifeScene::new(7);
+        s.resize(100, 30);
+        let me = s
+            .plan
+            .actors
+            .iter()
+            .find(|a| a.role == Role::Me)
+            .expect("me");
+        assert!((75.0..=85.0).contains(&me.death));
+        let mut canvas = Canvas::new(100, 30);
+        for unicode in [false, true] {
+            for real in [0.0, 0.25, 0.8, 1.6, 2.5, 3.9, 5.5] {
+                let age = me.death + real * 120.0 / 100.0;
+                s.draw_me_finale(&mut canvas, age, real, 120.0, unicode, 1.0);
+            }
+            // The permanent halo after the comet has arrived.
+            s.draw_me_finale(&mut canvas, 100.0, 20.0, 120.0, unicode, 1.0);
         }
     }
 
@@ -1776,23 +2745,391 @@ mod tests {
     }
 
     #[test]
-    fn death_marker_alternates_visible_and_hidden() {
+    fn end_marker_blinks_once_per_second() {
         let p = Plan::generate(7, 0);
         let a = p
             .actors
             .iter()
             .find(|a| a.end == EndKind::Star)
             .expect("star");
-        let mut on = false;
-        let mut off = false;
-        for i in 0..120 {
-            if death_marker_visible(i as f32 * 0.1, a) {
-                on = true;
-            } else {
-                off = true;
+        for k in 0..20 {
+            let sec = k as f32;
+            assert!(death_marker_visible(sec, a), "visible at {sec}s");
+            assert!(
+                !death_marker_visible(sec + 0.5, a),
+                "hidden at {}s",
+                sec + 0.5
+            );
+            assert!(death_marker_visible(sec + 0.25, a));
+            assert!(!death_marker_visible(sec + 0.75, a));
+        }
+        // One rising edge per second, no more.
+        let mut rises = 0;
+        let mut last = death_marker_visible(0.0, a);
+        for i in 1..500 {
+            let now = death_marker_visible(i as f32 * 0.01, a);
+            if now && !last {
+                rises += 1;
+            }
+            last = now;
+        }
+        assert!((4..=5).contains(&rises), "rises {rises}");
+    }
+
+    #[test]
+    fn friends_stay_outside_minor_children_and_pets() {
+        for seed in [7u64, 0x7e51_a017, 42] {
+            let p = Plan::generate(seed, 0);
+            for step in 0..=400 {
+                let age = step as f32 * 0.25;
+                let g = active_guards(&p, age);
+                for (i, a) in p.actors.iter().enumerate() {
+                    if a.role != Role::Friend || !active_at(a, age) {
+                        continue;
+                    }
+                    let lane = current_lane(&p, i, age).unwrap().round() as i32;
+                    assert!(
+                        !lane_violates(lane, g),
+                        "{seed}: {} at lane {lane} is inside the minor-child band (pos {}, neg {}) at {age}",
+                        a.label,
+                        g.pos,
+                        g.neg
+                    );
+                    for (j, b) in p.actors.iter().enumerate() {
+                        if i == j || !active_at(b, age) {
+                            continue;
+                        }
+                        let occupied = match b.role {
+                            Role::Child => age < b.birth + KID_MINOR_AGE,
+                            Role::Cat | Role::Dog | Role::Grandchild => true,
+                            _ => false,
+                        };
+                        if !occupied {
+                            continue;
+                        }
+                        let bl = current_lane(&p, j, age).unwrap().round() as i32;
+                        assert_ne!(
+                            lane, bl,
+                            "{seed}: {} takes {}'s row at {age}",
+                            a.label, b.label
+                        );
+                    }
+                }
             }
         }
-        assert!(on && off, "end marker must alternate");
+    }
+
+    #[test]
+    fn dog_stays_next_to_me_until_it_dies() {
+        for seed in [7u64, 0x7e51_a017, 42] {
+            let p = Plan::generate(seed, 0);
+            let dog_i = p.actors.iter().position(|a| a.role == Role::Dog).unwrap();
+            let dog = p.actors[dog_i];
+            let me_i = p.actors.iter().position(|a| a.role == Role::Me).unwrap();
+            let mut age = 0.5;
+            while age < dog.death - 0.1 {
+                if active_at(&dog, age) {
+                    assert!(
+                        (current_lane(&p, dog_i, age).unwrap() + 1.0).abs() < 0.01,
+                        "{seed}: dog left the row next to me at {age}"
+                    );
+                    for (j, a) in p.actors.iter().enumerate() {
+                        if j == dog_i || j == me_i || !active_at(a, age) {
+                            continue;
+                        }
+                        let lane = current_lane(&p, j, age).unwrap();
+                        assert!(
+                            (lane + 1.0).abs() > 0.01,
+                            "{seed}: {} took the dog's row at {age}",
+                            a.label
+                        );
+                    }
+                }
+                age += 0.25;
+            }
+        }
+    }
+
+    #[test]
+    fn parents_stay_adjacent_and_brother_follows() {
+        for seed in [7u64, 0x7e51_a017, 42] {
+            let p = Plan::generate(seed, 0);
+            let find = |label: &str| p.actors.iter().position(|a| a.label == label).unwrap();
+            let (d, m, b) = (find("DAD"), find("MOM"), find("BRO"));
+            let first_child = p
+                .actors
+                .iter()
+                .filter(|a| a.role == Role::Child)
+                .map(|a| a.birth)
+                .fold(f32::INFINITY, f32::min);
+            let end = p.actors[d].death.min(p.actors[m].death);
+            let mut age = 0.5;
+            while age < end - 0.1 {
+                let dl = current_lane(&p, d, age).unwrap();
+                let ml = current_lane(&p, m, age).unwrap();
+                let bl = current_lane(&p, b, age).unwrap();
+                assert!(
+                    (ml - dl - 1.0).abs() < 0.01,
+                    "{seed}: DAD/MOM not adjacent at {age}: {dl}/{ml}"
+                );
+                assert!(
+                    (bl - ml - 1.0).abs() < 0.01,
+                    "{seed}: BRO not directly below MOM at {age}: {ml}/{bl}"
+                );
+                age += 0.25;
+            }
+            // The block really steps two rows back for the first child.
+            if active_at(&p.actors[d], first_child + 0.5) {
+                assert!((current_lane(&p, d, first_child + 0.5).unwrap() - 5.0).abs() < 0.01);
+                assert!((current_lane(&p, b, first_child + 0.5).unwrap() - 7.0).abs() < 0.01);
+            }
+        }
+    }
+
+    #[test]
+    fn children_stay_close_until_they_grow_up() {
+        for seed in [7u64, 0x7e51_a017, 42] {
+            let p = Plan::generate(seed, 0);
+            for (i, a) in p.actors.iter().enumerate() {
+                if a.role != Role::Child {
+                    continue;
+                }
+                let mut age = a.birth + 0.1;
+                while age < a.birth + KID_MINOR_AGE - 0.1 {
+                    if active_at(a, age) {
+                        let lane = current_lane(&p, i, age).unwrap();
+                        assert!(
+                            lane.abs() <= 4.01,
+                            "{seed}: {} drifted to {lane} while still a minor at {age}",
+                            a.label
+                        );
+                        for (j, friend) in p.actors.iter().enumerate() {
+                            if friend.role != Role::Friend || !active_at(friend, age) {
+                                continue;
+                            }
+                            let fl = current_lane(&p, j, age).unwrap();
+                            assert!(
+                                (fl - lane).abs() > 0.01,
+                                "{seed}: {} shares {}'s row at {age}",
+                                friend.label,
+                                a.label
+                            );
+                        }
+                    }
+                    age += 0.5;
+                }
+            }
+            // KID1 is directly beside WIFE.
+            let kid1 = p.actors.iter().position(|a| a.label == "KID1").unwrap();
+            let wife = p
+                .actors
+                .iter()
+                .position(|a| a.role == Role::Spouse)
+                .unwrap();
+            let age = p.actors[kid1].birth + 1.0;
+            let kl = current_lane(&p, kid1, age).unwrap();
+            let wl = current_lane(&p, wife, age).unwrap();
+            assert!(
+                (kl - wl - 1.0).abs() < 0.01,
+                "{seed}: KID1 ({kl}) is not beside WIFE ({wl})"
+            );
+
+            // Gapless stack: KID3 -2 / KID2 -1 / ME 0 / WIFE +1 / KID1 +2 /
+            // CAT +3.  No empty rows between any of them.
+            let kid2 = p.actors.iter().position(|a| a.label == "KID2").unwrap();
+            let kid3 = p.actors.iter().position(|a| a.label == "KID3").unwrap();
+            let me = p.actors.iter().position(|a| a.role == Role::Me).unwrap();
+            let cat = p.actors.iter().position(|a| a.role == Role::Cat).unwrap();
+            let age = p.actors[kid3].birth + 1.0;
+            let k1 = current_lane(&p, kid1, age).unwrap();
+            let k2 = current_lane(&p, kid2, age).unwrap();
+            let k3 = current_lane(&p, kid3, age).unwrap();
+            let ml = current_lane(&p, me, age).unwrap();
+            let cl = current_lane(&p, cat, age).unwrap();
+            assert!(
+                (k2 - ml + 1.0).abs() < 0.01,
+                "{seed}: KID2 ({k2}) is not directly above ME ({ml})"
+            );
+            assert!(
+                (k3 - k2 + 1.0).abs() < 0.01,
+                "{seed}: KID3 ({k3}) is not directly above KID2 ({k2})"
+            );
+            assert!(
+                (cl - k1 - 1.0).abs() < 0.01,
+                "{seed}: CAT ({cl}) is not directly below KID1 ({k1})"
+            );
+        }
+    }
+
+    #[test]
+    fn ended_rows_are_reused_by_later_lives() {
+        for cycle in 0..10 {
+            let p = Plan::generate(7, cycle);
+            let kid2_i = p.actors.iter().position(|a| a.label == "KID2").unwrap();
+            let kid3_i = p.actors.iter().position(|a| a.label == "KID3").unwrap();
+            let kid2 = p.actors[kid2_i];
+            // KID2 takes the -1 row the dog leaves behind, which is also the
+            // row closest to ME.  KID3 then stacks above KID2 at -2.
+            let dog_i = p.actors.iter().position(|a| a.role == Role::Dog).unwrap();
+            let dog = p.actors[dog_i];
+            let kid2_lane = lane_offset(&p.actors, kid2_i).round() as i32;
+            let dog_lane = lane_offset(&p.actors, dog_i).round() as i32;
+            assert_eq!(
+                kid2_lane, dog_lane,
+                "cycle {cycle}: KID2 should take the dog's freed -1 row"
+            );
+            assert!(dog.death < kid2.birth);
+            assert_eq!(
+                lane_offset(&p.actors, kid3_i).round() as i32,
+                -2,
+                "cycle {cycle}: KID3 should stack at -2 above KID2"
+            );
+
+            // The school friend occupies +1, then WIFE moves into the same
+            // row after that friend has left the timeline.
+            let pal_i = p
+                .actors
+                .iter()
+                .enumerate()
+                .find(|(i, a)| {
+                    a.label == "PAL"
+                        && (current_lane(&p, *i, a.birth + a.entry_dur + 0.1).unwrap() - 1.0).abs()
+                            < 0.01
+                })
+                .map(|(i, _)| i)
+                .expect("a PAL in the +1 row");
+            let wife_i = p
+                .actors
+                .iter()
+                .position(|a| a.role == Role::Spouse)
+                .unwrap();
+            assert!(p.actors[pal_i].death < p.actors[wife_i].birth);
+            assert!((lane_offset(&p.actors, wife_i) - 1.0).abs() < 0.01);
+        }
+    }
+
+    #[test]
+    fn active_friends_share_one_row() {
+        for seed in [7u64, 0x7e51_a017, 42] {
+            let p = Plan::generate(seed, 0);
+            for step in 0..=396 {
+                let age = step as f32 * 0.25;
+                let lanes: Vec<f32> = p
+                    .actors
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, a)| a.role == Role::Friend && active_at(a, age))
+                    .filter_map(|(i, _)| current_lane(&p, i, age))
+                    .collect();
+                if lanes.len() > 1 {
+                    let first = lanes[0].round() as i32;
+                    for lane in &lanes[1..] {
+                        assert_eq!(
+                            lane.round() as i32,
+                            first,
+                            "{seed}: friends split across rows at {age}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn minor_kids_and_cat_leave_no_blank_rows() {
+        for seed in [7u64, 0x7e51_a017, 42] {
+            let p = Plan::generate(seed, 0);
+            let find = |label: &str| p.actors.iter().position(|a| a.label == label).unwrap();
+            let me = p.actors.iter().position(|a| a.role == Role::Me).unwrap();
+            let wife = p
+                .actors
+                .iter()
+                .position(|a| a.role == Role::Spouse)
+                .unwrap();
+            let cat = p.actors.iter().position(|a| a.role == Role::Cat).unwrap();
+            let kid1 = find("KID1");
+            let kid2 = find("KID2");
+            let kid3 = find("KID3");
+
+            // Before KID2, ME/WIFE/KID1/CAT are already consecutive.
+            // After KID2, KID2 fills -1.  After KID3, it stacks at -2.
+            for (age, ids) in [
+                (
+                    p.actors[kid1].birth + 1.0,
+                    vec![("ME", me), ("WIFE", wife), ("KID1", kid1), ("CAT", cat)],
+                ),
+                (
+                    p.actors[kid2].birth + 1.0,
+                    vec![
+                        ("KID2", kid2),
+                        ("ME", me),
+                        ("WIFE", wife),
+                        ("KID1", kid1),
+                        ("CAT", cat),
+                    ],
+                ),
+                (
+                    p.actors[kid3].birth + 1.0,
+                    vec![
+                        ("KID3", kid3),
+                        ("KID2", kid2),
+                        ("ME", me),
+                        ("WIFE", wife),
+                        ("KID1", kid1),
+                        ("CAT", cat),
+                    ],
+                ),
+            ] {
+                for h in [30usize, 36, 40, 46] {
+                    let ps = p.positions(age, 120, h);
+                    let mut rows: Vec<(&str, isize)> = ids
+                        .iter()
+                        .map(|(name, i)| (*name, ps[*i].unwrap().y.round() as isize))
+                        .collect();
+                    rows.sort_by_key(|(_, row)| *row);
+                    for pair in rows.windows(2) {
+                        assert_eq!(
+                            pair[1].1 - pair[0].1,
+                            1,
+                            "{seed} at {age}, h={h}: blank row between {} and {} ({rows:?})",
+                            pair[0].0,
+                            pair[1].0
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn no_two_lives_share_a_row() {
+        for seed in [7u64, 0x7e51_a017, 42] {
+            for cycle in 0..3 {
+                let p = Plan::generate(seed, cycle);
+                for step in 0..=396 {
+                    let age = step as f32 * 0.25;
+                    let mut used: Vec<(i32, &str, bool)> = Vec::new();
+                    for (i, a) in p.actors.iter().enumerate() {
+                        let Some(lane) = current_lane(&p, i, age) else {
+                            continue;
+                        };
+                        let row = lane.round() as i32;
+                        let is_friend = a.role == Role::Friend;
+                        if let Some((_, other, other_friend)) =
+                            used.iter().find(|(r, _, _)| *r == row)
+                        {
+                            if !(is_friend && *other_friend) {
+                                panic!(
+                                    "{seed}/{cycle} at {age}: {} and {} share row {row}",
+                                    a.label, other
+                                );
+                            }
+                        }
+                        used.push((row, a.label, is_friend));
+                    }
+                }
+            }
+        }
     }
 
     #[test]
