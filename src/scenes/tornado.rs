@@ -86,6 +86,14 @@ impl Scene for TornadoScene {
         }
     }
 
+    fn hud_status(&self, f: &Frame) -> Option<String> {
+        Some(format!(
+            "{} FUNNELS | {:.1}x",
+            self.funnels.len(),
+            f.tune.tornado_speed
+        ))
+    }
+
     fn update(&mut self, f: &Frame) {
         let dt = f.dt.clamp(0.0, 0.1);
         let target = f.tune.tornado_count.clamp(1, 8) as usize;
@@ -314,31 +322,6 @@ impl Scene for TornadoScene {
                 );
             }
         }
-        let w = self.w as isize;
-        let _ = h;
-        let title = if unicode {
-            "╡ TORNADO // STORM PLAIN ╞"
-        } else {
-            " TORNADO // STORM PLAIN "
-        };
-        canvas.put_str(2, 0, title, FUNNEL.scale(0.85));
-        let status = format!(
-            "{} FUNNELS  {:.1}x",
-            self.funnels.len(),
-            f.tune.tornado_speed
-        );
-        canvas.put_str(
-            (w - status.len() as isize - 2).max(2),
-            0,
-            &status,
-            LIGHT.scale(0.65),
-        );
-        canvas.put_str(
-            2,
-            self.h as isize - 1,
-            "--tornado-count / --tornado-speed",
-            DUST.scale(0.55),
-        );
         let _ = self.seed;
     }
 }

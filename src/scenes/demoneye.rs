@@ -351,26 +351,6 @@ impl DemonEyeScene {
             );
         }
     }
-
-    fn draw_hud(&self, canvas: &mut Canvas, t: f32, blink: f32) {
-        let title = "DEMON EYE // THE WATCHER";
-        canvas.put_str(2, 0, title, VEIN_HOT.scale(0.62));
-        let state = if blink > 0.75 {
-            "LID CLOSED".to_string()
-        } else if self.stare > 0.7 {
-            "IT SEES YOU".to_string()
-        } else {
-            "SCANNING".to_string()
-        };
-        let status = format!("{state}  |  BLINK {:02}", self.blink_count);
-        let x = (self.w as isize - status.chars().count() as isize - 2).max(2);
-        canvas.put_str(x, 0, &status, VEIN.scale(0.78));
-        let h = self.h as isize;
-        let pulse = (t * 1.8).sin() * 0.5 + 0.5;
-        let footer = "DO NOT LOOK AWAY";
-        let fx = (self.w as isize - footer.len() as isize) / 2;
-        canvas.put_str(fx.max(1), h - 1, footer, VEIN.scale(0.35 + pulse * 0.35));
-    }
 }
 
 impl Scene for DemonEyeScene {
@@ -378,6 +358,18 @@ impl Scene for DemonEyeScene {
         if w != self.w || h != self.h {
             self.rebuild(w, h);
         }
+    }
+
+    fn hud_status(&self, f: &Frame) -> Option<String> {
+        let blink = self.blink(f.t);
+        let state = if blink > 0.75 {
+            "LID CLOSED"
+        } else if self.stare > 0.7 {
+            "IT SEES YOU"
+        } else {
+            "SCANNING"
+        };
+        Some(format!("{state} | BLINK {:02}", self.blink_count))
     }
 
     fn update(&mut self, f: &Frame) {
@@ -681,7 +673,6 @@ impl Scene for DemonEyeScene {
         }
 
         self.draw_shockwave(canvas, t, unicode);
-        self.draw_hud(canvas, t, blink);
     }
 }
 

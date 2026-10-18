@@ -296,6 +296,18 @@ impl Scene for MatrixScene {
         }
     }
 
+    fn hud_status(&self, f: &Frame) -> Option<String> {
+        if self.glitch_t > 0.0 {
+            return Some("TRACE DETECTED".to_string());
+        }
+        let progress = self.progress(f.t);
+        if progress >= 100.0 {
+            Some("ACCESS GRANTED".to_string())
+        } else {
+            Some(format!("AUTH {:3.0}%", progress))
+        }
+    }
+
     fn update(&mut self, f: &Frame) {
         if self.charset != Some(f.charset) {
             self.set_charset(f.charset);
@@ -454,41 +466,6 @@ impl Scene for MatrixScene {
         if let Some(p) = panel {
             self.draw_console(canvas, theme, p, t, phase, progress, glitching, unicode);
         }
-
-        // HUD strips.
-        canvas.clear_rect(0, 0, w as isize, 1);
-        canvas.clear_rect(0, h as isize - 1, w as isize, 1);
-        let title = if w >= 70 {
-            " NASA SECURE MAINFRAME // AUTHORIZED PERSONNEL ONLY "
-        } else {
-            " NASA LOGIN "
-        };
-        canvas.put_str_gradient(0, 0, title, &[theme.c(2), theme.c(3), theme.hot()]);
-        let right = "SESSION 0x7F3A-9C2B";
-        let rx = w as isize - right.len() as isize - 1;
-        if rx > title.len() as isize + 4 {
-            canvas.put_str(rx, 0, right, theme.c(2).scale(0.8));
-        }
-
-        let status = if glitching {
-            " [ !! TRACE DETECTED !! ]  SIGNAL LOST  [ RECONNECTING ] ".to_string()
-        } else if progress >= 100.0 {
-            " [ ACCESS GRANTED ]  SESSION 0x7F3A-9C2B  [ NASA-JPL ] ".to_string()
-        } else {
-            format!(
-                " [ SECURE LOGIN ]  AUTH {:3.0}%  TRACE 00:00:00  [ NASA-JPL ] ",
-                progress
-            )
-        };
-        let sc = if glitching {
-            Rgb::hex(0xff5a5a)
-        } else if progress >= 100.0 {
-            theme.hot()
-        } else {
-            theme.c(2)
-        };
-        canvas.put_str(1, h as isize - 1, if unicode { "●" } else { " " }, sc);
-        canvas.put_str(3, h as isize - 1, &status, sc);
     }
 }
 

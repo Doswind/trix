@@ -562,6 +562,17 @@ impl Scene for TrafficScene {
         }
     }
 
+    fn hud_status(&self, f: &Frame) -> Option<String> {
+        Some(
+            if self.is_vertical(f) {
+                "VERTICAL"
+            } else {
+                "HORIZONTAL"
+            }
+            .to_string(),
+        )
+    }
+
     fn update(&mut self, f: &Frame) {
         let vertical = self.is_vertical(f);
         let density = f.tune.density.clamp(0.05, 4.0);
@@ -616,27 +627,6 @@ impl Scene for TrafficScene {
             self.draw_buildings_h(canvas, unicode);
             self.draw_cars_h(canvas, unicode);
         }
-        let w = self.w as isize;
-        let h = self.h as isize;
-        let title = if unicode {
-            "╡ 车水马龙 // NEON STREET ╞"
-        } else {
-            " TRAFFIC // NEON STREET "
-        };
-        canvas.put_str(2, 0, title, PINK.scale(0.9));
-        let mode = if self.is_vertical(f) {
-            "VERTICAL"
-        } else {
-            "HORIZONTAL"
-        };
-        let status = format!("{}  {}", mode, if unicode { "UNICODE" } else { "ASCII" });
-        canvas.put_str(
-            (w - status.len() as isize - 2).max(2),
-            0,
-            &status,
-            GOLD.scale(0.65),
-        );
-        canvas.put_str(2, h - 1, "--street horizontal | vertical", CYAN.scale(0.45));
         let _ = self.seed;
     }
 }

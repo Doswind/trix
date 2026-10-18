@@ -902,28 +902,21 @@ impl MarioScene {
         }
     }
 
-    fn draw_hud(&self, canvas: &mut Canvas, unicode: bool, theme: &crate::theme::Theme) {
+    fn draw_hud(&self, canvas: &mut Canvas, unicode: bool) {
         let w = self.w as isize;
-        let h = self.h as isize;
         let white = art::WHITE;
-        canvas.put_str(2, 0, "MARIO", white);
-        canvas.put_str(9, 0, &format!("{:06}", self.score), white);
-        canvas.put_str(18, 0, if unicode { "◉" } else { "o" }, art::GOLD);
-        canvas.put_str(20, 0, &format!("x{:02}", self.coins.min(99)), white);
-        let world = "WORLD 1-1";
-        canvas.put_str((w - world.len() as isize - 22).max(2), 0, world, white);
-        let time = format!("TIME {:03}", self.time_left as u32);
-        canvas.put_str((w - time.len() as isize - 2).max(2), 0, &time, white);
-
-        let bottom = "MUSHROOM RUN  //  PRESS JUMP";
-        canvas.put_str(2, h - 1, bottom, theme.c(4).scale(0.85));
-        let badge = if unicode { "UNICODE" } else { "ASCII" };
-        canvas.put_str(
-            (w - badge.len() as isize - 2).max(2),
-            h - 1,
-            badge,
-            art::GOLD.scale(0.85),
-        );
+        canvas.put_str(2, 1, "MARIO", white);
+        canvas.put_str(9, 1, &format!("{:06}", self.score), white);
+        canvas.put_str(18, 1, if unicode { "◉" } else { "o" }, art::GOLD);
+        canvas.put_str(20, 1, &format!("x{:02}", self.coins.min(99)), white);
+        // On narrow terminals the right-hand world/time block would collide
+        // with the score, so keep only the essential counters.
+        if w >= 60 {
+            let world = "WORLD 1-1";
+            canvas.put_str((w - world.len() as isize - 22).max(34), 1, world, white);
+            let time = format!("TIME {:03}", self.time_left as u32);
+            canvas.put_str((w - time.len() as isize - 2).max(2), 1, &time, white);
+        }
     }
 }
 
@@ -968,7 +961,7 @@ impl Scene for MarioScene {
         self.draw_goombas(canvas, unicode);
         self.draw_mario(canvas, unicode);
         self.draw_effects(canvas, theme);
-        self.draw_hud(canvas, unicode, theme);
+        self.draw_hud(canvas, unicode);
     }
 }
 

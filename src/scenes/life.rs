@@ -2227,13 +2227,7 @@ impl LifeScene {
         }
     }
 
-    fn draw_hud(&self, canvas: &mut Canvas, age: f32, cycle_secs: f32, unicode: bool) {
-        let sep = if unicode { "·" } else { "|" };
-        canvas.put_str(2, 0, "LIFE // TRAJECTORIES", C_ME.scale(0.76));
-        let status = format!("AGE {:.1} / 100  {sep}  CYCLE {:.0}s", age, cycle_secs);
-        let sx = (self.w as isize - status.len() as isize - 2).max(2);
-        canvas.put_str(sx, 0, &status, C_END.scale(0.62));
-
+    fn draw_caption(&self, canvas: &mut Canvas, age: f32) {
         let caption = if let Some(e) = self.plan.latest_event(age) {
             e.text
         } else {
@@ -2254,6 +2248,12 @@ impl Scene for LifeScene {
         if w != self.w || h != self.h {
             self.rebuild(w, h);
         }
+    }
+
+    fn hud_status(&self, f: &Frame) -> Option<String> {
+        let cycle_secs = f.tune.life_cycle.clamp(5.0, 600.0);
+        let age = ((f.t as f32 / cycle_secs).rem_euclid(1.0) * 100.0).clamp(0.0, 100.0);
+        Some(format!("AGE {:.1} | CYCLE {:.0}s", age, cycle_secs))
     }
 
     fn update(&mut self, f: &Frame) {
@@ -2292,7 +2292,7 @@ impl Scene for LifeScene {
         self.draw_me_finale(canvas, age, t, cycle_secs, unicode, fade);
         self.draw_labels(canvas, &positions, age, cycle_secs, fade);
         self.draw_death_labels(canvas, age, t, fade);
-        self.draw_hud(canvas, age, cycle_secs, unicode);
+        self.draw_caption(canvas, age);
     }
 }
 

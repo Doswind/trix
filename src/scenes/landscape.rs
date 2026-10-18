@@ -374,19 +374,6 @@ impl Scene for LandscapeScene {
             let y = (p.y + t * p.speed * 0.3) as isize % self.h as isize;
             canvas.set(x, y, if unicode { '❀' } else { '*' }, BLOSSOM.scale(0.5));
         }
-        let h = self.h as isize;
-        let title = if unicode {
-            "╡ SHAN SHUI // FIVE COLOURS ╞"
-        } else {
-            " SHAN SHUI // FIVE COLOURS "
-        };
-        canvas.put_str(2, 0, title, SUN.scale(0.9));
-        let footer = if unicode {
-            "MOUNTAINS · LAKE · BOAT · GEESE · JUNGLE"
-        } else {
-            "MOUNTAINS | LAKE | BOAT | GEESE | JUNGLE"
-        };
-        canvas.put_str(2, h - 1, footer, MIST.scale(0.55));
         let _ = self.seed;
     }
 }

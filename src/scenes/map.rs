@@ -411,6 +411,18 @@ impl Scene for MapScene {
         }
     }
 
+    fn hud_status(&self, f: &Frame) -> Option<String> {
+        let links = self.view.as_ref().map(|v| v.links.len()).unwrap_or(0);
+        let scan = ((f.t as f32 * 0.045).fract() * 100.0) as u32;
+        Some(format!(
+            "NODES {:02} | LINKS {:02} | SCAN {:03}% | UTC {}",
+            CITIES.len(),
+            links,
+            scan,
+            self.clock
+        ))
+    }
+
     fn update(&mut self, _f: &Frame) {
         // The map is mostly analytic; only the clock needs a syscall.
         let secs = utc_secs();
@@ -602,41 +614,10 @@ impl Scene for MapScene {
         }
 
         if view.y0 >= 2 {
-            let title = " GLOBAL NETWORK ";
-            canvas.put_str_gradient(
-                view.x0 as isize,
-                0,
-                title,
-                &[theme.c(2), theme.c(3), theme.hot()],
-            );
-            let sub = "// EARTH HOLO-ATLAS";
-            let sub_x = view.x0 as isize + title.len() as isize + 1;
-            if view.mw >= 70 && sub_x + sub.len() as isize <= view.x0 as isize + view.mw as isize {
-                canvas.put_str(sub_x, 0, sub, theme.c(1).scale(1.4));
-            }
-            let time = format!("UTC {}", self.clock);
-            let tx = view.x0 as isize + view.mw as isize - time.len() as isize;
-            if view.mw >= 48 && tx > view.x0 as isize + 18 {
-                canvas.put_str(tx, 0, &time, theme.c(2));
-            }
             let line_y = view.y0 as isize - 1;
             for x in (view.x0 as isize..(view.x0 + view.mw) as isize).step_by(3) {
                 canvas.add_light(x, line_y, theme.c(1), 0.4, '-');
             }
-        }
-
-        let status_y = self.h as isize - 1;
-        let left = format!(
-            " NODES {:02}   LINKS {:02}   SCAN {:03}% ",
-            CITIES.len(),
-            view.links.len(),
-            (scan_frac * 100.0) as u32
-        );
-        canvas.put_str(view.x0 as isize, status_y, &left, theme.c(2).scale(0.62));
-        let right = "ORBITAL UPLINK: NOMINAL ";
-        let rx = view.x0 as isize + view.mw as isize - right.len() as isize;
-        if rx > view.x0 as isize + 25 {
-            canvas.put_str(rx, status_y, right, theme.c(2).scale(0.85));
         }
     }
 }

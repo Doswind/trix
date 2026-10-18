@@ -97,6 +97,10 @@ impl Scene for StormScene {
         }
     }
 
+    fn hud_status(&self, _f: &Frame) -> Option<String> {
+        Some(format!("STRIKES {:02}", self.strikes))
+    }
+
     fn update(&mut self, f: &Frame) {
         let dt = f.dt.clamp(0.0, 0.1);
         for d in &mut self.drops {
@@ -227,14 +231,16 @@ impl Scene for StormScene {
         // full-screen white flash (drawn after the scene; bolt stays readable)
         if self.flash > 0.0 {
             let a = self.flash.powf(0.7);
+            let white = Rgb::hex(0xffffff).scale(a);
             for y in 0..h {
                 for x in 0..w {
-                    canvas.set(
-                        x,
-                        y,
-                        if unicode { '█' } else { ' ' },
-                        Rgb::hex(0xffffff).scale(a),
-                    );
+                    if unicode {
+                        canvas.set(x, y, '█', white);
+                    } else {
+                        // A foreground-only space would be invisible in ASCII;
+                        // paint the background so the default edition flashes too.
+                        canvas.paint(x, y, ' ', white, Some(white));
+                    }
                 }
             }
             for &(x, y) in &self.bolt {
@@ -259,25 +265,6 @@ impl Scene for StormScene {
                 canvas.set(x, y, ch, RAIN.scale(0.12));
             }
         }
-        let title = if unicode {
-            "╡ THUNDERSTORM // STRIKE ╞"
-        } else {
-            " THUNDERSTORM // STRIKE "
-        };
-        canvas.put_str(2, 0, title, BOLT_BLUE.scale(0.85));
-        let status = format!("STRIKES {:02}", self.strikes);
-        canvas.put_str(
-            (w - status.len() as isize - 2).max(2),
-            0,
-            &status,
-            WINDOW.scale(0.7),
-        );
-        canvas.put_str(
-            2,
-            h - 1,
-            "RAIN // CLOUDS // LIGHTNING",
-            BOLT_BLUE.scale(0.4),
-        );
         let _ = f.theme;
     }
 }
@@ -293,5 +280,30 @@ mod tests {
         s.strike();
         assert!(s.flash > 0.0);
         assert!(!s.bolt.is_empty());
+    }
+
+    #[test]
+    fn ascii_flash_paints_a_white_background() {
+        let mut s = StormScene::new(7);
+        s.resize(40, 12);
+        s.strike();
+        let f = Frame {
+            t: 0.0,
+            dt: 1.0 / 30.0,
+            w: 40,
+            h: 12,
+            fps: 30,
+            theme: crate::theme::find("ice").unwrap(),
+            charset: Charset::Ascii,
+            seed: 7,
+            speed: 1.0,
+            tune: crate::scene::Tune::default(),
+        };
+        let mut canvas = Canvas::new(40, 12);
+        s.draw(&mut canvas, &f);
+        assert!(
+            canvas.cells.iter().any(|cell| cell.bg.is_some()),
+            "ASCII flash must paint the background, not just a space foreground"
+        );
     }
 }

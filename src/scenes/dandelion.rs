@@ -426,6 +426,14 @@ impl Scene for DandelionScene {
         }
     }
 
+    fn hud_status(&self, f: &Frame) -> Option<String> {
+        Some(format!(
+            "SEEDS {:03} | WIND {:.1}x",
+            self.seeds.len(),
+            f.tune.seed_speed
+        ))
+    }
+
     fn update(&mut self, f: &Frame) {
         let dt = f.dt.clamp(0.0, 0.1);
         let target = f.tune.seed_count.clamp(1, 400) as usize;
@@ -464,28 +472,6 @@ impl Scene for DandelionScene {
         for flower in &self.flowers {
             self.draw_flower(canvas, flower, unicode, t);
         }
-        let w = self.w as isize;
-        let h = self.h as isize;
-        let title = if unicode {
-            "╡ DANDELION // WIND FIELD ╞"
-        } else {
-            " DANDELION // WIND FIELD "
-        };
-        canvas.put_str(2, 0, title, CREAM.scale(0.9));
-        let status = format!(
-            "SEEDS {:03}   WIND {:.1}x",
-            self.seeds.len(),
-            f.tune.seed_speed
-        );
-        let sx = (w - status.len() as isize - 2).max(2);
-        canvas.put_str(sx, 0, &status, GOLD.scale(0.85));
-        canvas.put_str(
-            2,
-            h - 1,
-            "SEEDS DRIFT EAST   //   --seed-count / --seed-speed",
-            WHITE.scale(0.55),
-        );
-        let _ = f.theme;
         let _ = self.seed;
     }
 }

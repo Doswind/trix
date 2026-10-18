@@ -117,6 +117,11 @@ impl TomJerryScene {
     }
 
     fn draw_props(&self, canvas: &mut Canvas, theme: &Theme, t: f32) {
+        // On very short terminals the holograms would land in the HUD rows;
+        // the chase still reads without them.
+        if self.h < 14 {
+            return;
+        }
         let ground = (self.h as f32 * 0.72) as isize;
         // left wall terminal
         canvas.put_str(3, ground - 7, "+--------+", theme.c(2).scale(0.8));
@@ -166,6 +171,10 @@ impl Scene for TomJerryScene {
         if w != self.w || h != self.h {
             self.rebuild(w, h);
         }
+    }
+
+    fn hud_status(&self, f: &Frame) -> Option<String> {
+        Some(format!("CHASE x{:.1}", 0.55 * f.speed))
     }
 
     fn update(&mut self, f: &Frame) {
@@ -353,22 +362,7 @@ impl Scene for TomJerryScene {
             );
         }
         self.draw_props(canvas, theme, t);
-
-        // HUD
-        let title = ":: TOM & JERRY // ZERO-G CHASE ::";
-        if self.w >= title.len() + 4 {
-            canvas.put_str_gradient(2, 0, title, &[theme.c(2), theme.c(3), theme.c(4)]);
-        }
-        let right = format!("SPEED x{:.1}  (+/-)", chase * f.speed);
-        if self.w >= right.len() + 10 {
-            canvas.put_str(
-                self.w as isize - right.len() as isize - 2,
-                0,
-                &right,
-                theme.c(2).scale(0.8),
-            );
-        }
-        let _ = (tom_art_h, tom_x, tom_y);
+        let _ = (tom_art_h, tom_x, tom_y, chase);
     }
 }
 

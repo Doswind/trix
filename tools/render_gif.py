@@ -39,7 +39,7 @@ def main() -> int:
     ap.add_argument(
         "--unicode",
         action="store_true",
-        help="render the Unicode charset (docs GIFs use it; the binary defaults to ASCII)",
+        help="render the Unicode charset (only for a Unicode-specific doc; the binary defaults to ASCII)",
     )
     ap.add_argument(
         "--ghost",

@@ -464,20 +464,6 @@ impl Scene for BuddhaScene {
         }
         self.rings = rings;
         self.draw_art_figure(canvas, theme, t);
-        // HUD
-        let title = ":: AMITABHA // RADIANT HALO ::";
-        if self.w >= title.len() + 4 {
-            canvas.put_str_gradient(2, 0, title, &[GOLD, PALE, theme.c(4)]);
-        }
-        let right = "LOTUS 108 // OM";
-        if self.w >= right.len() + 10 {
-            canvas.put_str(
-                self.w as isize - right.len() as isize - 2,
-                0,
-                right,
-                GOLD.scale(0.8),
-            );
-        }
     }
 }
 

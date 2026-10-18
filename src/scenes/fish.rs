@@ -597,6 +597,10 @@ impl Scene for FishScene {
         }
     }
 
+    fn hud_status(&self, _f: &Frame) -> Option<String> {
+        Some(format!("{} FISH", self.fish.len()))
+    }
+
     fn update(&mut self, f: &Frame) {
         let dt = f.dt.clamp(0.0, 0.1);
         let lanes = self.lanes();
@@ -678,23 +682,6 @@ impl Scene for FishScene {
         for fish in order {
             Self::draw_fish(self, canvas, fish, unicode, t);
         }
-        let w = self.w as isize;
-        let h = self.h as isize;
-        let title = if unicode {
-            "╡ AQUARIUM // DEEP BLUE ╞"
-        } else {
-            " AQUARIUM // DEEP BLUE "
-        };
-        canvas.put_str(2, 0, title, LIGHT.scale(0.9));
-        let status = format!("{} FISH", self.fish.len());
-        canvas.put_str(
-            (w - status.len() as isize - 2).max(2),
-            0,
-            &status,
-            BUBBLE.scale(0.75),
-        );
-        let hint = "TAP GLASS   //   n/p NEXT";
-        canvas.put_str(2, h - 1, hint, LIGHT.scale(0.45));
     }
 }
 

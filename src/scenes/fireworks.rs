@@ -253,6 +253,10 @@ impl Scene for FireworksScene {
         }
     }
 
+    fn hud_status(&self, _f: &Frame) -> Option<String> {
+        Some(format!("BURSTS {}", self.burst_count))
+    }
+
     fn update(&mut self, f: &Frame) {
         let dt = f.dt.clamp(0.0, 0.1);
         let density = f.tune.density.clamp(0.05, 4.0);
@@ -414,20 +418,6 @@ impl Scene for FireworksScene {
                     }
                 }
             }
-        }
-        // HUD
-        let title = ":: PYRO // GLOBAL CELEBRATION ::";
-        if self.w >= title.len() + 4 {
-            canvas.put_str_gradient(2, 0, title, &[theme.c(2), theme.c(3), theme.c(4)]);
-        }
-        let right = format!("BURSTS {}", self.burst_count);
-        if self.w >= right.len() + 10 {
-            canvas.put_str(
-                self.w as isize - right.len() as isize - 2,
-                0,
-                &right,
-                theme.c(2).scale(0.8),
-            );
         }
         let _ = hash2;
     }

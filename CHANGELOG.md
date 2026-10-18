@@ -2,7 +2,19 @@
 
 **English** | [简体中文](CHANGELOG.zh-CN.md)
 
-## Unreleased
+## 0.9.0 — 2026-10-18
+
+- **Renamed to `trix-tui`**: the package, crate and repository are now `trix-tui`; the command stays `trix` (the `ripgrep` / `rg` split). Release assets are named `trix-tui-<version>-...`, `--version` prints `trix-tui 0.9.0`, and `install.sh` installs the `trix` binary. The older `texiao` → `trix` rename remains historical.
+- **A help system that matches the product**: `trix --help` renders a wordmark, a real HUD frame, a colour-coded effect grid, grouped options, theme swatches and examples; `trix --help <effect>` adds a live preview rendered by the actual scene plus only that effect's flags; `trix --help all` is the full reference; `trix --list` is a styled catalog on a TTY and plain text when piped. Errors gained “did you mean” suggestions. The layout degrades to aligned ASCII / mono off a TTY or with `NO_COLOR` / `--no-color`.
+- **Help metadata is centralised**: effect summaries, descriptions, categories, shortcuts, charset support and per-effect flags now live in `src/meta.rs` and drive `--help`, `--list`, the `i` panel and the interactive `h` panel.
+- **Screenshots regenerated in ASCII**: all main README previews use the default ASCII glyphs and the current code; Unicode previews are isolated in the ASCII / Unicode section. The GIFs were re-recorded too.
+- **ASCII storm flash**: the default edition now paints the white flash on the background instead of an invisible white foreground.
+- **Docs corrections**: binary size (about 1.1 MB), startup (about 2.2 ms), ballet tempo (39 scene seconds ≈ 19.5 s at the default 2× tempo), exact theme defaults, the PTY sample scope, and the `fire --fps` example.
+- **`fairy` entry removed** from the product (source retained for later). `life` is part of the 26-effect set.
+- Added `install.sh`, `--completions bash|zsh|fish`, a `ci.yml` matrix, and a docs consistency check. Tests grew to 199.
+
+
+- **Unified HUD and cross-platform keys**: every effect now shares one top bar (`Code Rain // rain` plus live telemetry / speed / theme / charset), one always-on bottom key bar, and one playlist row; `rain`, `fire` and `monalisa` keep their deliberately text-free artwork by using an **ambient** mode that skips the top bar but keeps the key bar. Scene-owned titles, right-hand telemetry, footer slogans, CLI flag reminders and fake prompts (`TAP GLASS`, `PRESS JUMP`) were removed; live counters moved to `Scene::hud_status`, and diegetic instrument labels were moved above the reserved HUD rows. `i` is now an info/parameters panel that shows the runtime state plus the CLI knobs the current effect actually uses; `--no-hud` hides the top/bottom bars for recording while keeping the `h`/`i`/pause panels. The input layer is now a stateful parser: split escape sequences no longer quit, modified arrows no longer leak digits, Alt/Option chords and mouse/bracketed-paste/OSC reports are ignored, UTF-8 is decoded, and shortcuts are case-insensitive (Shift/Caps Lock work). The help panel, `--help`, READMEs and changelogs were synchronized; tests grew to 199.
 
 - `dragon` now flies in front of a layered ink-wash backdrop: two mountain ridges and a denser drifting cloud sea; the dragon and pearl remain the brightest layer, and `--plain` restores the previous starfield-only backdrop.
 - `monalisa`: new optional `--gallery` adds a faint warm gallery halo and a soft floor glow behind the static portrait; the default stays the clean background-free portrait. Added `docs/monalisa-gallery.png`.

@@ -439,6 +439,10 @@ impl Scene for BlackHoleScene {
         }
     }
 
+    fn hud_status(&self, _f: &Frame) -> Option<String> {
+        Some(format!("CONSUMED {}", self.consumed))
+    }
+
     fn update(&mut self, f: &Frame) {
         let dt = f.dt.clamp(0.0, 0.1);
         let t = f.t as f32;
@@ -585,25 +589,6 @@ impl Scene for BlackHoleScene {
                     m.color.scale(fade * (1.0 - i as f32 / 12.0)),
                 );
             }
-        }
-
-        // HUD
-        let title = ":: SAGITTARIUS A* // EVENT HORIZON ::";
-        if self.w >= title.len() + 4 {
-            canvas.put_str_gradient(2, 0, title, &[theme.c(2), theme.c(3), theme.c(4)]);
-        }
-        let right = format!("CONSUMED {}", self.consumed);
-        if self.w >= right.len() + 10 {
-            canvas.put_str(
-                self.w as isize - right.len() as isize - 2,
-                0,
-                &right,
-                theme.c(2).scale(0.8),
-            );
-        }
-        let info = "MASS 4.3M SOL // LENSING ACTIVE";
-        if self.h > 12 && self.w > info.len() + 4 {
-            canvas.put_str(2, self.h as isize - 2, info, theme.c(1).scale(1.2));
         }
     }
 }

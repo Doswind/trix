@@ -51,6 +51,8 @@ pub struct Canvas {
     last_bg: Option<Rgb>,
     out: Vec<u8>,
     full_ansi: Vec<u8>,
+    /// Test-only guard: scenes must not write text into the HUD rows.
+    chrome_guard: bool,
 }
 
 impl Canvas {
@@ -66,6 +68,22 @@ impl Canvas {
             last_bg: None,
             out: Vec::with_capacity(w * h * 8 + 512),
             full_ansi: Vec::with_capacity(w * h * 8 + 512),
+            chrome_guard: false,
+        }
+    }
+
+    /// Test-only: fail if a scene writes text into row 0 or row h-1.
+    #[cfg(test)]
+    pub fn set_chrome_guard(&mut self, on: bool) {
+        self.chrome_guard = on;
+    }
+
+    fn check_chrome_row(&self, y: isize) {
+        if self.chrome_guard {
+            assert!(
+                y != 0 && y != self.h as isize - 1,
+                "scene text written into reserved HUD row {y}"
+            );
         }
     }
 
@@ -218,6 +236,7 @@ impl Canvas {
     }
 
     pub fn put_str(&mut self, x: isize, y: isize, text: &str, fg: Rgb) {
+        self.check_chrome_row(y);
         for (cx, ch) in (x..).zip(text.chars()) {
             self.set(cx, y, ch, fg);
         }
@@ -225,6 +244,7 @@ impl Canvas {
 
     /// Draw text with a horizontal brightness ramp (used for HUD titles).
     pub fn put_str_gradient(&mut self, x: isize, y: isize, text: &str, colors: &[Rgb]) {
+        self.check_chrome_row(y);
         if colors.is_empty() {
             return;
         }
@@ -414,6 +434,39 @@ impl Canvas {
         out.extend_from_slice(b"\x1b[0m\n");
         self.full_ansi = out;
         self.full_ansi.clone()
+    }
+
+    /// Render one full-width ANSI string per row.  Unlike `render_ansi`, rows
+    /// are not trimmed and no separators are added: this is what the help
+    /// preview needs when it wraps a frame in a box.
+    pub fn render_rows(&self, mode: ColorMode) -> Vec<String> {
+        let mut rows = Vec::with_capacity(self.h);
+        for y in 0..self.h {
+            let mut out: Vec<u8> = Vec::with_capacity(self.w * 8);
+            let mut last_fg: Option<Rgb> = None;
+            let mut last_bg: Option<Rgb> = None;
+            for x in 0..self.w {
+                let cell = self.cells[y * self.w + x];
+                if mode.is_color() {
+                    if cell.ch != ' ' && last_fg != Some(cell.fg) {
+                        write_fg(&mut out, cell.fg, mode);
+                        last_fg = Some(cell.fg);
+                    }
+                    if last_bg != cell.bg {
+                        match cell.bg {
+                            Some(bg) => write_bg(&mut out, bg, mode),
+                            None => out.extend_from_slice(b"\x1b[40m"),
+                        }
+                        last_bg = cell.bg;
+                    }
+                }
+                let mut buf = [0u8; 4];
+                out.extend_from_slice(cell.ch.encode_utf8(&mut buf).as_bytes());
+            }
+            out.extend_from_slice(b"\x1b[0m");
+            rows.push(String::from_utf8_lossy(&out).into_owned());
+        }
+        rows
     }
 
     pub fn render_plain(&self) -> String {

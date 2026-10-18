@@ -114,6 +114,11 @@ impl Scene for EcgScene {
         }
     }
 
+    fn hud_status(&self, f: &Frame) -> Option<String> {
+        let bpm = 56 + ((f.t as f32 * 0.15).sin() * 2.0) as i32;
+        Some(format!("HR {:3} BPM", bpm))
+    }
+
     fn update(&mut self, _f: &Frame) {}
 
     fn draw(&mut self, canvas: &mut Canvas, f: &Frame) {
@@ -227,29 +232,19 @@ impl Scene for EcgScene {
             canvas.add_light(sx, y, GREEN, 0.30, '.');
         }
 
-        // HUD / monitor labels
-        let title = if unicode {
-            "╡ ECG MONITOR // LEAD II ╞"
-        } else {
-            " ECG MONITOR // LEAD II "
-        };
-        canvas.put_str(2, 0, title, GREEN_BRIGHT);
-        let bpm = 56 + ((t * 0.15).sin() * 2.0) as i32;
-        let hr = format!("HR {:3} BPM", bpm);
-        let rx = (w - hr.len() as isize - 2).max(2);
-        canvas.put_str(rx, 0, &hr, GREEN_BRIGHT);
+        // Monitor labels stay diegetic and above the reserved HUD rows.
         let spo2 = "SpO2 98%";
         if w > 40 {
-            canvas.put_str(2, h - 2, spo2, GREEN_MID);
+            canvas.put_str(2, h - 4, spo2, GREEN_MID);
         }
         let bp = "SYS 120 / DIA 80";
         let bx = (w - bp.len() as isize - 2).max(2);
         if w > 40 {
-            canvas.put_str(bx, h - 2, bp, GREEN_MID);
+            canvas.put_str(bx, h - 4, bp, GREEN_MID);
         }
         let lead = "25 mm/s  10 mm/mV  //  SINUS RHYTHM";
         if w > (lead.len() as isize + 4) {
-            canvas.put_str(2, h - 1, lead, GREEN_DIM.scale(1.8));
+            canvas.put_str(2, h - 3, lead, GREEN_DIM.scale(1.8));
         }
 
         // pulsing heart mark

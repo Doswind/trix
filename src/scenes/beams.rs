@@ -268,21 +268,6 @@ impl Scene for BeamsScene {
                 s.color.scale(s.life.min(1.0)),
             );
         }
-
-        // HUD.
-        let title = ":: PHOTON ARRAY // BEAM LATTICE ::";
-        if self.w >= title.len() + 4 {
-            canvas.put_str_gradient(2, 0, title, &[theme.c(2), theme.c(3), theme.c(4)]);
-        }
-        let right = "LIGHT SPEED // 0.99c";
-        if self.w >= right.len() + 10 {
-            canvas.put_str(
-                self.w as isize - right.len() as isize - 2,
-                0,
-                right,
-                theme.c(2).scale(0.8),
-            );
-        }
     }
 }
 

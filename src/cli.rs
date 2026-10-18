@@ -71,6 +71,8 @@ pub struct Options {
     pub seed: Option<u64>,
     pub size: Option<(usize, usize)>,
     pub no_alt: bool,
+    /// Hide the persistent top/bottom HUD in interactive mode.
+    pub no_hud: bool,
     pub snapshot: Option<PathBuf>,
     pub frames: Option<u64>,
     pub bench: bool,
@@ -110,6 +112,7 @@ impl Default for Options {
             seed: None,
             size: None,
             no_alt: false,
+            no_hud: false,
             snapshot: None,
             frames: None,
             bench: false,
@@ -121,14 +124,19 @@ impl Default for Options {
 #[allow(clippy::large_enum_variant)]
 pub enum Parsed {
     Run(Options),
-    List,
-    Help,
+    List(Options),
+    Help(Options),
+    Completions(String),
     Version,
 }
 
 pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
     let mut opts = Options::default();
     let mut positionals: Vec<String> = Vec::new();
+    let mut want_help = false;
+    let mut want_list = false;
+    let mut want_version = false;
+    let mut want_completions: Option<String> = None;
     let mut i = 0;
     let mut only_positionals = false;
 
@@ -150,11 +158,15 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                 None => (rest, None),
             };
             match name {
-                "help" => return Ok(Parsed::Help),
-                "version" => return Ok(Parsed::Version),
-                "list" => return Ok(Parsed::List),
+                "help" => want_help = true,
+                "version" => want_version = true,
+                "list" => want_list = true,
+                "completions" => {
+                    want_completions = Some(take_value(args, &mut i, inline, "--completions")?);
+                }
                 "bench" => opts.bench = true,
                 "no-alt" | "no-altscreen" => opts.no_alt = true,
+                "no-hud" => opts.no_hud = true,
                 "no-color" => opts.color = Some(ColorMode::Mono),
                 "ascii" => opts.charset = Some(Charset::Ascii),
                 "kana" => opts.charset = Some(Charset::Kana),
@@ -315,7 +327,7 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                         "--snapshot",
                     )?));
                 }
-                _ => return Err(format!("unknown option '--{name}'")),
+                _ => return Err(unknown_option_message(&format!("--{name}"))),
             }
             i += 1;
             continue;
@@ -329,9 +341,9 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                 None
             };
             match flag {
-                "h" => return Ok(Parsed::Help),
-                "V" => return Ok(Parsed::Version),
-                "l" => return Ok(Parsed::List),
+                "h" => want_help = true,
+                "V" => want_version = true,
+                "l" => want_list = true,
                 "e" => {
                     opts.effect = Some(take_value(args, &mut i, attached, "-e")?);
                 }
@@ -346,13 +358,25 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                 "t" => {
                     opts.theme = Some(take_value(args, &mut i, attached, "-t")?);
                 }
-                _ => return Err(format!("unknown option '-{flag}'")),
+                _ => return Err(unknown_option_message(&format!("-{flag}"))),
             }
             i += 1;
             continue;
         }
         positionals.push(arg.clone());
         i += 1;
+    }
+
+    // `trix help [effect]` and `trix list` are friendly aliases for the
+    // flag forms.  They are not effect names, so removing them here is safe.
+    if let Some(first) = positionals.first() {
+        if first.eq_ignore_ascii_case("help") {
+            want_help = true;
+            positionals.remove(0);
+        } else if first.eq_ignore_ascii_case("list") {
+            want_list = true;
+            positionals.remove(0);
+        }
     }
 
     if positionals.len() > 1 {
@@ -368,8 +392,147 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
         opts.effect = Some(pos);
     }
 
+    if want_help {
+        return Ok(Parsed::Help(opts));
+    }
+    if want_version {
+        return Ok(Parsed::Version);
+    }
+    if want_list {
+        return Ok(Parsed::List(opts));
+    }
+    if let Some(shell) = want_completions {
+        if !matches!(shell.as_str(), "bash" | "zsh" | "fish") {
+            return Err(format!(
+                "--completions must be 'bash', 'zsh' or 'fish' (got '{shell}')"
+            ));
+        }
+        return Ok(Parsed::Completions(shell));
+    }
+
     validate(&mut opts)?;
     Ok(Parsed::Run(opts))
+}
+
+/// Long flags that the help screens promise to document.  Tests use this to
+/// keep `--help all`, the README and the parser from drifting apart.
+pub const PRIMARY_FLAGS: &[&str] = &[
+    "--effect",
+    "--playlist",
+    "--switch",
+    "--transition",
+    "--transition-secs",
+    "--no-fade",
+    "--fps",
+    "--speed",
+    "--chase-speed",
+    "--theme",
+    "--charset",
+    "--unicode",
+    "--ascii",
+    "--color",
+    "--no-color",
+    "--no-hud",
+    "--no-alt",
+    "--density",
+    "--spin",
+    "--twinkle",
+    "--meteors",
+    "--beam-speed",
+    "--beam-motion",
+    "--beam-jump",
+    "--seed-count",
+    "--seed-speed",
+    "--street",
+    "--tornado-count",
+    "--tornado-speed",
+    "--life-cycle",
+    "--eye-motion",
+    "--eye-still",
+    "--ghost",
+    "--gallery",
+    "--plain",
+    "--jump",
+    "--no-jump",
+    "--snapshot",
+    "--frames",
+    "--size",
+    "--bench",
+    "--seed",
+    "--duration",
+    "--list",
+    "--help",
+    "--version",
+    "--completions",
+];
+
+fn normalize_name(text: &str) -> String {
+    text.to_ascii_lowercase().replace(['_', '-', ' '], "")
+}
+
+fn levenshtein(a: &str, b: &str) -> usize {
+    let a: Vec<char> = a.chars().collect();
+    let b: Vec<char> = b.chars().collect();
+    if a.is_empty() {
+        return b.len();
+    }
+    if b.is_empty() {
+        return a.len();
+    }
+    let mut prev: Vec<usize> = (0..=b.len()).collect();
+    let mut cur = vec![0usize; b.len() + 1];
+    for (i, ca) in a.iter().enumerate() {
+        cur[0] = i + 1;
+        for (j, cb) in b.iter().enumerate() {
+            let cost = if ca == cb { 0 } else { 1 };
+            cur[j + 1] = (cur[j] + 1).min(prev[j + 1] + 1).min(prev[j] + cost);
+        }
+        std::mem::swap(&mut prev, &mut cur);
+    }
+    prev[b.len()]
+}
+
+/// Closest effect key for "did you mean" hints.
+pub fn suggest_effect(input: &str) -> Option<&'static str> {
+    let needle = normalize_name(input);
+    let mut best: Option<(&'static str, usize)> = None;
+    for id in crate::scene::EffectId::ALL {
+        let key = id.key();
+        let distance = levenshtein(&needle, key);
+        let limit = if key.len() <= 4 { 2 } else { 3 };
+        if distance <= limit && best.map(|(_, d)| distance < d).unwrap_or(true) {
+            best = Some((key, distance));
+        }
+    }
+    best.map(|(key, _)| key)
+}
+
+/// Closest long option for "did you mean" hints.
+pub fn suggest_option(input: &str) -> Option<&'static str> {
+    let needle = normalize_name(input.trim_start_matches('-'));
+    let mut best: Option<(&'static str, usize)> = None;
+    for flag in PRIMARY_FLAGS {
+        let name = flag.trim_start_matches('-');
+        let distance = levenshtein(&needle, name);
+        if distance <= 2 && best.map(|(_, d)| distance < d).unwrap_or(true) {
+            best = Some((flag, distance));
+        }
+    }
+    best.map(|(flag, _)| flag)
+}
+
+pub fn unknown_effect_message(name: &str) -> String {
+    match suggest_effect(name) {
+        Some(hit) => format!("unknown effect '{name}' (did you mean '{hit}'?)"),
+        None => format!("unknown effect '{name}' (try 'trix --list')"),
+    }
+}
+
+pub fn unknown_option_message(name: &str) -> String {
+    match suggest_option(name) {
+        Some(hit) => format!("unknown option '{name}' (did you mean '{hit}'?)"),
+        None => format!("unknown option '{name}' (try 'trix --help all')"),
+    }
 }
 
 fn take_value(
@@ -494,159 +657,6 @@ fn validate(opts: &mut Options) -> Result<(), String> {
     Ok(())
 }
 
-pub fn help_text() -> String {
-    format!(
-        r#"
-  t r i x   ::  terminal effects engine  v{VERSION}
-
-  Low-footprint, sci-fi ASCII effects for your terminal.
-
-USAGE
-  trix [effect] [options]
-  trix --list
-  trix <effect> --snapshot out.ans --size 120x36 --frames 180
-
-EFFECTS
-  rain      代码雨      blue/green code rain with falling source tokens
-  fire      燃烧火焰    bottom fire bed 2x wider, separate slender tips
-  dragon    巨龙盘旋    Chinese celestial dragon; mountains and cloud sea; --plain
-  map       世界地图    holographic Earth with live network arcs
-  matrix    黑客帝国    NASA backend login screen with a large logo
-  blackhole 黑洞        horizon + slower, wider outer star orbits
-  beams     光束        one-way beams; straight or jumping motion
-  fireworks 烟花        layered fireworks over a neon skyline
-  solar     太阳系      Sun + planets; radial light wave sweeps outward
-  galaxy    满天星河    full-screen Milky Way starfield
-  buddha    佛光普照    glowing Buddha, halo and lotus mandala
-  tomjerry  猫和老鼠    Tom chasing Jerry through a space station
-  mario     超级马里奥  mushroom-bumping platformer (ASCII; --unicode)
-  ecg       心率跳动    glowing ECG monitor (ASCII; --unicode)
-  dandelion 蒲公英      clustered stems, staggered blooms, drifting seeds
-  fish      水族馆      colorful aquarium fish in every direction
-  landscape 五光十色    mountains, lake, boat, geese and jungle
-  shanghai  东方明珠    Shanghai Bund and Oriental Pearl
-  tiananmen 光芒万丈    Tiananmen gate radiating light
-  traffic   车水马龙    city street with cars; --street horizontal|vertical
-  tornado   龙卷风      twisted funnels, 2x wider tops, heavy base debris
-  storm     电闪雷鸣    rain, clouds and full-screen lightning flashes
-  monalisa  蒙娜丽莎      Mona Lisa cut-out: ANSI cells + ASCII, static; --ghost
-  ballet    冰上芭蕾    ice-ballet duet: lift, spiral, spin, spread eagle
-  demoneye  恶魔之眼    giant blood eye; eyeball darts between blinks
-  life      生命的轨迹  a 0-100 life timeline of family, love and generations
-
-  Dual-form effects start in ASCII; add --unicode for the Unicode variant.
-
-OPTIONS
-  -e, --effect <name>     Effect to run; omit to loop all effects
-      --playlist <mode>   cycle | random (default: cycle)  [no effect]
-      --switch <secs>     seconds per effect in playlist   [default: 12]
-      --transition <mode> fade | dissolve | none            [default: fade]
-      --transition-secs <s>  length of the blend             [default: 0.6]
-      --no-fade           alias for --transition none
-  -f, --fps <1-240>       Target frame rate                    [default: 30]
-  -s, --speed <0.05-8>    Animation speed multiplier           [default: 1.0]
-      --chase-speed <f>   Alias of --speed (Tom & Jerry chase)
-  -t, --theme <name>      Color theme, see below               [effect default]
-      --charset <mode>    kana | ascii | unicode                [default: ascii]
-      --unicode           Opt in to Unicode single-cell glyphs
-      --ascii             Force ASCII glyphs (the default)
-      --color <mode>      auto | truecolor | 256 | 16 | mono   [default: auto]
-      --density <f>       beams/fireworks/galaxy/traffic density [default: 1.0]
-      --spin <f>          black hole rotation speed            [default: 0.5]
-      --twinkle <f>       galaxy twinkle rate                  [default: 1.0]
-      --meteors <n>       black hole / galaxy meteors          [default: 3]
-      --beam-speed <f>    beams horizontal speed               [default: 1.0]
-      --beam-motion <m>   straight | jump (default: straight)
-      --beam-jump         alias for --beam-motion jump
-      --seed-count <n>    dandelion drifting seeds            [default: 90]
-      --seed-speed <f>    dandelion seed drift speed          [default: 1.0]
-      --street <dir>      traffic street: horizontal|vertical [default: horizontal]
-      --tornado-count <n> tornado count                        [default: 3]
-      --tornado-speed <f> tornado travel speed                 [default: 1.0]
-      --life-cycle <secs> life: 0-100 cycle length            [default: 120]
-      --eye-motion <m>    demoneye: dart | still              [default: dart]
-      --eye-still         alias for --eye-motion still
-      --ghost             monalisa: flat pure-ASCII portrait (no colour cells)
-      --gallery           monalisa: soft gallery glow behind the portrait
-      --plain             dragon: plain starfield (no mountains/cloud sea)
-      --jump              Tom & Jerry jumps (default: off)
-      --no-jump           disable Tom & Jerry jumps
-      --seed <u64>        Deterministic random seed
-      --duration <secs>   Exit automatically after N seconds
-      --no-alt            Do not use the alternate screen
-  -l, --list              List effects and themes
-  -h, --help              Show this help
-  -V, --version           Print version
-
-CAPTURE / BENCHMARK
-      --snapshot <path>   Render after --frames steps to an ANSI file ('-' = stdout)
-      --frames <n>        Steps to simulate before snapshot / benchmark
-      --size <WxH>        Offscreen canvas size for snapshot/bench
-      --bench             Offscreen render benchmark (includes ANSI encoding)
-
-THEMES
-  {themes}
-
-KEYS (interactive)
-  q / Esc   quit            space   pause
-  n / p     next/prev      1-9,0,[ ]  first 12 effects; letters more
-  m/e/d     Mario/ECG/Dandelion
-  f/l/b/j   Fish/Landscape/Bund/Gate
-  c/z/k     Traffic/Tornado/Storm
-  o/v/g     Mona Lisa/Ballet/Demon eye
-  y         Life trajectory
-  t         next theme     + / -   speed
-  r         restart        i       status line
-  h         help overlay
-
-EXAMPLES
-  trix
-  trix --playlist random --switch 8
-  trix --transition dissolve --switch 6
-  trix rain
-  trix fire --fps 60 --theme ember
-  trix dragon -f 45 -t gold
-  trix map --theme ice
-  trix matrix --unicode
-  trix map --snapshot earth.ans --size 120x36 --frames 150
-  trix mario --unicode
-  trix dandelion --seed-count 180 --seed-speed 1.4
-  trix traffic --street vertical
-  trix tornado --tornado-count 5 --tornado-speed 1.6
-  trix monalisa
-  trix ballet --speed 1.3
-  trix demoneye
-  trix demoneye --eye-still
-  trix life --life-cycle 90
-"#,
-        VERSION = VERSION,
-        themes = theme::THEMES
-            .iter()
-            .map(|t| format!("{} ({})", t.key, t.label))
-            .collect::<Vec<_>>()
-            .join("\n  "),
-    )
-}
-
-pub fn list_text() -> String {
-    let mut s = String::new();
-    s.push_str("EFFECTS\n");
-    for e in crate::scene::EffectId::ALL {
-        s.push_str(&format!(
-            "  {:<10} {:<28} {}\n",
-            e.key(),
-            e.title_en(),
-            e.title_zh()
-        ));
-    }
-    s.push_str("\nTHEMES\n");
-    for t in theme::THEMES {
-        s.push_str(&format!("  {:<10} {}\n", t.key, t.label));
-    }
-    s.push_str("\nRun `trix --help` for options.\n");
-    s
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -715,6 +725,18 @@ mod tests {
             panic!()
         };
         assert!(!o.ghost);
+    }
+
+    #[test]
+    fn parses_no_hud() {
+        let Parsed::Run(o) = parse_args(&args("rain --no-hud")).unwrap() else {
+            panic!()
+        };
+        assert!(o.no_hud);
+        let Parsed::Run(o) = parse_args(&args("rain")).unwrap() else {
+            panic!()
+        };
+        assert!(!o.no_hud);
     }
 
     #[test]
@@ -846,9 +868,56 @@ mod tests {
 
     #[test]
     fn commands() {
-        assert!(matches!(parse_args(&args("--help")).unwrap(), Parsed::Help));
+        assert!(matches!(
+            parse_args(&args("--help")).unwrap(),
+            Parsed::Help(_)
+        ));
         assert!(matches!(parse_args(&args("-V")).unwrap(), Parsed::Version));
-        assert!(matches!(parse_args(&args("--list")).unwrap(), Parsed::List));
+        assert!(matches!(
+            parse_args(&args("--list")).unwrap(),
+            Parsed::List(_)
+        ));
+    }
+
+    #[test]
+    fn help_accepts_an_effect_and_style_flags() {
+        let Parsed::Help(o) = parse_args(&args("--help rain --no-color")).unwrap() else {
+            panic!()
+        };
+        assert_eq!(o.effect.as_deref(), Some("rain"));
+        assert_eq!(o.color, Some(ColorMode::Mono));
+
+        let Parsed::Help(o) = parse_args(&args("rain --help")).unwrap() else {
+            panic!()
+        };
+        assert_eq!(o.effect.as_deref(), Some("rain"));
+
+        let Parsed::Help(o) = parse_args(&args("help all")).unwrap() else {
+            panic!()
+        };
+        assert_eq!(o.effect.as_deref(), Some("all"));
+
+        let Parsed::List(o) = parse_args(&args("list")).unwrap() else {
+            panic!()
+        };
+        assert_eq!(o.effect, None);
+    }
+
+    #[test]
+    fn suggestions_are_useful() {
+        assert_eq!(suggest_effect("rainn"), Some("rain"));
+        assert_eq!(suggest_option("--fsp"), Some("--fps"));
+        assert!(unknown_effect_message("rainn").contains("rain"));
+        assert!(unknown_option_message("--fsp").contains("--fps"));
+    }
+
+    #[test]
+    fn parses_completions() {
+        assert!(matches!(
+            parse_args(&args("--completions bash")).unwrap(),
+            Parsed::Completions(ref shell) if shell == "bash"
+        ));
+        assert!(parse_args(&args("--completions nope")).is_err());
     }
 
     #[test]

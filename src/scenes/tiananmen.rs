@@ -846,23 +846,6 @@ impl TiananmenScene {
             }
         }
     }
-
-    fn draw_title(&self, canvas: &mut Canvas) {
-        let title = if self.w >= 60 {
-            " TIANANMEN // RADIANT LIGHT "
-        } else {
-            " TIANANMEN "
-        };
-        canvas.put_str_gradient(2, 0, title, &[GOLD_LIGHT, GOLD, GOLD_DEEP]);
-        if self.h >= 12 && self.w >= 40 {
-            canvas.put_str(
-                2,
-                self.h as isize - 1,
-                "THE EAST IS RED   //   LIGHT OF DAWN",
-                GOLD_LIGHT.scale(0.50),
-            );
-        }
-    }
 }
 
 fn rim_light(t: f32) -> f32 {
@@ -1224,7 +1207,6 @@ impl Scene for TiananmenScene {
         self.draw_gate(canvas, uni, t);
         self.draw_flags(canvas, uni, t);
         self.draw_foreground(canvas, uni, t);
-        self.draw_title(canvas);
         let _ = self.seed;
     }
 }

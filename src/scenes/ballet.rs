@@ -1697,6 +1697,14 @@ impl Scene for BalletScene {
         }
     }
 
+    fn hud_status(&self, f: &Frame) -> Option<String> {
+        Some(format!(
+            "TEMPO {:.2}x | {}",
+            f.speed * TEMPO,
+            self.figure(f.t as f32 * TEMPO)
+        ))
+    }
+
     fn update(&mut self, _f: &Frame) {
         // All motion is analytic; nothing to integrate.
     }
@@ -1742,20 +1750,6 @@ impl Scene for BalletScene {
                     canvas.add_light(sx, sy, ICE_LINE, 0.30 * (1.0 - n), ' ');
                 }
             }
-        }
-
-        // Tiny rink HUD.
-        let title = if unicode {
-            "✦ ICE BALLET // PAS DE DEUX ✦"
-        } else {
-            "* ICE BALLET // PAS DE DEUX *"
-        };
-        canvas.put_str(2, 0, title, FEMALE_HL.scale(0.8));
-        let sep = if unicode { "·" } else { "|" };
-        let status = format!("TEMPO {:.2}x  {sep}  {}", f.speed * TEMPO, self.figure(t));
-        let sx = self.w as isize - status.chars().count() as isize - 2;
-        if sx > title.chars().count() as isize + 4 {
-            canvas.put_str(sx, 0, &status, MALE_HL.scale(0.62));
         }
     }
 }

@@ -7,6 +7,8 @@ use std::time::{Duration, Instant};
 use crate::canvas::Canvas;
 use crate::cli::{self, Options, Parsed, PlaylistMode};
 use crate::color::ColorMode;
+use crate::help;
+use crate::hud;
 use crate::rng::Rng;
 use crate::scene::{self, EffectId, Frame, Scene, Tune};
 use crate::term::{self, Key, Terminal};
@@ -18,22 +20,14 @@ const SNAPSHOT_SEED: u64 = 0x7e51_a017;
 pub fn run() -> i32 {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match cli::parse_args(&args) {
-        Ok(Parsed::Help) => {
-            print!("{}", cli::help_text());
-            0
-        }
-        Ok(Parsed::Version) => {
-            println!("trix {}", cli::VERSION);
-            0
-        }
-        Ok(Parsed::List) => {
-            print!("{}", cli::list_text());
-            0
-        }
+        Ok(Parsed::Help(opts)) => help::run_help(&opts),
+        Ok(Parsed::Version) => help::run_version(),
+        Ok(Parsed::List(opts)) => help::run_list(&opts),
+        Ok(Parsed::Completions(shell)) => help::run_completions(&shell),
         Ok(Parsed::Run(opts)) => run_options(opts),
         Err(e) => {
-            eprintln!("trix: {e}");
-            eprintln!("Try 'trix --help' for usage.");
+            let style = help::HelpStyle::detect(&Options::default());
+            eprint!("{}", help::error(&e, &style));
             2
         }
     }
@@ -54,14 +48,7 @@ fn resolve_effect(opts: &Options, deterministic: bool) -> Result<(EffectId, u64)
         .effect
         .as_deref()
         .ok_or_else(|| "no effect selected. Try 'trix rain' or 'trix --list'".to_string())?;
-    let id = EffectId::parse(name).ok_or_else(|| {
-        let names = EffectId::ALL
-            .iter()
-            .map(|e| e.key())
-            .collect::<Vec<_>>()
-            .join(", ");
-        format!("unknown effect '{name}' (available: {names})")
-    })?;
+    let id = EffectId::parse(name).ok_or_else(|| cli::unknown_effect_message(name))?;
     let seed = match opts.seed {
         Some(s) => s,
         None if deterministic => SNAPSHOT_SEED,
@@ -336,12 +323,10 @@ fn interactive(opts: Options) -> i32 {
     let mut t = 0.0f64;
     let mut paused = false;
     let mut speed = opts.speed;
-    let mut show_help = false;
-    let mut show_status = false;
+    let mut panel = hud::Panel::None;
     let mut flash = 0.0f32;
     let mut fps_smooth = opts.fps as f32;
     let mut frame_ms = 0.0f32;
-    let hint_until = 6.0f32;
     let mut auto_clock = 0.0f32;
 
     loop {
@@ -368,18 +353,32 @@ fn interactive(opts: Options) -> i32 {
         }
 
         for key in term.read_keys() {
+            // Shift and Caps Lock should never break a shortcut: terminals
+            // report `Q` / `N` / `H` exactly like `q` / `n` / `h`.
+            let key = normalize_key(key);
             match key {
                 Key::Char('q') | Key::Char('\u{3}') => return 0,
                 Key::Esc => {
-                    if show_help {
-                        show_help = false;
-                    } else {
+                    if panel == hud::Panel::None {
                         return 0;
                     }
+                    panel = hud::Panel::None;
                 }
                 Key::Char(' ') => paused = !paused,
-                Key::Char('h') | Key::Char('?') => show_help = !show_help,
-                Key::Char('i') => show_status = !show_status,
+                Key::Char('h') | Key::Char('?') => {
+                    panel = if panel == hud::Panel::Help {
+                        hud::Panel::None
+                    } else {
+                        hud::Panel::Help
+                    };
+                }
+                Key::Char('i') => {
+                    panel = if panel == hud::Panel::Info {
+                        hud::Panel::None
+                    } else {
+                        hud::Panel::Info
+                    };
+                }
                 Key::Char('t') => {
                     current_theme = theme::next_theme(current_theme);
                     explicit_theme = true;
@@ -442,47 +441,8 @@ fn interactive(opts: Options) -> i32 {
                     // `r` is a restart, not an effect change: cut straight back.
                     transition = None;
                 }
-                Key::Char(
-                    c @ ('1'..='9'
-                    | '0'
-                    | '['
-                    | ']'
-                    | 'm'
-                    | 'e'
-                    | 'd'
-                    | 'f'
-                    | 'l'
-                    | 'b'
-                    | 'j'
-                    | 'c'
-                    | 'z'
-                    | 'k'
-                    | 'o'
-                    | 'v'
-                    | 'g'
-                    | 'y'),
-                ) => {
-                    let idx = match c {
-                        '0' => 9,
-                        '[' => 10,
-                        ']' => 11,
-                        'm' => 12,
-                        'e' => 13,
-                        'd' => 14,
-                        'f' => 15,
-                        'l' => 16,
-                        'b' => 17,
-                        'j' => 18,
-                        'c' => 19,
-                        'z' => 20,
-                        'k' => 21,
-                        'o' => 22,
-                        'v' => 23,
-                        'g' => 24,
-                        'y' => 25,
-                        _ => c as usize - '1' as usize,
-                    };
-                    let target = EffectId::from_index(idx);
+                Key::Char(c) if EffectId::from_shortcut(c).is_some() => {
+                    let target = EffectId::from_shortcut(c).expect("shortcut guard");
                     switch_effect(
                         &mut id,
                         &mut seed,
@@ -607,34 +567,61 @@ fn interactive(opts: Options) -> i32 {
             scene.draw(&mut canvas, &frame);
         }
 
-        let elapsed = started.elapsed().as_secs_f32();
-        if !show_help && elapsed < hint_until {
-            draw_hint(&mut canvas, &frame, elapsed, hint_until);
-        }
-        if playlist && !show_help {
-            draw_playlist(&mut canvas, &frame, id, opts.switch_secs, auto_clock);
-        }
-        if show_help {
-            draw_help(&mut canvas, &frame, id, current_theme, speed, paused);
-        } else if paused {
-            draw_pause(&mut canvas, &frame);
-        }
-        if show_status && !show_help {
-            draw_status(
-                &mut canvas,
-                &frame,
-                id,
-                current_theme,
-                speed,
-                paused,
-                fps_smooth,
-                frame_ms,
-                mode,
-            );
+        let scene_status = scene.hud_status(&frame);
+        if !opts.no_hud {
+            if id.hud_mode() == scene::HudMode::Full {
+                hud::draw_header(&mut canvas, &frame, id, scene_status.as_deref());
+            }
+            hud::draw_keybar(&mut canvas, &frame, paused);
+            if playlist {
+                hud::draw_playlist(&mut canvas, &frame, id, opts.switch_secs, auto_clock);
+            }
         }
         if flash > 0.0 {
             draw_flash(&mut canvas, &frame, flash);
             flash = (flash - real_dt).max(0.0);
+        }
+        if paused {
+            hud::draw_pause(&mut canvas, &frame);
+        }
+        match panel {
+            hud::Panel::None => {}
+            hud::Panel::Help => {
+                hud::draw_help(&mut canvas, &frame, id, speed, paused);
+            }
+            hud::Panel::Info => {
+                let params = info_params(
+                    id,
+                    &tune,
+                    &opts,
+                    playlist,
+                    current_theme,
+                    speed,
+                    charset,
+                    mode,
+                );
+                let playlist_info = if playlist {
+                    Some(hud::PlaylistInfo {
+                        index: id.index(),
+                        total: EffectId::ALL.len(),
+                        switch_secs: opts.switch_secs,
+                        remaining: (opts.switch_secs - auto_clock).max(0.0) as u32,
+                        transition: opts.transition.key(),
+                    })
+                } else {
+                    None
+                };
+                let info = hud::Info {
+                    effect: id,
+                    fps: fps_smooth,
+                    frame_ms,
+                    mode,
+                    status: scene_status.as_deref(),
+                    playlist: playlist_info,
+                    params: &params,
+                };
+                hud::draw_info(&mut canvas, &frame, &info);
+            }
         }
 
         if let Err(e) = term.present(&mut canvas, mode) {
@@ -719,58 +706,19 @@ fn switch_effect(
     *t = 0.0;
 }
 
-fn centered_x(w: usize, text: &str) -> isize {
-    let tw = text.chars().count();
-    ((w as isize - tw as isize) / 2).max(0)
+fn normalize_key(key: Key) -> Key {
+    match key {
+        Key::Char(c) => Key::Char(c.to_ascii_lowercase()),
+        other => other,
+    }
 }
 
-fn draw_playlist(canvas: &mut Canvas, frame: &Frame, id: EffectId, switch_secs: f32, elapsed: f32) {
-    if frame.h < 3 || frame.w < 36 {
-        return;
+fn charset_label(charset: cli::Charset) -> &'static str {
+    match charset {
+        cli::Charset::Kana => "kana",
+        cli::Charset::Ascii => "ascii",
+        cli::Charset::Unicode => "unicode",
     }
-    let total = EffectId::ALL.len();
-    let left = (switch_secs - elapsed).max(0.0) as u32;
-    let text = format!(
-        "PLAYLIST {:02}/{}  {}  next {}s",
-        id.index() + 1,
-        total,
-        id.title_en(),
-        left
-    );
-    let y = frame.h as isize - 1;
-    let x = (frame.w as isize - text.chars().count() as isize - 1).max(1);
-    canvas.clear_rect(x - 1, y, frame.w as isize - x + 1, 1);
-    canvas.put_str(x, y, &text, frame.theme.c(2).scale(0.55));
-}
-
-fn draw_hint(canvas: &mut Canvas, frame: &Frame, elapsed: f32, hint_until: f32) {
-    if frame.h < 4 || frame.w < 30 {
-        return;
-    }
-    let text = if frame.w >= 76 {
-        "q quit  |  space pause  |  n next  |  t theme  |  h help"
-    } else {
-        "q quit  |  n next  |  h help"
-    };
-    let x = centered_x(frame.w, text);
-    let y = frame.h as isize - 1;
-    canvas.clear_rect(0, y, frame.w as isize, 1);
-    let fade = ((hint_until - elapsed) / 1.8).clamp(0.0, 1.0);
-    let color = frame.theme.c(2).scale(0.35 + 0.55 * fade);
-    canvas.put_str(x, y, text, color);
-}
-
-fn draw_pause(canvas: &mut Canvas, frame: &Frame) {
-    if frame.w < 24 || frame.h < 6 {
-        return;
-    }
-    let text = " PAUSED ";
-    let bw = text.len() as isize + 4;
-    let x = ((frame.w as isize - bw) / 2).max(0);
-    let y = frame.h as isize / 2 - 1;
-    canvas.clear_rect(x, y, bw, 3);
-    canvas.rect(x, y, bw, 3, frame.theme.c(2).scale(0.8));
-    canvas.put_str(x + 3, y + 1, text, frame.theme.hot());
 }
 
 fn draw_flash(canvas: &mut Canvas, frame: &Frame, flash: f32) {
@@ -794,117 +742,111 @@ fn draw_flash(canvas: &mut Canvas, frame: &Frame, flash: f32) {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn draw_status(
-    canvas: &mut Canvas,
-    frame: &Frame,
+fn info_params(
     id: EffectId,
-    theme: &Theme,
+    tune: &Tune,
+    opts: &Options,
+    playlist: bool,
+    current_theme: &Theme,
     speed: f32,
-    paused: bool,
-    fps: f32,
-    frame_ms: f32,
+    charset: cli::Charset,
     mode: ColorMode,
-) {
-    if frame.h < 3 {
-        return;
-    }
-    let text = format!(
-        " {:.0}fps {:.1}ms | {} | {} | {:.2}x | {}x{} | {} | seed {}{}",
-        fps,
-        frame_ms,
-        id.key(),
-        theme.key,
-        speed,
-        frame.w,
-        frame.h,
-        mode.label(),
-        frame.seed,
-        if paused { " | PAUSED" } else { "" }
-    );
-    let y = frame.h as isize - 1;
-    canvas.clear_rect(0, y, frame.w as isize, 1);
-    let shown: String = text.chars().take(frame.w.saturating_sub(1)).collect();
-    canvas.put_str(0, y, &shown, theme.c(2).scale(0.75));
-}
-
-fn draw_help(
-    canvas: &mut Canvas,
-    frame: &Frame,
-    id: EffectId,
-    theme: &Theme,
-    speed: f32,
-    paused: bool,
-) {
-    let w = frame.w as isize;
-    let h = frame.h as isize;
-    if w < 34 || h < 10 {
-        canvas.clear_rect(0, 0, w, 1);
-        canvas.put_str(0, 0, " h/q close help  n/p next effect ", theme.c(2));
-        return;
-    }
-    let bw = 76.min(w - 4).max(32);
-    let bh = 22.min(h - 2).max(11);
-    let x = (w - bw) / 2;
-    let y = (h - bh) / 2;
-    canvas.clear_rect(x, y, bw, bh);
-    canvas.rect(x, y, bw, bh, theme.c(2).scale(0.65));
-    let title = "TRIX // MISSION CONTROL";
-    canvas.put_str_gradient(x + 2, y + 1, title, &[theme.c(2), theme.c(3), theme.hot()]);
-    let rows: &[(&str, String)] = &[
-        ("q / Esc", "quit".to_string()),
-        (
-            "space",
-            if paused {
-                "resume".into()
-            } else {
-                "pause".into()
-            },
-        ),
-        ("n / p", "next / previous effect".into()),
-        ("1-9,0,[ ]", "first 12 effects".into()),
-        ("m / e / d", "Mario / ECG / Dandelion".into()),
-        ("f l b j", "Fish / Landscape / Bund / Gate".into()),
-        ("c z k", "Traffic / Tornado / Storm".into()),
-        ("o v g y", "Mona / Ballet / Eye / Life".into()),
-        ("t", "cycle theme".into()),
-        ("+ / -", format!("speed  {:.2}x", speed)),
-        ("r", "restart current effect".into()),
-        ("i", "status line".into()),
-        ("h", "close this panel".into()),
+) -> Vec<(String, String)> {
+    let mut params = vec![
+        ("--theme".to_string(), current_theme.key.to_string()),
+        ("--charset".to_string(), charset_label(charset).to_string()),
+        ("--fps".to_string(), opts.fps.to_string()),
+        ("--speed".to_string(), format!("{speed:.2}")),
+        ("--color".to_string(), mode.label().to_string()),
     ];
-    for (i, (key, desc)) in rows.iter().enumerate() {
-        let line = y + 3 + i as isize;
-        if line >= y + bh - 4 {
-            break;
-        }
-        canvas.put_str(x + 2, line, key, theme.c(3));
-        canvas.put_str(x + 12, line, desc, theme.c(2).scale(0.95));
+    if playlist {
+        params.push((
+            "--playlist".to_string(),
+            match opts.playlist {
+                PlaylistMode::Cycle => "cycle".to_string(),
+                PlaylistMode::Random => "random".to_string(),
+            },
+        ));
+        params.push(("--switch".to_string(), format!("{:.1}", opts.switch_secs)));
+        params.push((
+            "--transition".to_string(),
+            opts.transition.key().to_string(),
+        ));
+        params.push((
+            "--transition-secs".to_string(),
+            format!("{:.1}", opts.transition_secs),
+        ));
     }
-    // Effect list, two compact columns.
-    if bw >= 60 {
-        canvas.put_str(x + 38, y + 2, "EFFECTS", theme.c(1).scale(1.5));
-        let half = (EffectId::ALL.len() + 1) / 2;
-        for (i, e) in EffectId::ALL.iter().enumerate() {
-            let (col, row) = if i < half { (0, i) } else { (1, i - half) };
-            let ex = x + 38 + col as isize * 18;
-            let ey = y + 3 + row as isize;
-            if ey >= y + bh - 2 {
-                break;
+    if let Some(d) = opts.duration {
+        params.push(("--duration".to_string(), format!("{d}s")));
+    }
+
+    for t in id.tuning() {
+        let value = match t.flag {
+            "--density" => format!("{:.2}", tune.density),
+            "--spin" => format!("{:.2}", tune.spin),
+            "--twinkle" => format!("{:.2}", tune.twinkle),
+            "--meteors" => tune.meteors.to_string(),
+            "--beam-speed" => format!("{:.2}", tune.beam_speed),
+            "--beam-motion" => {
+                if tune.beam_jump {
+                    "jump".to_string()
+                } else {
+                    "straight".to_string()
+                }
             }
-            let marker = if *e == id { ">" } else { " " };
-            let color = if *e == id {
-                theme.hot()
-            } else {
-                theme.c(2).scale(0.8)
-            };
-            canvas.put_str(ex, ey, marker, color);
-            canvas.put_str(ex + 2, ey, e.key(), color);
-        }
+            "--seed-count" => tune.seed_count.to_string(),
+            "--seed-speed" => format!("{:.2}", tune.seed_speed),
+            "--street" => {
+                if tune.street_vertical {
+                    "vertical".to_string()
+                } else {
+                    "horizontal".to_string()
+                }
+            }
+            "--tornado-count" => tune.tornado_count.to_string(),
+            "--tornado-speed" => format!("{:.2}", tune.tornado_speed),
+            "--life-cycle" => format!("{:.1}s", tune.life_cycle),
+            "--eye-motion" => {
+                if tune.eye_still {
+                    "still".to_string()
+                } else {
+                    "dart".to_string()
+                }
+            }
+            "--ghost" => {
+                if tune.ghost {
+                    "on".to_string()
+                } else {
+                    "off".to_string()
+                }
+            }
+            "--gallery" => {
+                if tune.gallery {
+                    "on".to_string()
+                } else {
+                    "off".to_string()
+                }
+            }
+            "--plain" => {
+                if tune.plain {
+                    "on".to_string()
+                } else {
+                    "off".to_string()
+                }
+            }
+            "--jump" => {
+                if tune.jump {
+                    "on".to_string()
+                } else {
+                    "off".to_string()
+                }
+            }
+            _ => continue,
+        };
+        params.push((t.flag.to_string(), value));
     }
-    let footer = "space pauses, all effects animate in real time";
-    if y + bh - 2 > y {
-        canvas.put_str(x + 2, y + bh - 2, footer, theme.c(1).scale(1.4));
-    }
+    params
 }
 
 #[cfg(test)]
@@ -1071,5 +1013,94 @@ mod tests {
         assert!(transition.is_none());
         assert_eq!(t, 2.0);
         assert_eq!(flash, 0.0);
+    }
+
+    #[test]
+    fn uppercase_keys_are_normalized() {
+        assert_eq!(normalize_key(Key::Char('Q')), Key::Char('q'));
+        assert_eq!(normalize_key(Key::Char('N')), Key::Char('n'));
+        assert_eq!(normalize_key(Key::Char('?')), Key::Char('?'));
+        assert_eq!(normalize_key(Key::Up), Key::Up);
+    }
+
+    #[test]
+    fn info_params_list_the_current_scene_knobs() {
+        let tune = Tune {
+            seed_count: 123,
+            seed_speed: 1.6,
+            ..Tune::default()
+        };
+        let opts = Options::default();
+        let th = theme::find("gold").unwrap();
+        let params = info_params(
+            EffectId::Dandelion,
+            &tune,
+            &opts,
+            false,
+            th,
+            1.25,
+            Charset::Unicode,
+            ColorMode::True,
+        );
+        let text = params
+            .iter()
+            .map(|(k, v)| format!("{k} {v}"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(text.contains("--seed-count 123"), "{text}");
+        assert!(text.contains("--seed-speed 1.60"), "{text}");
+        assert!(text.contains("--charset unicode"), "{text}");
+        assert!(text.contains("--speed 1.25"), "{text}");
+    }
+
+    #[test]
+    fn info_params_cover_every_effect_specific_flag() {
+        let tune = Tune::default();
+        let opts = Options::default();
+        let th = theme::find("neon").unwrap();
+        for id in EffectId::ALL {
+            let params = info_params(
+                id,
+                &tune,
+                &opts,
+                false,
+                th,
+                1.0,
+                Charset::Ascii,
+                ColorMode::True,
+            );
+            for t in id.tuning() {
+                assert!(
+                    params.iter().any(|(k, _)| k == t.flag),
+                    "{id:?} missing {} in info panel",
+                    t.flag
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn info_params_show_playlist_settings() {
+        let tune = Tune::default();
+        let opts = Options::default();
+        let th = theme::find("neon").unwrap();
+        let params = info_params(
+            EffectId::Rain,
+            &tune,
+            &opts,
+            true,
+            th,
+            1.0,
+            Charset::Ascii,
+            ColorMode::True,
+        );
+        let text = params
+            .iter()
+            .map(|(k, v)| format!("{k} {v}"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(text.contains("--playlist cycle"), "{text}");
+        assert!(text.contains("--switch 12.0"), "{text}");
+        assert!(text.contains("--transition fade"), "{text}");
     }
 }

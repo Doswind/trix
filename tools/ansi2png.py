@@ -151,9 +151,11 @@ def render(ansi_path: str, out_path: str, size: tuple[int, int] | None, label: s
     if label:
         small = ImageFont.truetype("/System/Library/Fonts/Menlo.ttc", 14, index=0)
         draw.text((PAD, img_h - 26), label, font=small, fill=(90, 120, 150))
+        right = "trix-tui // preview"
+        right_w = draw.textlength(right, font=small)
         draw.text(
-            (img_w - PAD - 120, img_h - 26),
-            "trix // ascii fx",
+            (img_w - PAD - right_w, img_h - 26),
+            right,
             font=small,
             fill=(45, 65, 85),
         )

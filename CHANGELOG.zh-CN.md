@@ -2,7 +2,19 @@
 
 [English](CHANGELOG.md) | **简体中文**
 
-## Unreleased
+## 0.9.0 — 2026-10-18
+
+- **更名为 `trix-tui`**：包名、crate 和仓库改为 `trix-tui`，命令仍是 `trix`（类似 `ripgrep` / `rg`）。Release 资产命名为 `trix-tui-<version>-...`，`--version` 输出 `trix-tui 0.9.0`，`install.sh` 安装 `trix` 命令。早年的 `texiao` → `trix` 改名保留为历史。
+- **像产品一样的帮助系统**：`trix --help` 渲染字标、真实 HUD 画面、按主题着色的特效网格、分组参数、主题色带和示例；`trix --help <effect>` 用真实场景渲染预览，并只列该特效的参数；`trix --help all` 是完整参数手册；`trix --list` 在 TTY 下是风格化目录，管道下是纯文本。错误信息增加“did you mean”建议。非 TTY、`NO_COLOR` 或 `--no-color` 下退化为对齐的 ASCII / 单色文本。
+- **帮助元数据集中**：特效摘要、说明、分类、快捷键、字符集支持和专属参数统一放在 `src/meta.rs`，同时驱动 `--help`、`--list`、`i` 面板和交互式 `h` 面板。
+- **截图全部按 ASCII 重录**：README 主预览使用默认 ASCII 字形和当前代码；Unicode 预览只放在 ASCII / Unicode 一节。GIF 也重新录制。
+- **ASCII 闪电**：默认版本把白色闪电画在背景上，而不是不可见的白色前景，ASCII 下也能看到全屏白闪。
+- **文档校正**：二进制约 1.1 MB、启动约 2.2 ms、芭蕾节奏（39 场景秒，默认 2× 约 19.5 秒一轮）、主题默认映射、PTY 数据范围、`fire --fps` 示例。
+- **`fairy` 入口移除**（源码保留，后续可再启用）；`life` 属于 26 个特效。
+- 新增 `install.sh`、`--completions bash|zsh|fish`、CI 矩阵和文档一致性检查。测试增至 199 项。
+
+
+- **统一 HUD 与跨平台按键**：所有特效共用同一套顶栏（`Code Rain // rain` + 实时遥测 / 速度 / 主题 / 字符集）、常驻底栏和播放列表行；`rain`、`fire`、`monalisa` 使用 **Ambient** 模式保留刻意无文字的纯画面——不显示顶栏，但保留底栏。场景自绘标题、右侧遥测、底部口号、CLI 参数提示和假交互提示（`TAP GLASS`、`PRESS JUMP`）全部移除；实时计数迁到 `Scene::hud_status`，拟真仪表标签上移到 HUD 保留行之外。`i` 改为信息/参数面板，显示运行状态和当前特效真正在用的 CLI 参数；`--no-hud` 可隐藏顶栏/底栏用于录制，同时保留 `h`/`i`/暂停面板。输入层改为带状态解析器：分片转义序列不再误退出，带修饰方向键不再泄漏数字，Alt/Option、鼠标、括号粘贴和 OSC 上报被忽略，UTF-8 正常解码，快捷键不区分大小写（Shift/Caps Lock 可用）。帮助面板、`--help`、两版 README 和 CHANGELOG 已同步；测试增至 199 项。
 
 - `dragon` 现在飞行在分层水墨背景前：两层远山、以及更浓的缓慢漂移云海；龙与龙珠仍是画面最亮的一层，`--plain` 可恢复原来的纯星空背景。
 - `monalisa` 新增可选 `--gallery`：在静态人物像后方加一层很淡的暖色展厅光晕与地面微光；默认仍保持干净的无背景人物像。新增 `docs/monalisa-gallery.png`。

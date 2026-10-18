@@ -846,17 +846,6 @@ impl Scene for DragonScene {
             let col = GOLD.scale(0.25 + 0.25 * (1.0 - pt.u));
             canvas.add_light(x.round() as isize, y.round() as isize, col, 0.35, '.');
         }
-
-        // Small HUD.
-        if self.w >= 62 {
-            let title = ":: SHENLONG // CELESTIAL DRAGON ::";
-            canvas.put_str_gradient(2, 0, title, &[JADE, GOLD, PALE_GOLD]);
-            let right = "CLOUD SEA // FLIGHT NOMINAL";
-            let rx = self.w as isize - right.len() as isize - 2;
-            if rx > 32 {
-                canvas.put_str(rx, 0, right, theme.c(2).scale(0.75));
-            }
-        }
     }
 }
 

@@ -7,7 +7,7 @@
 use std::io::{self, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::canvas::Canvas;
 use crate::color::ColorMode;
@@ -84,6 +84,7 @@ pub struct Terminal {
     orig: libc::termios,
     raw_active: bool,
     alt_screen: bool,
+    input: InputParser,
     pub width: usize,
     pub height: usize,
 }
@@ -132,11 +133,12 @@ impl Terminal {
                 return Err(e);
             }
         }
-        let (w, h) = query_size().unwrap_or((80, 24));
+        let (w, h) = size().unwrap_or((80, 24));
         Ok(Terminal {
             orig,
             raw_active: true,
             alt_screen,
+            input: InputParser::default(),
             width: w,
             height: h,
         })
@@ -160,7 +162,7 @@ impl Terminal {
 
     /// Re-query the terminal size. Returns true when it changed.
     pub fn refresh_size(&mut self) -> bool {
-        let (w, h) = query_size().unwrap_or((self.width, self.height));
+        let (w, h) = size().unwrap_or((self.width, self.height));
         if w != self.width || h != self.height {
             self.width = w;
             self.height = h;
@@ -183,13 +185,17 @@ impl Terminal {
     }
 
     /// Non-blocking read of all currently available input bytes.
+    ///
+    /// Bytes go through a small state machine so escape sequences split
+    /// across `read()` calls (slow SSH links, macOS Terminal, Linux consoles)
+    /// are decoded as one key instead of a spurious `Esc`.
     pub fn read_keys(&mut self) -> Vec<Key> {
-        let mut buf = [0u8; 128];
+        let mut buf = [0u8; 256];
         let n = unsafe { libc::read(0, buf.as_mut_ptr() as *mut libc::c_void, buf.len()) };
-        if n <= 0 {
-            return Vec::new();
+        if n > 0 {
+            self.input.push(&buf[..n as usize]);
         }
-        parse_keys(&buf[..n as usize])
+        self.input.drain(Instant::now())
     }
 
     pub fn sleep_until(&self, deadline: std::time::Instant) {
@@ -209,7 +215,7 @@ impl Drop for Terminal {
     }
 }
 
-fn query_size() -> Option<(usize, usize)> {
+pub fn size() -> Option<(usize, usize)> {
     unsafe {
         let mut ws: libc::winsize = std::mem::zeroed();
         if libc::ioctl(1, libc::TIOCGWINSZ, &mut ws) == 0 {
@@ -229,70 +235,261 @@ fn query_size() -> Option<(usize, usize)> {
     }
 }
 
-fn parse_keys(bytes: &[u8]) -> Vec<Key> {
-    let mut keys = Vec::new();
-    let mut i = 0;
-    while i < bytes.len() {
-        let b = bytes[i];
-        if b == 0x1b {
-            if i + 1 >= bytes.len() {
-                keys.push(Key::Esc);
-                i += 1;
-                continue;
+/// How long to wait for the rest of an escape sequence before deciding that
+/// a lone `ESC` really was the Escape key.
+const ESC_TIMEOUT: Duration = Duration::from_millis(40);
+/// How long to wait for the tail of a malformed / incomplete sequence.
+const SEQ_TIMEOUT: Duration = Duration::from_millis(140);
+
+enum Csi {
+    /// A decoded key (possibly `Unknown`) and the number of bytes consumed.
+    Key(Key, usize),
+    /// `ESC [ 200 ~`: everything up to `ESC [ 201 ~` is pasted text.
+    Paste,
+    NeedMore,
+}
+
+/// Stateful byte -> key decoder.
+///
+/// Deliberately terminal-agnostic: it accepts both CSI (`ESC [`) and SS3
+/// (`ESC O`) cursor keys, ignores modifiers and private parameter prefixes,
+/// and never lets an `Alt`/`Option` chord or a mouse report turn into a stray
+/// shortcut.
+#[derive(Default)]
+struct InputParser {
+    buf: Vec<u8>,
+    last_feed: Option<Instant>,
+    paste: bool,
+}
+
+impl InputParser {
+    fn push(&mut self, bytes: &[u8]) {
+        if bytes.is_empty() {
+            return;
+        }
+        self.buf.extend_from_slice(bytes);
+        self.last_feed = Some(Instant::now());
+    }
+
+    fn drain(&mut self, now: Instant) -> Vec<Key> {
+        let mut keys = Vec::new();
+        loop {
+            if self.buf.is_empty() {
+                break;
             }
-            if bytes[i + 1] == b'[' || bytes[i + 1] == b'O' {
-                if i + 2 >= bytes.len() {
-                    keys.push(Key::Unknown);
-                    i += 2;
+            if self.paste {
+                if let Some(pos) = find_subslice(&self.buf, b"\x1b[201~") {
+                    self.buf.drain(..pos + 6);
+                    self.paste = false;
                     continue;
                 }
-                let code = bytes[i + 2];
-                match code {
-                    b'A' => keys.push(Key::Up),
-                    b'B' => keys.push(Key::Down),
-                    b'C' => keys.push(Key::Right),
-                    b'D' => keys.push(Key::Left),
-                    b'H' => keys.push(Key::Home),
-                    b'F' => keys.push(Key::End),
-                    b'0'..=b'9' => {
-                        // Extended sequence: ESC [ <n> ~
-                        let mut n = (code - b'0') as u32;
-                        let mut j = i + 3;
-                        while j < bytes.len() && bytes[j].is_ascii_digit() {
-                            n = n * 10 + (bytes[j] - b'0') as u32;
-                            j += 1;
-                        }
-                        if j < bytes.len() && bytes[j] == b'~' {
-                            match n {
-                                1 | 7 => keys.push(Key::Home),
-                                4 | 8 => keys.push(Key::End),
-                                5 => keys.push(Key::PageUp),
-                                6 => keys.push(Key::PageDown),
-                                _ => keys.push(Key::Unknown),
-                            }
-                            i = j + 1;
+                // Keep a small tail in case the end marker is split.
+                let keep = self.buf.len().min(5);
+                if self.buf.len() > keep {
+                    self.buf.drain(..self.buf.len() - keep);
+                }
+                break;
+            }
+            match self.buf[0] {
+                0x1b => match self.buf.get(1).copied() {
+                    None => {
+                        if self.timed_out(now, ESC_TIMEOUT) {
+                            self.buf.remove(0);
+                            keys.push(Key::Esc);
                             continue;
                         }
-                        keys.push(Key::Unknown);
-                        i = j;
-                        continue;
+                        break;
                     }
-                    _ => keys.push(Key::Unknown),
+                    Some(b'[') => match self.parse_csi(now) {
+                        Csi::Key(key, used) => {
+                            self.buf.drain(..used);
+                            keys.push(key);
+                        }
+                        Csi::Paste => {
+                            self.buf.drain(..6);
+                            self.paste = true;
+                        }
+                        Csi::NeedMore => break,
+                    },
+                    Some(b'O') => {
+                        if self.buf.len() < 3 {
+                            if self.timed_out(now, SEQ_TIMEOUT) {
+                                self.buf.clear();
+                            }
+                            break;
+                        }
+                        let key = match self.buf[2] {
+                            b'A' => Key::Up,
+                            b'B' => Key::Down,
+                            b'C' => Key::Right,
+                            b'D' => Key::Left,
+                            b'H' => Key::Home,
+                            b'F' => Key::End,
+                            _ => Key::Unknown,
+                        };
+                        self.buf.drain(..3);
+                        keys.push(key);
+                    }
+                    Some(b']' | b'P' | b'_' | b'^') => {
+                        if let Some(used) = string_sequence_len(&self.buf) {
+                            self.buf.drain(..used);
+                        } else if self.timed_out(now, SEQ_TIMEOUT) {
+                            self.buf.clear();
+                        } else {
+                            break;
+                        }
+                    }
+                    Some(next) => {
+                        // Alt / Option chord.  Treat it as "not a shortcut"
+                        // instead of `Esc` + the key, which used to quit.
+                        let used = 1 + utf8_len(next).unwrap_or(1);
+                        if self.buf.len() < used {
+                            if self.timed_out(now, SEQ_TIMEOUT) {
+                                self.buf.clear();
+                            }
+                            break;
+                        }
+                        self.buf.drain(..used);
+                        keys.push(Key::Unknown);
+                    }
+                },
+                0x03 => {
+                    self.buf.remove(0);
+                    keys.push(Key::Char('\u{3}'));
                 }
-                i += 3;
-                continue;
+                0x00..=0x1f | 0x7f => {
+                    // Enter/Tab/Backspace/other C0 controls are not shortcuts.
+                    self.buf.remove(0);
+                    keys.push(Key::Unknown);
+                }
+                _ => {
+                    let n = utf8_len(self.buf[0]).unwrap_or(1);
+                    if self.buf.len() < n {
+                        if self.timed_out(now, SEQ_TIMEOUT) {
+                            self.buf.clear();
+                        }
+                        break;
+                    }
+                    match std::str::from_utf8(&self.buf[..n]) {
+                        Ok(s) => {
+                            let ch = s.chars().next().unwrap_or('\0');
+                            self.buf.drain(..n);
+                            if !ch.is_control() {
+                                keys.push(Key::Char(ch));
+                            }
+                        }
+                        Err(_) => {
+                            self.buf.remove(0);
+                            keys.push(Key::Unknown);
+                        }
+                    }
+                }
             }
-            // Alt-<key> or a bare ESC followed by another key.
-            keys.push(Key::Esc);
-            i += 1;
-            continue;
         }
-        if b.is_ascii_graphic() || b == b' ' || b == b'\t' || b == 0x03 {
-            keys.push(Key::Char(b as char));
+        keys
+    }
+
+    fn timed_out(&self, now: Instant, timeout: Duration) -> bool {
+        match self.last_feed {
+            Some(t) => now.saturating_duration_since(t) >= timeout,
+            None => true,
+        }
+    }
+
+    fn parse_csi(&self, now: Instant) -> Csi {
+        let mut i = 2;
+        while i < self.buf.len() && (0x30..=0x3f).contains(&self.buf[i]) {
+            i += 1;
+        }
+        while i < self.buf.len() && (0x20..=0x2f).contains(&self.buf[i]) {
+            i += 1;
+        }
+        if i >= self.buf.len() {
+            if self.timed_out(now, SEQ_TIMEOUT) {
+                return Csi::Key(Key::Unknown, i.max(1));
+            }
+            return Csi::NeedMore;
+        }
+        let final_byte = self.buf[i];
+        if !(0x40..=0x7e).contains(&final_byte) {
+            return Csi::Key(Key::Unknown, i + 1);
+        }
+        let used = i + 1;
+        let params = std::str::from_utf8(&self.buf[2..i]).unwrap_or("");
+        if final_byte == b'~' {
+            let first = params.split(';').next().unwrap_or("");
+            match first {
+                "200" => return Csi::Paste,
+                "201" => return Csi::Key(Key::Unknown, used),
+                _ => {}
+            }
+            let key = match first.parse::<u32>().unwrap_or(0) {
+                1 | 7 => Key::Home,
+                4 | 8 => Key::End,
+                5 => Key::PageUp,
+                6 => Key::PageDown,
+                _ => Key::Unknown,
+            };
+            return Csi::Key(key, used);
+        }
+        // Mouse reports (`ESC [ < ... M`) and focus events (`ESC [ I/O`) are
+        // not shortcuts; modifiers on arrows (params like `1;2`) are ignored.
+        if params.starts_with('<') && (final_byte == b'M' || final_byte == b'm') {
+            return Csi::Key(Key::Unknown, used);
+        }
+        let key = match final_byte {
+            b'A' => Key::Up,
+            b'B' => Key::Down,
+            b'C' => Key::Right,
+            b'D' => Key::Left,
+            b'H' => Key::Home,
+            b'F' => Key::End,
+            _ => Key::Unknown,
+        };
+        Csi::Key(key, used)
+    }
+}
+
+fn utf8_len(first: u8) -> Option<usize> {
+    match first {
+        0x00..=0x7f => Some(1),
+        0xc0..=0xdf => Some(2),
+        0xe0..=0xef => Some(3),
+        0xf0..=0xf7 => Some(4),
+        _ => None,
+    }
+}
+
+fn find_subslice(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+    if needle.is_empty() || haystack.len() < needle.len() {
+        return None;
+    }
+    haystack
+        .windows(needle.len())
+        .position(|window| window == needle)
+}
+
+/// Length of an OSC/DCS/APC/PM string sequence, including its terminator.
+fn string_sequence_len(bytes: &[u8]) -> Option<usize> {
+    let mut i = 1;
+    while i < bytes.len() {
+        if bytes[i] == 0x07 {
+            return Some(i + 1);
+        }
+        if bytes[i] == 0x1b && bytes.get(i + 1) == Some(&b'\\') {
+            return Some(i + 2);
         }
         i += 1;
     }
-    keys
+    None
+}
+
+/// Convenience wrapper used by the unit tests below.
+#[cfg(test)]
+fn parse_keys(bytes: &[u8]) -> Vec<Key> {
+    let mut parser = InputParser::default();
+    parser.push(bytes);
+    parser.drain(Instant::now() + Duration::from_millis(500))
 }
 
 /// Small helper for tests and non-interactive demo pacing.
@@ -323,5 +520,61 @@ mod tests {
     #[test]
     fn ctrl_c_passes_through() {
         assert_eq!(parse_keys(&[0x03]), vec![Key::Char('\u{3}')]);
+    }
+
+    #[test]
+    fn modified_arrows_do_not_leak_digits_or_letters() {
+        assert_eq!(parse_keys(b"\x1b[1;2A"), vec![Key::Up]);
+        assert_eq!(parse_keys(b"\x1b[1;5C"), vec![Key::Right]);
+        assert_eq!(parse_keys(b"\x1b[1;3D"), vec![Key::Left]);
+        assert_eq!(parse_keys(b"\x1b[1;2H"), vec![Key::Home]);
+    }
+
+    #[test]
+    fn split_escape_sequence_is_not_escape() {
+        let mut parser = InputParser::default();
+        parser.push(b"\x1b");
+        assert!(parser.drain(Instant::now()).is_empty());
+        parser.push(b"[A");
+        assert_eq!(parser.drain(Instant::now()), vec![Key::Up]);
+    }
+
+    #[test]
+    fn lone_escape_fires_after_timeout() {
+        let mut parser = InputParser::default();
+        parser.push(b"\x1b");
+        assert!(parser.drain(Instant::now()).is_empty());
+        assert_eq!(
+            parser.drain(Instant::now() + Duration::from_millis(100)),
+            vec![Key::Esc]
+        );
+    }
+
+    #[test]
+    fn alt_chords_are_ignored_not_escape() {
+        // macOS Option-as-Meta sends ESC + the key; it must never quit.
+        assert_eq!(parse_keys(b"\x1bq"), vec![Key::Unknown]);
+        assert_eq!(parse_keys("é".as_bytes()), vec![Key::Char('é')]);
+    }
+
+    #[test]
+    fn mouse_and_paste_reports_are_ignored() {
+        assert_eq!(parse_keys(b"\x1b[<0;10;5M"), vec![Key::Unknown]);
+        assert_eq!(parse_keys(b"\x1b[<0;10;5m"), vec![Key::Unknown]);
+        assert!(parse_keys(b"\x1b[200~q n 3\x1b[201~").is_empty());
+    }
+
+    #[test]
+    fn osc_titles_and_focus_events_are_ignored() {
+        assert!(parse_keys(b"\x1b]0;title\x07").is_empty());
+        assert_eq!(parse_keys(b"\x1b[I"), vec![Key::Unknown]);
+        assert_eq!(parse_keys(b"\x1b[O"), vec![Key::Unknown]);
+    }
+
+    #[test]
+    fn uppercase_letters_survive_for_the_shortcut_layer() {
+        // The app lowercases these, so Shift and Caps Lock keep working.
+        assert_eq!(parse_keys(b"Q"), vec![Key::Char('Q')]);
+        assert_eq!(parse_keys(b"N"), vec![Key::Char('N')]);
     }
 }

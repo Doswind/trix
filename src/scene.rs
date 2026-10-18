@@ -263,6 +263,17 @@ impl EffectId {
     pub fn default_charset(self) -> Charset {
         Charset::Ascii
     }
+
+    /// How much shared HUD this effect wants.
+    ///
+    /// `Ambient` keeps a deliberately text-free artwork (no header, no scene
+    /// labels) but still gets the persistent key bar and playlist row.
+    pub fn hud_mode(self) -> HudMode {
+        match self {
+            EffectId::Rain | EffectId::Fire | EffectId::MonaLisa => HudMode::Ambient,
+            _ => HudMode::Full,
+        }
+    }
 }
 
 /// Per-run tuning knobs exposed on the command line.
@@ -328,6 +339,18 @@ pub trait Scene {
     fn resize(&mut self, w: usize, h: usize);
     fn update(&mut self, frame: &Frame);
     fn draw(&mut self, canvas: &mut Canvas, frame: &Frame);
+
+    /// Optional live telemetry for the shared header.  Keep it short and
+    /// ASCII; the header already adds speed, theme and charset.
+    fn hud_status(&self, _frame: &Frame) -> Option<String> {
+        None
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum HudMode {
+    Full,
+    Ambient,
 }
 
 pub fn build(id: EffectId, seed: u64) -> Box<dyn Scene> {
@@ -389,6 +412,16 @@ mod tests {
     }
 
     #[test]
+    fn only_the_text_free_effects_are_ambient() {
+        let ambient: Vec<_> = EffectId::ALL
+            .iter()
+            .filter(|id| id.hud_mode() == HudMode::Ambient)
+            .map(|id| id.key())
+            .collect();
+        assert_eq!(ambient, ["rain", "fire", "monalisa"]);
+    }
+
+    #[test]
     fn every_scene_draws_something() {
         for id in EffectId::ALL {
             let mut scene = build(id, 7);
@@ -423,6 +456,66 @@ mod tests {
             }
             let ansi = canvas.render_ansi(ColorMode::True);
             assert!(ansi.len() > 100);
+        }
+    }
+
+    #[test]
+    fn scenes_keep_text_out_of_reserved_hud_rows() {
+        for id in EffectId::ALL {
+            for &(w, h) in &[(40, 12), (80, 24), (120, 36)] {
+                let mut scene = build(id, 7);
+                scene.resize(w, h);
+                let frame = Frame {
+                    t: 5.0,
+                    dt: 1.0 / 30.0,
+                    w,
+                    h,
+                    fps: 30,
+                    theme: id.default_theme(),
+                    charset: id.default_charset(),
+                    seed: 7,
+                    speed: 1.0,
+                    tune: Tune::default(),
+                };
+                let mut canvas = Canvas::new(w, h);
+                canvas.set_chrome_guard(true);
+                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    scene.draw(&mut canvas, &frame);
+                }));
+                canvas.set_chrome_guard(false);
+                assert!(
+                    result.is_ok(),
+                    "{id:?} wrote scene text into reserved HUD row 0 or h-1 at {w}x{h}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn hud_status_is_short_and_ascii() {
+        for id in EffectId::ALL {
+            let mut scene = build(id, 7);
+            let (w, h) = (120, 36);
+            scene.resize(w, h);
+            let frame = Frame {
+                t: 5.0,
+                dt: 1.0 / 30.0,
+                w,
+                h,
+                fps: 30,
+                theme: id.default_theme(),
+                charset: id.default_charset(),
+                seed: 7,
+                speed: 1.0,
+                tune: Tune::default(),
+            };
+            if let Some(status) = scene.hud_status(&frame) {
+                assert!(status.is_ascii(), "{id:?} status is not ASCII: {status:?}");
+                assert!(
+                    status.chars().count() <= 60,
+                    "{id:?} status is too long: {status:?}"
+                );
+            }
         }
     }
 

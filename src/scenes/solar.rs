@@ -101,7 +101,9 @@ impl SolarScene {
                 kind: *kind,
             });
         }
-        self.label_y = self.baseline + 5.0 * unit + 1.0;
+        self.label_y = (self.baseline + 5.0 * unit + 1.0)
+            .min(h as f32 - 3.0)
+            .max(1.0);
         // asteroid belt between Mars and Jupiter
         let mars = self.planets[3].x;
         let jup = self.planets[4].x;
@@ -474,20 +476,6 @@ impl Scene for SolarScene {
             let mx = jup.x + a.cos() * (jup.r * 2.1);
             let my = self.baseline + a.sin() * (jup.r * 0.9);
             canvas.set(mx as isize, my as isize, 'o', Rgb::hex(0xfde68a).scale(0.7));
-        }
-        // HUD
-        let title = ":: SOL SYSTEM // ORBITAL LINEUP ::";
-        if self.w >= title.len() + 4 {
-            canvas.put_str_gradient(2, 0, title, &[theme.c(2), theme.c(3), theme.c(4)]);
-        }
-        let right = "8 PLANETS // 1 AU";
-        if self.w >= right.len() + 10 {
-            canvas.put_str(
-                self.w as isize - right.len() as isize - 2,
-                0,
-                right,
-                theme.c(2).scale(0.8),
-            );
         }
     }
 }

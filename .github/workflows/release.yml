@@ -42,7 +42,7 @@ jobs:
             -output pkg/trix
           chmod +x pkg/trix
           cp README.md README.zh-CN.md LICENSE CHANGELOG.md CHANGELOG.zh-CN.md pkg/
-          tar -czf "dist/trix-${VERSION}-macos-universal.tar.gz" -C pkg .
+          tar -czf "dist/trix-tui-${VERSION}-macos-universal.tar.gz" -C pkg .
           file pkg/trix
           ./pkg/trix --version
       - uses: actions/upload-artifact@v4
@@ -76,7 +76,7 @@ jobs:
           cp target/x86_64-unknown-linux-musl/release/trix pkg/trix
           chmod +x pkg/trix
           cp README.md README.zh-CN.md LICENSE CHANGELOG.md CHANGELOG.zh-CN.md pkg/
-          tar -czf "dist/trix-${VERSION}-linux-x86_64.tar.gz" -C pkg .
+          tar -czf "dist/trix-tui-${VERSION}-linux-x86_64.tar.gz" -C pkg .
           file pkg/trix
           ./pkg/trix --version
       - uses: actions/upload-artifact@v4
@@ -109,7 +109,7 @@ jobs:
           cp target/aarch64-unknown-linux-musl/release/trix pkg/trix
           chmod +x pkg/trix
           cp README.md README.zh-CN.md LICENSE CHANGELOG.md CHANGELOG.zh-CN.md pkg/
-          tar -czf "dist/trix-${VERSION}-linux-aarch64.tar.gz" -C pkg .
+          tar -czf "dist/trix-tui-${VERSION}-linux-aarch64.tar.gz" -C pkg .
           file pkg/trix
       - name: Smoke test under QEMU
         run: |

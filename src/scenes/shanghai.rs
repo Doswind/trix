@@ -1035,27 +1035,6 @@ impl Scene for ShanghaiScene {
         self.tower(canvas, unicode, t);
         self.river(canvas, unicode, t);
         self.draw_boats(canvas, unicode, t);
-        let w = self.w as isize;
-        let h = self.h as isize;
-        let title = if unicode {
-            "╡ ORIENTAL PEARL // THE BUND ╞"
-        } else {
-            " ORIENTAL PEARL // THE BUND "
-        };
-        canvas.put_str(2, 0, title, CYAN.scale(0.9));
-        let hint = if unicode {
-            "SHANGHAI · HUANGPU RIVER · NIGHT"
-        } else {
-            "SHANGHAI // HUANGPU RIVER // NIGHT"
-        };
-        canvas.put_str(2, h - 1, hint, PINK.scale(0.55));
-        let mode = if unicode { "UNICODE" } else { "ASCII" };
-        canvas.put_str(
-            (w - mode.len() as isize - 2).max(2),
-            h - 1,
-            mode,
-            GOLD.scale(0.6),
-        );
     }
 }
 

@@ -201,6 +201,10 @@ impl Scene for GalaxyScene {
         }
     }
 
+    fn hud_status(&self, _f: &Frame) -> Option<String> {
+        Some(format!("STARS {}", self.stars.len()))
+    }
+
     fn update(&mut self, f: &Frame) {
         if (f.tune.density - self.density).abs() > 0.01 {
             self.density = f.tune.density.clamp(0.05, 4.0);
@@ -317,20 +321,6 @@ impl Scene for GalaxyScene {
             canvas.add_light(head.0, head.1, m.color, 0.8, '.');
         }
 
-        // HUD
-        let title = ":: MILKY WAY // STELLAR CARTOGRAPHY ::";
-        if self.w >= title.len() + 4 {
-            canvas.put_str_gradient(2, 0, title, &[theme.c(2), theme.c(3), theme.c(4)]);
-        }
-        let n = format!("STARS {}", self.stars.len());
-        if self.w >= n.len() + 8 {
-            canvas.put_str(
-                self.w as isize - n.len() as isize - 2,
-                0,
-                &n,
-                theme.c(2).scale(0.8),
-            );
-        }
         let _ = self.seed;
         let _ = hash2;
     }
