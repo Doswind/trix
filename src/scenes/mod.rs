@@ -17,6 +17,7 @@ pub mod landscape;
 pub mod life;
 pub mod map;
 pub mod mario;
+mod mario_art;
 pub mod matrix;
 pub mod monalisa;
 pub mod rain;

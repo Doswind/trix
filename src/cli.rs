@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use crate::color::ColorMode;
 use crate::theme;
+use crate::transition::TransitionMode;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -37,6 +38,10 @@ pub struct Options {
     pub effect: Option<String>,
     pub playlist: PlaylistMode,
     pub switch_secs: f32,
+    /// How to blend from one effect into the next.
+    pub transition: TransitionMode,
+    /// Length of that blend in seconds.
+    pub transition_secs: f32,
     pub fps: u32,
     pub speed: f32,
     pub theme: Option<String>,
@@ -59,6 +64,12 @@ pub struct Options {
     pub tornado_speed: f32,
     pub life_cycle: f32,
     pub eye_still: bool,
+    /// monalisa: draw the flat pure-ASCII "ghost" portrait.
+    pub ghost: bool,
+    /// dragon: plain starfield, no cloud sea / mountains.
+    pub plain: bool,
+    /// monalisa: soft gallery glow behind the portrait.
+    pub gallery: bool,
     pub seed: Option<u64>,
     pub size: Option<(usize, usize)>,
     pub no_alt: bool,
@@ -73,6 +84,8 @@ impl Default for Options {
             effect: None,
             playlist: PlaylistMode::Cycle,
             switch_secs: 12.0,
+            transition: TransitionMode::Fade,
+            transition_secs: 0.6,
             fps: 30,
             speed: 1.0,
             theme: None,
@@ -95,6 +108,9 @@ impl Default for Options {
             tornado_speed: 1.0,
             life_cycle: 120.0,
             eye_still: false,
+            ghost: false,
+            plain: false,
+            gallery: false,
             seed: None,
             size: None,
             no_alt: false,
@@ -219,6 +235,12 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                 }
                 "eye-still" | "no-eye-dart" | "eye-fixed" => opts.eye_still = true,
                 "eye-dart" => opts.eye_still = false,
+                "ghost" | "ghost-mode" | "ascii-art" | "mono-art" => opts.ghost = true,
+                "no-ghost" => opts.ghost = false,
+                "plain" | "no-bg" | "no-background" => opts.plain = true,
+                "bg" | "background" => opts.plain = false,
+                "gallery" => opts.gallery = true,
+                "no-gallery" => opts.gallery = false,
                 "beam-motion" => {
                     let v = take_value(args, &mut i, inline, "--beam-motion")?;
                     opts.beam_jump = match v.to_ascii_lowercase().as_str() {
@@ -244,6 +266,19 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                     let v = take_value(args, &mut i, inline, "--switch")?;
                     opts.switch_secs = parse_num(&v, "--switch")?;
                 }
+                "transition" | "transition-mode" | "blend" => {
+                    let v = take_value(args, &mut i, inline, "--transition")?;
+                    opts.transition = TransitionMode::parse(&v).ok_or_else(|| {
+                        format!("invalid --transition '{v}' (expected fade, dissolve or none)")
+                    })?;
+                }
+                "transition-secs" | "transition-time" | "fade-secs" => {
+                    let v = take_value(args, &mut i, inline, "--transition-secs")?;
+                    opts.transition_secs = parse_num(&v, "--transition-secs")?;
+                }
+                "no-fade" | "no-transition" => opts.transition = TransitionMode::None,
+                "fade" => opts.transition = TransitionMode::Fade,
+                "dissolve" | "crossfade" => opts.transition = TransitionMode::Dissolve,
                 "fps" => {
                     let v = take_value(args, &mut i, inline, "--fps")?;
                     opts.fps = parse_num(&v, "--fps")?;
@@ -459,6 +494,9 @@ fn validate(opts: &mut Options) -> Result<(), String> {
     if !opts.switch_secs.is_finite() || !(1.0..=600.0).contains(&opts.switch_secs) {
         return Err("--switch must be between 1 and 600 seconds".into());
     }
+    if !opts.transition_secs.is_finite() || !(0.0..=5.0).contains(&opts.transition_secs) {
+        return Err("--transition-secs must be between 0 and 5 seconds".into());
+    }
     if !(1..=300).contains(&opts.petal_count) {
         return Err("--petal-count must be between 1 and 300".into());
     }
@@ -489,7 +527,7 @@ USAGE
 EFFECTS
   rain      代码雨      blue/green code rain with falling source tokens
   fire      燃烧火焰    bottom fire bed 2x wider, separate slender tips
-  dragon    巨龙盘旋    Chinese celestial dragon flying across the sky
+  dragon    巨龙盘旋    Chinese celestial dragon; mountains and cloud sea; --plain
   map       世界地图    holographic Earth with live network arcs
   matrix    黑客帝国    NASA backend login screen with a large logo
   blackhole 黑洞        horizon + slower, wider outer star orbits
@@ -502,7 +540,7 @@ EFFECTS
   mario     超级马里奥  mushroom-bumping platformer (ASCII; --unicode)
   ecg       心率跳动    glowing ECG monitor (ASCII; --unicode)
   dandelion 蒲公英      clustered stems, staggered blooms, drifting seeds
-  fish      鱼缸        colorful aquarium fish in every direction
+  fish      水族馆      colorful aquarium fish in every direction
   landscape 五光十色    mountains, lake, boat, geese and jungle
   shanghai  东方明珠    Shanghai Bund and Oriental Pearl
   tiananmen 光芒万丈    Tiananmen gate radiating light
@@ -510,7 +548,7 @@ EFFECTS
   fairy     仙女散花    flying fairy scattering petals
   tornado   龙卷风      twisted funnels, 2x wider tops, heavy base debris
   storm     电闪雷鸣    rain, clouds and full-screen lightning flashes
-  monalisa  蒙娜丽莎      living Mona Lisa oil painting: gaze, blink, smile
+  monalisa  蒙娜丽莎      Mona Lisa cut-out: ANSI cells + ASCII, static; --ghost
   ballet    冰上芭蕾    ice-ballet duet: lift, spiral, spin, spread eagle
   demoneye  恶魔之眼    giant blood eye; eyeball darts between blinks
   life      生命的轨迹  a 0-100 life timeline of family, love and generations
@@ -521,6 +559,9 @@ OPTIONS
   -e, --effect <name>     Effect to run; omit to loop all effects
       --playlist <mode>   cycle | random (default: cycle)  [no effect]
       --switch <secs>     seconds per effect in playlist   [default: 12]
+      --transition <mode> fade | dissolve | none            [default: fade]
+      --transition-secs <s>  length of the blend             [default: 0.6]
+      --no-fade           alias for --transition none
   -f, --fps <1-240>       Target frame rate                    [default: 30]
   -s, --speed <0.05-8>    Animation speed multiplier           [default: 1.0]
       --chase-speed <f>   Alias of --speed (Tom & Jerry chase)
@@ -546,6 +587,9 @@ OPTIONS
       --life-cycle <secs> life: 0-100 cycle length            [default: 120]
       --eye-motion <m>    demoneye: dart | still              [default: dart]
       --eye-still         alias for --eye-motion still
+      --ghost             monalisa: flat pure-ASCII portrait (no colour cells)
+      --gallery           monalisa: soft gallery glow behind the portrait
+      --plain             dragon: plain starfield (no mountains/cloud sea)
       --jump              Tom & Jerry jumps (default: off)
       --no-jump           disable Tom & Jerry jumps
       --seed <u64>        Deterministic random seed
@@ -579,6 +623,7 @@ KEYS (interactive)
 EXAMPLES
   trix
   trix --playlist random --switch 8
+  trix --transition dissolve --switch 6
   trix rain
   trix fire --fps 60 --theme ember
   trix dragon -f 45 -t gold
@@ -666,6 +711,35 @@ mod tests {
     }
 
     #[test]
+    fn parses_plain_and_gallery_flags() {
+        let Parsed::Run(o) = parse_args(&args("dragon --plain --gallery")).unwrap() else {
+            panic!()
+        };
+        assert!(o.plain);
+        assert!(o.gallery);
+        let Parsed::Run(o) = parse_args(&args("dragon --plain --no-bg")).unwrap() else {
+            panic!()
+        };
+        assert!(o.plain);
+        let Parsed::Run(o) = parse_args(&args("monalisa --gallery --no-gallery")).unwrap() else {
+            panic!()
+        };
+        assert!(!o.gallery);
+    }
+
+    #[test]
+    fn parses_ghost_flag() {
+        let Parsed::Run(o) = parse_args(&args("monalisa --ghost")).unwrap() else {
+            panic!()
+        };
+        assert!(o.ghost);
+        let Parsed::Run(o) = parse_args(&args("monalisa --ghost --no-ghost")).unwrap() else {
+            panic!()
+        };
+        assert!(!o.ghost);
+    }
+
+    #[test]
     fn parses_playlist_and_street() {
         let Parsed::Run(o) = parse_args(&args(
             "--playlist random --switch 8 --street vertical --petal-count 150 --petal-speed 1.5 --tornado-count 5 --tornado-speed 1.8 --life-cycle 90",
@@ -705,6 +779,40 @@ mod tests {
         };
         assert!(!o.eye_still);
         assert!(parse_args(&args("demoneye --eye-motion sideways")).is_err());
+    }
+
+    #[test]
+    fn parses_transition_options() {
+        let Parsed::Run(o) =
+            parse_args(&args("--transition dissolve --transition-secs 1.2")).unwrap()
+        else {
+            panic!()
+        };
+        assert_eq!(o.transition, TransitionMode::Dissolve);
+        assert!((o.transition_secs - 1.2).abs() < f32::EPSILON);
+
+        let Parsed::Run(o) = parse_args(&args("--no-fade")).unwrap() else {
+            panic!()
+        };
+        assert_eq!(o.transition, TransitionMode::None);
+
+        let Parsed::Run(o) = parse_args(&args("rain --crossfade")).unwrap() else {
+            panic!()
+        };
+        assert_eq!(o.transition, TransitionMode::Dissolve);
+
+        let Parsed::Run(o) = parse_args(&args("rain")).unwrap() else {
+            panic!()
+        };
+        assert_eq!(o.transition, TransitionMode::Fade, "fade is the default");
+        assert!((o.transition_secs - 0.6).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn rejects_bad_transition_values() {
+        assert!(parse_args(&args("--transition sideways")).is_err());
+        assert!(parse_args(&args("--transition-secs -1")).is_err());
+        assert!(parse_args(&args("--transition-secs 9")).is_err());
     }
 
     #[test]

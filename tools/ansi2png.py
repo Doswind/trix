@@ -18,6 +18,14 @@ ESC = re.compile(r"\x1b\[([0-9;]*)m")
 
 BG = (5, 7, 11)
 DEFAULT_FG = (200, 205, 215)
+ANSI16 = [
+    (0, 0, 0), (128, 0, 0), (0, 128, 0), (128, 128, 0),
+    (0, 0, 128), (128, 0, 128), (0, 128, 128), (192, 192, 192),
+]
+ANSI16_BRIGHT = [
+    (128, 128, 128), (255, 0, 0), (0, 255, 0), (255, 255, 0),
+    (0, 0, 255), (255, 0, 255), (0, 255, 255), (255, 255, 255),
+]
 PAD = 20
 GAP = 6
 
@@ -28,6 +36,7 @@ def parse_ansi(text: str):
     for row in rows:
         line = []
         fg = DEFAULT_FG
+        bg = None
         i = 0
         while i < len(row):
             m = ESC.match(row, i)
@@ -38,16 +47,26 @@ def parse_ansi(text: str):
                     p = params[j]
                     if p == 0:
                         fg = DEFAULT_FG
+                        bg = None
                     elif p == 38 and j + 4 < len(params) and params[j + 1] == 2:
                         fg = (params[j + 2], params[j + 3], params[j + 4])
                         j += 4
+                    elif p == 48 and j + 4 < len(params) and params[j + 1] == 2:
+                        bg = (params[j + 2], params[j + 3], params[j + 4])
+                        j += 4
                     elif p == 39:
                         fg = DEFAULT_FG
+                    elif 40 <= p <= 47:
+                        bg = ANSI16[p - 40]
+                    elif 100 <= p <= 107:
+                        bg = ANSI16_BRIGHT[p - 100]
+                    elif p == 49:
+                        bg = None
                     j += 1
                 i = m.end()
                 continue
             ch = row[i]
-            line.append((ch, fg))
+            line.append((ch, fg, bg))
             i += 1
         cells.append(line)
     return cells
@@ -67,7 +86,7 @@ def render(ansi_path: str, out_path: str, size: tuple[int, int] | None, label: s
         cells = cells[:h]
         while len(cells) < h:
             cells.append([])
-        cells = [row[:w] + [(" ", DEFAULT_FG)] * (w - len(row[:w])) for row in cells]
+        cells = [row[:w] + [(" ", DEFAULT_FG, None)] * (w - len(row[:w])) for row in cells]
     else:
         h = len(cells)
         w = max((len(r) for r in cells), default=0)
@@ -88,7 +107,11 @@ def render(ansi_path: str, out_path: str, size: tuple[int, int] | None, label: s
     draw.rectangle([2, 2, img_w - 3, img_h - 3], outline=(20, 30, 44))
 
     for y, row in enumerate(cells):
-        for x, (ch, fg) in enumerate(row):
+        for x, (ch, fg, bg) in enumerate(row):
+            if bg is not None:
+                px = PAD + x * cell_w
+                py = PAD + y * cell_h
+                draw.rectangle([px, py, px + cell_w - 1, py + cell_h - 1], fill=bg)
             if ch == " ":
                 continue
             use_kana = 0x3000 <= ord(ch) or 0xFF61 <= ord(ch) <= 0xFF9F

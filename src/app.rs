@@ -11,6 +11,7 @@ use crate::rng::Rng;
 use crate::scene::{self, EffectId, Frame, Scene, Tune};
 use crate::term::{self, Key, Terminal};
 use crate::theme::{self, Theme};
+use crate::transition::{Transition, TransitionMode};
 
 const SNAPSHOT_SEED: u64 = 0x7e51_a017;
 
@@ -98,6 +99,9 @@ fn tune_for(opts: &Options) -> Tune {
         tornado_speed: opts.tornado_speed,
         life_cycle: opts.life_cycle,
         eye_still: opts.eye_still,
+        ghost: opts.ghost,
+        plain: opts.plain,
+        gallery: opts.gallery,
     }
 }
 
@@ -311,6 +315,18 @@ fn interactive(opts: Options) -> i32 {
     let mut w = term.width.max(1);
     let mut h = term.height.max(1);
     let mut canvas = Canvas::new(w, h);
+    // Two off-screen buffers let the outgoing and incoming effects render at
+    // the same time while a transition blends them.
+    let mut back_a = Canvas::new(w, h);
+    let mut back_b = Canvas::new(w, h);
+    let trans_mode = opts.transition;
+    let trans_secs = if playlist {
+        // Leave at least half of each playlist slot untouched by the blend.
+        opts.transition_secs.min(opts.switch_secs * 0.5)
+    } else {
+        opts.transition_secs
+    };
+    let mut transition: Option<Transition> = None;
     let mut scene = scene::build(id, seed);
     scene.resize(w, h);
     let tune = tune_for(&opts);
@@ -343,7 +359,12 @@ fn interactive(opts: Options) -> i32 {
             w = term.width.max(1);
             h = term.height.max(1);
             canvas.resize(w, h);
+            back_a.resize(w, h);
+            back_b.resize(w, h);
             scene.resize(w, h);
+            if let Some(tr) = transition.as_mut() {
+                tr.from.resize(w, h);
+            }
             term.clear();
             canvas.invalidate();
         }
@@ -386,6 +407,9 @@ fn interactive(opts: Options) -> i32 {
                         explicit_charset,
                         w,
                         h,
+                        &mut transition,
+                        trans_mode,
+                        trans_secs,
                     );
                     auto_clock = 0.0;
                 }
@@ -404,6 +428,9 @@ fn interactive(opts: Options) -> i32 {
                         explicit_charset,
                         w,
                         h,
+                        &mut transition,
+                        trans_mode,
+                        trans_secs,
                     );
                     auto_clock = 0.0;
                 }
@@ -414,6 +441,8 @@ fn interactive(opts: Options) -> i32 {
                     t = 0.0;
                     flash = 0.3;
                     auto_clock = 0.0;
+                    // `r` is a restart, not an effect change: cut straight back.
+                    transition = None;
                 }
                 Key::Char(
                     c @ ('1'..='9'
@@ -471,6 +500,9 @@ fn interactive(opts: Options) -> i32 {
                         explicit_charset,
                         w,
                         h,
+                        &mut transition,
+                        trans_mode,
+                        trans_secs,
                     );
                     auto_clock = 0.0;
                 }
@@ -515,14 +547,22 @@ fn interactive(opts: Options) -> i32 {
                     explicit_charset,
                     w,
                     h,
+                    &mut transition,
+                    trans_mode,
+                    trans_secs,
                 );
             }
         }
 
+        let anim_dt = if paused { 0.0 } else { real_dt * speed };
+        if let Some(tr) = transition.as_mut() {
+            // The blend follows wall-clock time so it stays legible at any
+            // --speed; the scenes themselves follow pause/speed.
+            tr.tick(real_dt, anim_dt);
+        }
         if !paused {
             t += real_dt as f64 * speed as f64;
         }
-        let anim_dt = if paused { 0.0 } else { real_dt * speed };
         let frame = Frame {
             t,
             dt: anim_dt,
@@ -536,12 +576,40 @@ fn interactive(opts: Options) -> i32 {
             tune,
         };
 
+        // The outgoing scene keeps its own clock and look while it fades.
+        let from_frame = transition.as_ref().map(|tr| Frame {
+            t: tr.from_t,
+            dt: anim_dt,
+            w,
+            h,
+            fps: opts.fps,
+            theme: tr.from_theme,
+            charset: tr.from_charset,
+            seed: tr.from_seed,
+            speed,
+            tune,
+        });
+
         let render_start = Instant::now();
         if !paused {
             scene.update(&frame);
+            if let (Some(tr), Some(ff)) = (transition.as_mut(), from_frame.as_ref()) {
+                tr.from.update(ff);
+            }
         }
         canvas.clear();
-        scene.draw(&mut canvas, &frame);
+        if let (Some(tr), Some(ff)) = (transition.as_mut(), from_frame.as_ref()) {
+            back_a.clear();
+            tr.from.draw(&mut back_a, ff);
+            back_b.clear();
+            scene.draw(&mut back_b, &frame);
+            tr.compose(&mut canvas, &back_a, &back_b);
+            if tr.finished() {
+                transition = None;
+            }
+        } else {
+            scene.draw(&mut canvas, &frame);
+        }
 
         let elapsed = started.elapsed().as_secs_f32();
         if !show_help && elapsed < hint_until {
@@ -609,22 +677,50 @@ fn switch_effect(
     explicit_charset: bool,
     w: usize,
     h: usize,
+    transition: &mut Option<Transition>,
+    trans_mode: TransitionMode,
+    trans_secs: f32,
 ) {
     if target == *id {
         return;
     }
+    let old_theme = *current_theme;
+    let old_charset = *charset;
+    let old_seed = *seed;
+    let old_t = *t;
+
+    let next_seed = Rng::from_entropy().next_u64();
+    let mut next = scene::build(target, next_seed);
+    next.resize(w, h);
+
     *id = target;
-    *seed = Rng::from_entropy().next_u64();
+    *seed = next_seed;
     if !*explicit_theme {
         *current_theme = target.default_theme();
     }
     if !explicit_charset {
         *charset = target.default_charset();
     }
-    *sc = scene::build(target, *seed);
-    sc.resize(w, h);
+
+    if trans_mode != TransitionMode::None && trans_secs > 0.001 {
+        // Hand the old scene to the transition instead of dropping it, so it
+        // keeps animating while it fades out.
+        let from = std::mem::replace(sc, next);
+        *transition = Some(Transition::new(
+            trans_mode,
+            trans_secs,
+            from,
+            old_t,
+            old_seed,
+            old_theme,
+            old_charset,
+        ));
+    } else {
+        *sc = next;
+        *transition = None;
+        *flash = 0.3;
+    }
     *t = 0.0;
-    *flash = 0.3;
 }
 
 fn centered_x(w: usize, text: &str) -> isize {
@@ -812,5 +908,172 @@ fn draw_help(
     let footer = "space pauses, all effects animate in real time";
     if y + bh - 2 > y {
         canvas.put_str(x + 2, y + bh - 2, footer, theme.c(1).scale(1.4));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::cli::Charset;
+
+    #[allow(clippy::too_many_arguments)]
+    fn switch(
+        id: &mut EffectId,
+        scene: &mut Box<dyn Scene>,
+        t: &mut f64,
+        flash: &mut f32,
+        theme: &mut &'static Theme,
+        charset: &mut Charset,
+        transition: &mut Option<Transition>,
+        target: EffectId,
+        mode: TransitionMode,
+    ) {
+        switch_effect(
+            id,
+            &mut 7,
+            target,
+            scene,
+            t,
+            flash,
+            &mut false,
+            theme,
+            charset,
+            false,
+            80,
+            24,
+            transition,
+            mode,
+            if mode == TransitionMode::None {
+                0.0
+            } else {
+                0.6
+            },
+        );
+    }
+
+    #[test]
+    fn switching_starts_a_transition_and_keeps_the_old_scene() {
+        let mut id = EffectId::Rain;
+        let mut scene = scene::build(id, 7);
+        let mut t = 3.0;
+        let mut flash = 0.0;
+        let mut theme = id.default_theme();
+        let mut charset = id.default_charset();
+        let mut transition = None;
+
+        switch(
+            &mut id,
+            &mut scene,
+            &mut t,
+            &mut flash,
+            &mut theme,
+            &mut charset,
+            &mut transition,
+            EffectId::Fire,
+            TransitionMode::Fade,
+        );
+
+        assert_eq!(id, EffectId::Fire);
+        assert_eq!(t, 0.0, "the incoming scene restarts its clock");
+        assert_eq!(flash, 0.0, "no flash when blending");
+        let tr = transition.expect("a transition should be running");
+        assert_eq!(tr.from_t, 3.0, "the outgoing scene keeps its clock");
+        assert!(std::ptr::eq(tr.from_theme, EffectId::Rain.default_theme()));
+        assert_eq!(tr.from_charset, EffectId::Rain.default_charset());
+        assert_eq!(tr.duration, 0.6);
+    }
+
+    #[test]
+    fn switching_during_a_transition_starts_from_the_current_scene() {
+        let mut id = EffectId::Rain;
+        let mut scene = scene::build(id, 7);
+        let mut t = 0.0;
+        let mut flash = 0.0;
+        let mut theme = id.default_theme();
+        let mut charset = id.default_charset();
+        let mut transition = None;
+
+        switch(
+            &mut id,
+            &mut scene,
+            &mut t,
+            &mut flash,
+            &mut theme,
+            &mut charset,
+            &mut transition,
+            EffectId::Fire,
+            TransitionMode::Dissolve,
+        );
+        t = 0.4;
+        switch(
+            &mut id,
+            &mut scene,
+            &mut t,
+            &mut flash,
+            &mut theme,
+            &mut charset,
+            &mut transition,
+            EffectId::Matrix,
+            TransitionMode::Dissolve,
+        );
+
+        assert_eq!(id, EffectId::Matrix);
+        let tr = transition.expect("the second switch should blend too");
+        assert!((tr.from_t - 0.4).abs() < 1e-9);
+        assert!(std::ptr::eq(tr.from_theme, EffectId::Fire.default_theme()));
+    }
+
+    #[test]
+    fn none_mode_keeps_the_hard_cut_and_flash() {
+        let mut id = EffectId::Rain;
+        let mut scene = scene::build(id, 7);
+        let mut t = 2.0;
+        let mut flash = 0.0;
+        let mut theme = id.default_theme();
+        let mut charset = id.default_charset();
+        let mut transition = None;
+
+        switch(
+            &mut id,
+            &mut scene,
+            &mut t,
+            &mut flash,
+            &mut theme,
+            &mut charset,
+            &mut transition,
+            EffectId::Fire,
+            TransitionMode::None,
+        );
+
+        assert!(transition.is_none());
+        assert_eq!(flash, 0.3);
+        assert_eq!(t, 0.0);
+    }
+
+    #[test]
+    fn same_effect_is_a_no_op() {
+        let mut id = EffectId::Rain;
+        let mut scene = scene::build(id, 7);
+        let mut t = 2.0;
+        let mut flash = 0.0;
+        let mut theme = id.default_theme();
+        let mut charset = id.default_charset();
+        let mut transition = None;
+
+        switch(
+            &mut id,
+            &mut scene,
+            &mut t,
+            &mut flash,
+            &mut theme,
+            &mut charset,
+            &mut transition,
+            EffectId::Rain,
+            TransitionMode::Fade,
+        );
+
+        assert!(transition.is_none());
+        assert_eq!(t, 2.0);
+        assert_eq!(flash, 0.0);
     }
 }

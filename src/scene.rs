@@ -107,33 +107,33 @@ impl EffectId {
 
     pub fn title_en(self) -> &'static str {
         match self {
-            EffectId::Rain => "Code rain",
-            EffectId::Fire => "Burning flame",
-            EffectId::Dragon => "Celestial dragon",
-            EffectId::Map => "World map",
-            EffectId::Matrix => "NASA login",
-            EffectId::BlackHole => "Black hole",
-            EffectId::Beams => "Light beams",
+            EffectId::Rain => "Code Rain",
+            EffectId::Fire => "Blazing Fire",
+            EffectId::Dragon => "Coiling Dragon",
+            EffectId::Map => "World Map",
+            EffectId::Matrix => "The Matrix",
+            EffectId::BlackHole => "Black Hole",
+            EffectId::Beams => "Light Beams",
             EffectId::Fireworks => "Fireworks",
-            EffectId::Solar => "Solar system",
-            EffectId::Galaxy => "Milky Way",
-            EffectId::Buddha => "Radiant Buddha",
+            EffectId::Solar => "Solar System",
+            EffectId::Galaxy => "Starry Galaxy",
+            EffectId::Buddha => "Buddha's Halo",
             EffectId::TomJerry => "Tom & Jerry",
             EffectId::Mario => "Super Mario",
-            EffectId::Ecg => "Heart monitor",
-            EffectId::Dandelion => "Dandelion field",
+            EffectId::Ecg => "Heartbeat Monitor",
+            EffectId::Dandelion => "Dandelion",
             EffectId::FishTank => "Aquarium",
-            EffectId::Landscape => "Shan shui",
-            EffectId::Shanghai => "Shanghai Bund",
-            EffectId::Tiananmen => "Tiananmen light",
-            EffectId::Traffic => "City traffic",
-            EffectId::Fairy => "Fairy petals",
+            EffectId::Landscape => "Colorful Landscape",
+            EffectId::Shanghai => "Oriental Pearl",
+            EffectId::Tiananmen => "Tiananmen Radiance",
+            EffectId::Traffic => "Traffic Flow",
+            EffectId::Fairy => "Fairy Scattering Petals",
             EffectId::Tornado => "Tornado",
             EffectId::Storm => "Thunderstorm",
             EffectId::MonaLisa => "Mona Lisa",
-            EffectId::Ballet => "Ice ballet duet",
-            EffectId::DemonEye => "Demon eye",
-            EffectId::Life => "Life trajectory",
+            EffectId::Ballet => "Ice Ballet",
+            EffectId::DemonEye => "Demon Eye",
+            EffectId::Life => "Threads of Life",
         }
     }
 
@@ -154,7 +154,7 @@ impl EffectId {
             EffectId::Mario => "超级马里奥",
             EffectId::Ecg => "心率跳动",
             EffectId::Dandelion => "蒲公英",
-            EffectId::FishTank => "鱼缸",
+            EffectId::FishTank => "水族馆",
             EffectId::Landscape => "五光十色",
             EffectId::Shanghai => "东方明珠",
             EffectId::Tiananmen => "光芒万丈",
@@ -292,6 +292,9 @@ pub struct Tune {
     pub tornado_speed: f32,
     pub life_cycle: f32,
     pub eye_still: bool,
+    pub ghost: bool,
+    pub plain: bool,
+    pub gallery: bool,
 }
 
 impl Default for Tune {
@@ -313,6 +316,9 @@ impl Default for Tune {
             tornado_speed: 1.0,
             life_cycle: 120.0,
             eye_still: false,
+            ghost: false,
+            plain: false,
+            gallery: false,
         }
     }
 }

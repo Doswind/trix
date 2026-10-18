@@ -4,6 +4,11 @@
 //! past times so the tail trails the head exactly.  It has a large side-view
 //! head with antler horns, whiskers, mane, fangs and a beard, four clawed
 //! legs, a dorsal ridge, a tail fin, and a small flaming pearl ahead of it.
+//!
+//! The whole body carries a slow serpentine wave that travels from the head
+//! down to the tail, so the flight path reads as a coiling dragon instead of a
+//! smooth circle.  The wave stays gentle and well inside the loop: it fades in
+//! behind the neck and grows towards the tail, leaving the head steady.
 
 use std::f32::consts::TAU;
 
@@ -15,6 +20,15 @@ use crate::theme::Theme;
 
 const BODY_RAMP: &[u8] = b" .:-=+*#%@";
 const SAMPLES: usize = 250;
+
+/// Whole-body serpentine wave: roughly 2.6 crests travel from head to tail at
+/// a slow, steady pace.  The amplitude fades in behind the neck and grows
+/// towards the tail, so the loop keeps its coiling shape instead of becoming a
+/// zig-zag.
+const WAVE_CYCLES: f32 = 2.6;
+const WAVE_SPEED: f32 = 2.3;
+const WAVE_AMP: f32 = 4.8;
+const WAVE_RAMP: f32 = 0.18;
 
 const GOLD: Rgb = Rgb::hex(0xf5c542);
 const PALE_GOLD: Rgb = Rgb::hex(0xfff3c4);
@@ -106,11 +120,22 @@ impl DragonScene {
             });
         }
         self.clouds.clear();
+        // The first six are the old faint "plain" clouds; the extra ones
+        // build the denser cloud sea used by the default backdrop.
         for _ in 0..6 {
             self.clouds.push(Cloud {
                 x: self.rng.range(0.0, self.w as f32),
                 y: self.rng.range(self.h as f32 * 0.55, self.h as f32),
                 width: self.rng.range(4.0, 12.0),
+                phase: self.rng.range(0.0, TAU),
+            });
+        }
+        let extra = (self.w / 8).clamp(10, 30);
+        for _ in 0..extra {
+            self.clouds.push(Cloud {
+                x: self.rng.range(0.0, self.w as f32),
+                y: self.rng.range(self.h as f32 * 0.50, self.h as f32 * 0.94),
+                width: self.rng.range(12.0, 30.0),
                 phase: self.rng.range(0.0, TAU),
             });
         }
@@ -147,6 +172,14 @@ impl DragonScene {
         tx /= len;
         ty /= len;
         (x, y, tx, ty)
+    }
+
+    /// Lateral offset of the serpentine wave at body coordinate `u`
+    /// (0 = head, 1 = tail).  The phase runs head → tail: crests move towards
+    /// the tail as time advances.
+    fn body_wave(&self, u: f32, t: f32) -> f32 {
+        let env = WAVE_AMP * smoothstep(0.0, WAVE_RAMP, u) * (0.30 + 0.70 * u) * self.unit();
+        env * (u * TAU * WAVE_CYCLES - t * WAVE_SPEED).sin()
     }
 
     fn build_body(&self, t: f32) -> Vec<Pt> {
@@ -189,6 +222,7 @@ impl DragonScene {
             let y = a.1 + (b.1 - a.1) * f;
             let tt = a.3 + (b.3 - a.3) * f;
             let (_, _, fx, fy) = self.frame_at(tt);
+            // Shading normal points away from the screen centre.
             let mut nx = -fy;
             let mut ny = fx;
             let ox = x - self.w as f32 * 0.5;
@@ -197,9 +231,6 @@ impl DragonScene {
                 nx = -nx;
                 ny = -ny;
             }
-            let wave = (u * TAU * 1.8 + t * 1.7).sin() * (0.25 + 1.35 * (1.0 - u)) * unit;
-            let x = x + nx * wave;
-            let y = y + ny * wave * 0.5;
             let r = unit * (1.0 + 2.6 * (1.0 - u).powf(1.32));
             pts.push(Pt {
                 x,
@@ -210,6 +241,25 @@ impl DragonScene {
                 ny,
                 z: 1.0 - 0.55 * u,
             });
+        }
+        // Apply the serpentine wave as a second pass, using a tangent smoothed
+        // over several neighbouring samples.  The raw path has a near-cusp
+        // where its direction turns very fast; using the instantaneous normal
+        // there would make the body jump between frames.
+        let base: Vec<(f32, f32)> = pts.iter().map(|p| (p.x, p.y)).collect();
+        let n = pts.len();
+        let span = 6usize;
+        for i in 0..n {
+            let a = base[i.saturating_sub(span)];
+            let b = base[(i + span).min(n - 1)];
+            let mut tx = b.0 - a.0;
+            let mut ty = (b.1 - a.1) * 2.0;
+            let len = (tx * tx + ty * ty).sqrt().max(1e-4);
+            tx /= len;
+            ty /= len;
+            let wave = self.body_wave(pts[i].u, t);
+            pts[i].x += -ty * wave;
+            pts[i].y += tx * wave * 0.5;
         }
         pts
     }
@@ -250,6 +300,82 @@ impl DragonScene {
                     self.body[idx] = val;
                     self.body_col[idx] = col;
                     self.depth[idx] = pt.z;
+                }
+            }
+        }
+    }
+
+    fn draw_mountains(&self, canvas: &mut Canvas, theme: &Theme) {
+        let h = self.h as f32;
+        for layer in 0..2 {
+            let base = h * (0.60 + layer as f32 * 0.080);
+            let amp = h * (0.065 + layer as f32 * 0.030);
+            let ridge = theme.c(1).scale(0.18 + layer as f32 * 0.060);
+            let hatch = theme.c(2).scale(0.07 + layer as f32 * 0.025);
+            let mut prev: Option<isize> = None;
+            for x in 0..self.w {
+                let xf = x as f32;
+                let yf = base
+                    - amp
+                        * (0.55
+                            + 0.45 * (xf * 0.040 + layer as f32 * 2.1).sin()
+                            + 0.25 * (xf * 0.095 + layer as f32 * 1.3).sin());
+                let y = yf.round().clamp(0.0, h - 1.0) as isize;
+                let ch = match prev {
+                    Some(p) if y > p => '\\',
+                    Some(p) if y < p => '/',
+                    _ => '_',
+                };
+                canvas.set(x as isize, y, ch, ridge);
+                for dy in 1..=3 {
+                    if (x as isize + dy) % 3 == 0 {
+                        canvas.set_if_blank(
+                            x as isize,
+                            y + dy,
+                            if dy == 1 { ':' } else { '.' },
+                            hatch,
+                        );
+                    }
+                }
+                prev = Some(y);
+            }
+        }
+    }
+
+    fn draw_cloud_sea(&self, canvas: &mut Canvas, theme: &Theme, t: f32) {
+        let h = self.h as f32;
+        let mist = theme.c(2).scale(0.085);
+        // Long horizontal strata make the bottom read as a "cloud sea".
+        for (k, frac) in [0.72f32, 0.80, 0.88, 0.95].iter().enumerate() {
+            for x in (0..self.w).step_by(2) {
+                let xf = x as f32;
+                let yy = h * frac + ((xf * 0.07 + t * 0.10 + k as f32 * 1.7).sin() * 1.4);
+                let ch = if (x / 2 + k) % 4 == 0 { '~' } else { '-' };
+                canvas.set_if_blank(x as isize, yy.round() as isize, ch, mist);
+            }
+        }
+        let base = theme.c(2).scale(0.23);
+        for cloud in self.clouds.iter().skip(6) {
+            let drift = (t * 0.11 + cloud.phase).sin() * 4.0;
+            let x = cloud.x + drift;
+            let y = cloud.y;
+            let col = base.scale(0.82 + 0.30 * (cloud.phase.sin() * 0.5 + 0.5));
+            let width = cloud.width as isize;
+            for i in 0..width {
+                let px = (x as isize + i - width / 2).clamp(0, self.w as isize - 1);
+                let yy = y as isize + ((i as f32 * 0.55 + cloud.phase).sin() * 1.5) as isize;
+                let ch = match i.rem_euclid(7) {
+                    0 => '=',
+                    1 | 2 => '-',
+                    3 | 4 => '~',
+                    _ => ':',
+                };
+                canvas.set_if_blank(px, yy, ch, col);
+                if i % 2 == 0 {
+                    canvas.set_if_blank(px, yy + 1, ':', col.scale(0.75));
+                }
+                if i % 3 == 0 {
+                    canvas.set_if_blank(px, yy + 2, '~', col.scale(0.5));
                 }
             }
         }
@@ -605,6 +731,11 @@ impl DragonScene {
     }
 }
 
+fn smoothstep(e0: f32, e1: f32, x: f32) -> f32 {
+    let t = ((x - e0) / (e1 - e0).max(1e-6)).clamp(0.0, 1.0);
+    t * t * (3.0 - 2.0 * t)
+}
+
 impl Scene for DragonScene {
     fn resize(&mut self, w: usize, h: usize) {
         if w != self.w || h != self.h {
@@ -632,7 +763,12 @@ impl Scene for DragonScene {
                 col,
             );
         }
-        self.draw_clouds(canvas, theme, t);
+        if f.tune.plain {
+            self.draw_clouds(canvas, theme, t);
+        } else {
+            self.draw_mountains(canvas, theme);
+            self.draw_cloud_sea(canvas, theme, t);
+        }
 
         // Compute and splat the trailing body, tail first.
         let body = self.build_body(t);
@@ -721,5 +857,128 @@ impl Scene for DragonScene {
                 canvas.put_str(rx, 0, right, theme.c(2).scale(0.75));
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::scene::Scene;
+
+    fn dragon() -> DragonScene {
+        let mut scene = DragonScene::new(7);
+        scene.resize(80, 24);
+        scene
+    }
+
+    fn frame(plain: bool) -> crate::scene::Frame<'static> {
+        let tune = crate::scene::Tune {
+            plain,
+            ..Default::default()
+        };
+        crate::scene::Frame {
+            t: 3.0,
+            dt: 1.0 / 30.0,
+            w: 120,
+            h: 36,
+            fps: 30,
+            theme: &crate::theme::THEMES[0],
+            charset: crate::cli::Charset::Ascii,
+            seed: 7,
+            speed: 1.0,
+            tune,
+        }
+    }
+
+    #[test]
+    fn backdrop_adds_ink() {
+        let mut scene = DragonScene::new(7);
+        scene.resize(120, 36);
+        let mut plain = Canvas::new(120, 36);
+        scene.draw(&mut plain, &frame(true));
+        let mut rich = Canvas::new(120, 36);
+        scene.draw(&mut rich, &frame(false));
+        assert!(
+            rich.ink() > plain.ink() + 80,
+            "plain={} rich={}",
+            plain.ink(),
+            rich.ink()
+        );
+    }
+
+    #[test]
+    fn wave_leaves_the_head_steady() {
+        let scene = dragon();
+        for i in 0..900 {
+            let t = i as f32 / 30.0;
+            assert_eq!(scene.body_wave(0.0, t), 0.0);
+            let (hx, hy) = scene.head_pos(t);
+            let body = scene.build_body(t);
+            assert!((body[0].x - hx).abs() < 1e-3, "x at t={t}");
+            assert!((body[0].y - hy).abs() < 1e-3, "y at t={t}");
+        }
+    }
+
+    #[test]
+    fn wave_grows_towards_the_tail() {
+        let scene = dragon();
+        let mut neck = 0.0;
+        let mut mid = 0.0;
+        let mut tail = 0.0;
+        for i in 0..900 {
+            let t = i as f32 / 30.0;
+            neck += scene.body_wave(0.08, t).abs();
+            mid += scene.body_wave(0.50, t).abs();
+            tail += scene.body_wave(0.92, t).abs();
+        }
+        assert!(
+            tail > mid && mid > neck,
+            "neck={neck} mid={mid} tail={tail}"
+        );
+        assert!(tail / 900.0 > scene.unit() * 1.2, "tail wave too flat");
+    }
+
+    #[test]
+    fn coiled_body_stays_on_canvas() {
+        for (w, h) in [(80usize, 24usize), (120, 36), (160, 48)] {
+            let mut scene = DragonScene::new(7);
+            scene.resize(w, h);
+            for i in 0..1500 {
+                let t = i as f32 / 30.0;
+                for pt in scene.build_body(t) {
+                    assert!(pt.x.is_finite() && pt.y.is_finite() && pt.r.is_finite());
+                    assert!((0.0..=w as f32).contains(&pt.x), "x={} w={w} t={t}", pt.x);
+                    assert!((0.0..=h as f32).contains(&pt.y), "y={} h={h} t={t}", pt.y);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn body_motion_is_smooth() {
+        let scene = dragon();
+        let mut prev: Option<Vec<Pt>> = None;
+        let mut max_step = 0.0f32;
+        let mut max_at = (0.0f32, 0usize);
+        for i in 0..3600 {
+            let t = i as f32 / 60.0;
+            let body = scene.build_body(t);
+            if let Some(old) = &prev {
+                for (k, (a, b)) in old.iter().zip(body.iter()).enumerate() {
+                    let d = ((a.x - b.x).powi(2) + ((a.y - b.y) * 2.0).powi(2)).sqrt();
+                    if d > max_step {
+                        max_step = d;
+                        max_at = (t, k);
+                    }
+                }
+            }
+            prev = Some(body);
+        }
+        assert!(
+            max_step < 1.8,
+            "max body step per frame: {max_step} at t={} u={}",
+            max_at.0,
+            max_at.1 as f32 / 249.0
+        );
     }
 }

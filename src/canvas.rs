@@ -7,28 +7,32 @@
 
 use std::io::{self, Write};
 
-use crate::color::{write_fg, ColorMode, Rgb};
+use crate::color::{write_bg, write_fg, ColorMode, Rgb};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Cell {
     pub ch: char,
     pub fg: Rgb,
+    /// Explicit background color.  `None` leaves the terminal default showing,
+    /// which is what every pre-existing effect relies on.
+    pub bg: Option<Rgb>,
 }
 
 impl Cell {
     pub const EMPTY: Cell = Cell {
         ch: ' ',
         fg: Rgb::BLACK,
+        bg: None,
     };
 
     #[inline]
     pub fn new(ch: char, fg: Rgb) -> Self {
-        Cell { ch, fg }
+        Cell { ch, fg, bg: None }
     }
 
     #[inline]
     fn visible_eq(&self, other: &Cell) -> bool {
-        self.ch == other.ch && (self.ch == ' ' || self.fg == other.fg)
+        self.bg == other.bg && self.ch == other.ch && (self.ch == ' ' || self.fg == other.fg)
     }
 }
 
@@ -44,6 +48,7 @@ pub struct Canvas {
     pub cells: Vec<Cell>,
     prev: Vec<Cell>,
     last_fg: Option<Rgb>,
+    last_bg: Option<Rgb>,
     out: Vec<u8>,
     full_ansi: Vec<u8>,
 }
@@ -58,6 +63,7 @@ impl Canvas {
             cells: vec![Cell::EMPTY; w * h],
             prev: vec![Cell::EMPTY; w * h],
             last_fg: None,
+            last_bg: None,
             out: Vec::with_capacity(w * h * 8 + 512),
             full_ansi: Vec::with_capacity(w * h * 8 + 512),
         }
@@ -76,6 +82,7 @@ impl Canvas {
         self.prev.clear();
         self.prev.resize(w * h, Cell::EMPTY);
         self.last_fg = None;
+        self.last_bg = None;
         self.out.clear();
         self.out.reserve(w * h * 8 + 512);
         self.full_ansi.clear();
@@ -85,6 +92,7 @@ impl Canvas {
     pub fn invalidate(&mut self) {
         self.prev.fill(Cell::EMPTY);
         self.last_fg = None;
+        self.last_bg = None;
     }
 
     #[inline]
@@ -111,7 +119,50 @@ impl Canvas {
         if x < 0 || y < 0 || x as usize >= self.w || y as usize >= self.h {
             return;
         }
-        self.cells[y as usize * self.w + x as usize] = Cell { ch, fg };
+        let idx = y as usize * self.w + x as usize;
+        // Keep whatever background is already painted behind this cell.
+        self.cells[idx] = Cell {
+            ch,
+            fg,
+            bg: self.cells[idx].bg,
+        };
+    }
+
+    /// Write glyph, foreground and background in one go.
+    #[inline]
+    pub fn paint(&mut self, x: isize, y: isize, ch: char, fg: Rgb, bg: Option<Rgb>) {
+        if x < 0 || y < 0 || x as usize >= self.w || y as usize >= self.h {
+            return;
+        }
+        self.cells[y as usize * self.w + x as usize] = Cell { ch, fg, bg };
+    }
+
+    /// Set only the background colour of an existing cell.
+    #[inline]
+    pub fn set_bg(&mut self, x: isize, y: isize, bg: Option<Rgb>) {
+        if x < 0 || y < 0 || x as usize >= self.w || y as usize >= self.h {
+            return;
+        }
+        self.cells[y as usize * self.w + x as usize].bg = bg;
+    }
+
+    /// Fill a rectangle with a solid colour (glyph `ch`, colour `fg`).
+    #[allow(clippy::too_many_arguments)]
+    pub fn fill(
+        &mut self,
+        x: isize,
+        y: isize,
+        w: isize,
+        h: isize,
+        ch: char,
+        fg: Rgb,
+        bg: Option<Rgb>,
+    ) {
+        for yy in y..y + h {
+            for xx in x..x + w {
+                self.paint(xx, yy, ch, fg, bg);
+            }
+        }
     }
 
     /// Set only if the target is still blank, useful for backgrounds.
@@ -121,7 +172,11 @@ impl Canvas {
         }
         let idx = y as usize * self.w + x as usize;
         if self.cells[idx].ch == ' ' {
-            self.cells[idx] = Cell { ch, fg };
+            self.cells[idx] = Cell {
+                ch,
+                fg,
+                bg: self.cells[idx].bg,
+            };
         }
     }
 
@@ -139,7 +194,11 @@ impl Canvas {
             old.fg.lerp(fg, a)
         };
         // Fading into empty space: keep the glyph but with a dim color.
-        self.cells[idx] = Cell { ch, fg: new_fg };
+        self.cells[idx] = Cell {
+            ch,
+            fg: new_fg,
+            bg: old.bg,
+        };
     }
 
     /// Add light to a cell.  `ch` is used only when the cell was blank.
@@ -151,7 +210,11 @@ impl Canvas {
         let old = self.cells[idx];
         let col = old.fg.add(fg, amount.clamp(0.0, 2.0));
         let glyph = if old.ch == ' ' { ch } else { old.ch };
-        self.cells[idx] = Cell { ch: glyph, fg: col };
+        self.cells[idx] = Cell {
+            ch: glyph,
+            fg: col,
+            bg: old.bg,
+        };
     }
 
     pub fn put_str(&mut self, x: isize, y: isize, text: &str, fg: Rgb) {
@@ -239,7 +302,7 @@ impl Canvas {
     pub fn clear_rect(&mut self, x: isize, y: isize, w: isize, h: isize) {
         for yy in y..y + h {
             for xx in x..x + w {
-                self.set(xx, yy, ' ', Rgb::BLACK);
+                self.paint(xx, yy, ' ', Rgb::BLACK, None);
             }
         }
     }
@@ -249,6 +312,14 @@ impl Canvas {
         let mut out = std::mem::take(&mut self.out);
         out.clear();
         let mut last_fg = self.last_fg;
+        let mut last_bg = self.last_bg;
+
+        // Leaving a scene that painted a background: make sure the terminal
+        // goes back to the baseline black even if this frame changes nothing.
+        if mode.is_color() && last_bg.is_some() && !self.cells.iter().any(|c| c.bg.is_some()) {
+            out.extend_from_slice(b"\x1b[40m");
+            last_bg = None;
+        }
 
         for y in 0..self.h {
             let row = y * self.w;
@@ -267,9 +338,18 @@ impl Canvas {
                     if cell.visible_eq(&self.prev[idx]) {
                         break;
                     }
-                    if cell.ch != ' ' && mode.is_color() && last_fg != Some(cell.fg) {
-                        write_fg(&mut out, cell.fg, mode);
-                        last_fg = Some(cell.fg);
+                    if mode.is_color() {
+                        if cell.ch != ' ' && last_fg != Some(cell.fg) {
+                            write_fg(&mut out, cell.fg, mode);
+                            last_fg = Some(cell.fg);
+                        }
+                        if last_bg != cell.bg {
+                            match cell.bg {
+                                Some(bg) => write_bg(&mut out, bg, mode),
+                                None => out.extend_from_slice(b"\x1b[40m"),
+                            }
+                            last_bg = cell.bg;
+                        }
                     }
                     let mut buf = [0u8; 4];
                     out.extend_from_slice(cell.ch.encode_utf8(&mut buf).as_bytes());
@@ -280,6 +360,7 @@ impl Canvas {
         }
 
         self.last_fg = last_fg;
+        self.last_bg = last_bg;
         let res = dst.write_all(&out).and_then(|_| dst.flush());
         self.out = out;
         res?;
@@ -292,18 +373,34 @@ impl Canvas {
         out.clear();
         let _ = write!(out, "\x1b[0m");
         let mut last_fg: Option<Rgb> = None;
+        let mut last_bg: Option<Rgb> = None;
         for y in 0..self.h {
             let row = y * self.w;
-            // Trim trailing blanks but keep a couple of cells for readability.
+            // Trim trailing blanks, but never trim a cell that paints a
+            // background colour: that colour is part of the picture.
             let mut end = self.w;
-            while end > 0 && self.cells[row + end - 1].ch == ' ' {
-                end -= 1;
+            while end > 0 {
+                let cell = self.cells[row + end - 1];
+                if cell.ch == ' ' && cell.bg.is_none() {
+                    end -= 1;
+                } else {
+                    break;
+                }
             }
             for x in 0..end {
                 let cell = self.cells[row + x];
-                if cell.ch != ' ' && mode.is_color() && last_fg != Some(cell.fg) {
-                    write_fg(&mut out, cell.fg, mode);
-                    last_fg = Some(cell.fg);
+                if mode.is_color() {
+                    if cell.ch != ' ' && last_fg != Some(cell.fg) {
+                        write_fg(&mut out, cell.fg, mode);
+                        last_fg = Some(cell.fg);
+                    }
+                    if last_bg != cell.bg {
+                        match cell.bg {
+                            Some(bg) => write_bg(&mut out, bg, mode),
+                            None => out.extend_from_slice(b"\x1b[40m"),
+                        }
+                        last_bg = cell.bg;
+                    }
                 }
                 let mut buf = [0u8; 4];
                 out.extend_from_slice(cell.ch.encode_utf8(&mut buf).as_bytes());
@@ -311,6 +408,7 @@ impl Canvas {
             if y + 1 < self.h {
                 out.extend_from_slice(b"\x1b[0m\n");
                 last_fg = None;
+                last_bg = None;
             }
         }
         out.extend_from_slice(b"\x1b[0m\n");
@@ -384,5 +482,78 @@ mod tests {
         let s = String::from_utf8_lossy(&out);
         assert!(s.contains("hi"));
         assert!(s.contains("38;2;0;255;0"));
+    }
+
+    #[test]
+    fn background_is_diffed_and_emitted() {
+        let mut c = Canvas::new(6, 2);
+        let sky = Rgb::new(92, 148, 252);
+        c.fill(0, 0, 6, 2, ' ', sky, Some(sky));
+        let mut sink = Vec::new();
+        c.present(&mut sink, ColorMode::True).unwrap();
+        let s = String::from_utf8_lossy(&sink).to_string();
+        assert!(s.contains("48;2;92;148;252"), "{s:?}");
+
+        sink.clear();
+        c.present(&mut sink, ColorMode::True).unwrap();
+        assert!(sink.is_empty(), "static background must not repaint");
+
+        // painting the default background back must reset the terminal
+        c.set_bg(2, 1, None);
+        sink.clear();
+        c.present(&mut sink, ColorMode::True).unwrap();
+        let s = String::from_utf8_lossy(&sink).to_string();
+        assert!(s.contains("\x1b[40m"), "{s:?}");
+    }
+
+    #[test]
+    fn set_keeps_existing_background() {
+        let mut c = Canvas::new(4, 1);
+        let sky = Rgb::new(1, 2, 3);
+        c.set_bg(1, 0, Some(sky));
+        c.set(1, 0, '#', Rgb::WHITE);
+        let cell = c.get(1, 0).unwrap();
+        assert_eq!(cell.ch, '#');
+        assert_eq!(cell.bg, Some(sky));
+    }
+
+    #[test]
+    fn dropping_a_background_repaints_with_default() {
+        // Playlist switching: the next scene paints no background at all, so
+        // the cells the old scene had coloured must be repainted as default.
+        let mut c = Canvas::new(4, 2);
+        let sky = Rgb::new(1, 2, 3);
+        c.fill(0, 0, 4, 2, ' ', sky, Some(sky));
+        let mut sink = Vec::new();
+        c.present(&mut sink, ColorMode::True).unwrap();
+        assert!(!sink.is_empty());
+
+        c.clear();
+        sink.clear();
+        c.present(&mut sink, ColorMode::True).unwrap();
+        let s = String::from_utf8_lossy(&sink).to_string();
+        assert!(s.contains("\x1b[40m"), "{s:?}");
+    }
+
+    #[test]
+    fn mono_mode_never_emits_background_codes() {
+        let mut c = Canvas::new(4, 1);
+        c.fill(0, 0, 4, 1, ' ', Rgb::WHITE, Some(Rgb::new(9, 9, 9)));
+        let mut sink = Vec::new();
+        c.present(&mut sink, ColorMode::Mono).unwrap();
+        let s = String::from_utf8_lossy(&sink).to_string();
+        assert!(!s.contains("48;"), "{s:?}");
+    }
+
+    #[test]
+    fn render_keeps_background_painted_columns() {
+        let mut c = Canvas::new(8, 2);
+        let sky = Rgb::new(10, 20, 30);
+        c.fill(0, 0, 8, 2, ' ', sky, Some(sky));
+        let out = c.render_ansi(ColorMode::True);
+        let text = String::from_utf8_lossy(&out);
+        let first = text.lines().next().unwrap_or("");
+        assert!(first.contains("48;2;10;20;30"), "{first:?}");
+        assert!(first.contains("m        "), "{first:?}");
     }
 }

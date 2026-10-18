@@ -1,122 +1,136 @@
 # Changelog
 
+**English** | [简体中文](CHANGELOG.zh-CN.md)
+
 ## Unreleased
 
-- `tiananmen` 重做：天安门城楼整体放大到约 **92% 屏宽 / 62% 屏高**，按图标重新分层——双层橙瓦飞檐与翼角、红柱暗窗城楼与国徽、红墙、白石门套的五个门洞、白框长标语与中央画像、白石栏杆与中央甬道、两侧红旗和小楼；桥面等细节按约定省略。光芒改为两段式：先从屋脊后方向外、向上生长出一道道金色光束（逐道错开、带亮点头部），成形后亮点沿每束光从根部跑到末端，并按 `|i - 中心|` 错峰、由内向外循环点亮；屋顶檐口同步做金色呼吸。ASCII 默认与 `--unicode` 实心块行为不变，新增光束/阶段/大画幅测试。
-- `traffic` 车辆与车道重做：原先 1 行高、3–5 格的“小鱼”车改为 **8–16 格长、3 行高**的侧视车（车顶亮线 / 实心车身 / 车下双轮），车头白灯 + 3 格前照光锥、车尾红灯 + 2 格残影；车道数改由道路高度推导（200×40 为 4 条、不再是把 14 条一列列铺满），车道之间有虚线分道线，**方向按车道交替**（同车道不再有对向车），每车道 3 辆等距 + 同速，避免穿插；道路范围 0.42–0.80 → 0.36–0.84。纵向街道改为 **6 列 × 5–9 行俯视车**（圆角车头/车尾、前后风挡、四轮、双前灯/双尾灯），车道按列交替、车道数随宽度推导。`--density` 现在也控制车流密度（默认 1.0，横向每车道 3 辆、纵向 2 辆）；`--street vertical`、ASCII 默认与 `--unicode` 块字符行为不变；新增车道/尺寸/方向/密度单测。
-- `life` 优化汇总：无空行家庭栈（`KID3 -2 / KID2 -1 / ME 0 / WIFE +1 / KID1 +2`，`CAT +3`，朋友共用 `+4`，`DAD/MOM +5/+6`）；家属年龄标签（含死亡点与顶部星标的最终年龄、1 秒同步闪烁，非亲属不带年龄）；亮光束随年龄增长、早期保留暗淡点；**ME 轨迹结束时约 6 秒超新星终章（回闪与星屑放慢，彗星保持原速）**——白光核心与十字爆发、BIRTH→死亡点的一生回闪、4 圈双层冲击波、64 颗确定性星屑、加粗彗星与顶部 ME 星永久光晕；回闪扫描光柱到达 ME 停止线后以三列宽保留，不再消失。
-- `fairy` 重做（第二版）：放弃“从十字绣自动描图”的路线——那会把 2px 的轮廓线平均成灰噪点，白裙还会和白底同色。改为 **30×34 手工像素画**（`src/data/fairy_sprite.txt`，逐格设计）：低发髻 + 花钿、3/4 侧脸（眉、闭眼、鼻影、唇）、右臂高举花篮、左臂收在胸前、交领蓝襟、腰封、白色长裙与左向裙裾、赤足。17 色调色板，ASCII 用 `# @ : % & *` 等字形，`--unicode` 时发丝/肤色改用实心块、花瓣用 `❀`。sprite 直接按终端格 1:1 绘制，不再二次降采样。
-- `fairy` 运动简化：只保留缓慢的椭圆环绕（左右 ±20% 屏宽、上下 ±9% 屏高）与轻微摇摆；每 24 秒做一次 6 秒的**转身**，用 `scaleX = cos(θ)` 实现——侧身到接近一条线时补一道柔光，绝不是平面 360° 翻跟斗。删除上一版的程序化飘带与整周旋转。
-- `fairy` 花瓣：从篮口撒出并继承她当前的水平速度，跟随尾迹后再受重力与横摆四散飘落；其余花瓣从画面上方飘入。`--petal-count` / `--petal-speed` 语义不变。
-- `fairy` 夜景简化：淡月、稀疏星点、渐变底色；去掉云带与多余星尘。
-- `storm` 优化：屏幕上方新增一层灰白高云——双频噪波叠加逐格抖动，生成不规则、不成块的云团（约占顶部 1/4 高度、覆盖约四成格子）；颜色改为浅灰蓝白、亮度提高，底部两行渐隐融入天空，并整体**缓慢向右飘移**（默认约 3 列/秒，所有噪声层同速平移，不会互相错位）；只填空格，不覆盖原有云带、雨、闪电、城市与地面。
-- `blackhole`：外围星星改为 **"/" 倾斜的饱满椭圆环绕**（视觉倾角约 29°，短轴比例 0.52）；整体铺满屏幕、外缘压住上下边缘；最外圈改用 `.` / `:` / `+` 随机低密度散点（不再用切线线框，避免形成第二道环）；内层与外层之间补一层中段星尘，星云密度更均匀；旋转改为同向、更平缓的差速——内圈仍快、外圈仍慢，但外圈星尘/吸积带/边缘散点同步提速，整体看起来是一个完整转动的椭圆盘；公转基速整体 ×1.7；吸积带同步倾斜并把半径扩大到 ×1.5。
-- `buddha` 佛光优化：外扩的曼陀罗环改为**等距扩散**——所有环共用同一扩散相位，相邻环径向间距恒定；首层半径按佛像实际绘制范围（佛身、头顶光环、莲座）计算，整层起点位于佛像之外，不再压住佛像或与头顶光环重叠；环数最多 5 层；环亮度压到佛像金色之下（内层 0.6，外缘约 0.2），并继续由内向外逐层变暗。
-- `tornado` 调淡：填充亮度 0.66~1.38 降到 0.42~0.85、每行粒子 28→20 颗、螺旋亮点与暗边一并调暗；整体高度比原来再降一档（0.38~0.78 → 0.28~0.58 屏高），顶部维持在屏幕内并保留原来的 `≈` 收口；底部新增 30 颗向外飘散的碎屑（随机方向/距离/高度，抛出成弧线后淡出）。
-- `demoneye`：虹膜/竖瞳/角膜高光改为整体随注视点平移（此前只有高光在动）；每次甩出约 0.1 秒到位、0.45～0.85 秒内必回正中直视观众，双击眨眼的短间隔内不甩动；竖瞳缩放、眼睑、血丝、冲击波与 HUD 等其余表现保持不变。
-- `demoneye` 节奏放慢：眨眼改为每 8～15 秒一次、到点随机单眨或双眨（约 7:3）；每两次眨眼之间只排 1～2 次跳动（“跳出去+回正中”算一次），两次跳动的“出去时刻”至少相隔 5 秒，放不下就只跳 1 次。
-- `demoneye`：新增 `--eye-motion dart|still`（默认 `dart`，即眼球跳动）与别名 `--eye-still` / `--eye-dart`；`still` 时眼球钉在正中，只保留眨眼、瞳孔缩放与瞳孔白光的跳动。
-- `demoneye`：角膜白光回到原版外观（0.20/0.30 半径的白色主光点 + 0.07 的小副光点，无呼吸、无拖影），改为每 0.55～1.6 秒在虹膜上快速跳一次（约 0.09～0.18 秒到位），保留原来那种灵动；并新增遮挡保护：竖瞳与其热边永远压在光点之上，白光不会盖住瞳孔黑孔。
-- 新增 `life` 生命的轨迹：0～100 岁横向时间轴、左右发光生命线；开局我/爷爷/奶奶/爸爸/妈妈/哥哥六条轨迹，爷奶与父母及哥哥先后离场化作终点星；女友→妻子、固定 3 个孩子、孙辈、同学/同事/朋友按年限进入离开；孩子继续越过终点不化星，循环往复。
-- `life` 优化：人类统一 `@` 符号、仅颜色区分（狗 `d`、猫 `c`）；名称与光束同排、置于最前方，使用大写简写（如 `ME` / `KID3` / `GRAND1`），星星阶段也保留；近期轨迹改为长光束（`=` / `~` / `*`），早期轨迹用不消失的淡点；我/爸妈/爷奶终身 0 次变轨、夫妻相邻；死亡流星改为直线并放慢一倍；进出屏幕速度放慢一倍。默认 cycle 改为 120 秒。
-- `life` 文案：左下事件描述不再使用 “leave the frame”，改为 “goes to a farther place” 等人生化表达；`PAL` / `UNI` / `WORK` / `FRIEND` 进入时展开为完整身份说明。
-- `life` 关系与轨道：`GPA/GMA` 在上方 3～4 行内成对紧挨，`DAD/MOM` 在 WIFE 下方成对且中间留一行，`BRO` 在 MOM 下方并随父母一起让位；`KID1` 在 WIFE 下方预留行、`KID2/KID3` 在近身上方并各自成轨；`PAL/UNI/WORK/FRIEND` 共享近身一行；`CAT` 与第一个孩子同时出现并位于其外侧；`GRAND` 紧贴父辈；GF 靠近我 1～2 年后才变成 WIFE；`WORK/FRIEND` 始终共享近身一行，不占孩子宠物行，也永不靠近父母；`WIFE` 在 75～90 岁、晚于主角化为星星；`PARTNER` 不再出现，孙辈跟随父辈独立成轨；所有角色的完整历史轨迹从出生保留为可见暗点，近期为长光束；AGE 去掉前导零；角色死亡后保留头部物种符号但移除该处标签，标签只留在终点；终点人类统一 `*`、猫狗统一 `+`，并增加明显闪烁与射线。
-- `life` 新增动物：前 20 年随机出现一只 `dog`（10～12 年），首个孩子出生后 20 年内随机出现一只 `cat`（10～12 年），二者各有独立符号与终点星符号。
-- 新增 `--life-cycle <秒>` 控制 0～100 岁一轮时长，默认 120 秒，速度按周期自动换算；快捷键 `y`。
+- `dragon` now flies in front of a layered ink-wash backdrop: two mountain ridges and a denser drifting cloud sea; the dragon and pearl remain the brightest layer, and `--plain` restores the previous starfield-only backdrop.
+- `monalisa`: new optional `--gallery` adds a faint warm gallery halo and a soft floor glow behind the static portrait; the default stays the clean background-free portrait. Added `docs/monalisa-gallery.png`.
+- The documentation preview helper `tools/ansi2png.py` now understands ANSI `40`–`47` / `100`–`107` background resets, so background cells no longer smear across neighbouring preview cells.
+- **Smooth effect hand-off**: switching effects (playlist, `n`/`p`, number keys) no longer cuts hard. The outgoing scene keeps animating and the incoming scene starts warming up immediately, and the two are composited through a new `transition` layer. `--transition fade` (default) dims the old scene to black in the first half and brings the new one up in the second; `--transition dissolve` flips cells between the two scenes on an 8×8 Bayer ordered-dither threshold and interpolates colours, for a true cross-fade; `--transition none` / `--no-fade` keeps the old instant cut with the white flash. `--transition-secs <0-5>` sets the blend length (default 0.6 s), and playlist blends are capped at half of `--switch` so each effect still gets screen time. The blend runs on wall-clock time (unaffected by `--speed`) and keeps running while paused; `r` still restarts instantly. Rendering both scenes during the blend roughly doubles update+draw cost for those few frames only.
+- Documentation is now bilingual: `README.md` and `CHANGELOG.md` are the English primary documents, with complete Chinese mirrors in `README.zh-CN.md` and `CHANGELOG.zh-CN.md`. Both READMEs carry the same English–Chinese name table for all 27 effects, `trix --list` uses the same English names, and the documents link to each other at the top.
+- The release workflow gained a Linux ARM64 job: a static `aarch64-unknown-linux-musl` binary built with `cross`, packaged as `trix-<version>-linux-aarch64.tar.gz`, smoke-tested under QEMU and published alongside the existing macOS universal and Linux x86_64 assets.
+- `monalisa` was reworked into a **background-free portrait**: a 148×134 figure RGBA is baked offline from the reference pixel art (cropped, cut out, white mosaic seams removed, color graded), then sampled at runtime to fit the terminal into ANSI color cells + ASCII character detail; no landscape, gilded frame or floating dust — only the figure (hair, face, neck and shoulders, folded hands); the figure is widened by about 12% horizontally, closer to the original's posture; **the default cell version is static and does not blink**. ASCII by default; `--unicode` uses `▀`/`▄` half blocks for higher vertical resolution; `--ghost` keeps the original pure-character "ghost" version (`src/data/monalisa_ascii.txt`, foreground color only, no background cells, blinking retained).
+- Canvas: restored `Cell.bg` / `paint` / `set_bg` together with background SGR diffing and the `40` baseline reset (needed by the `monalisa` cell version; other effects do not paint a background by default).
+- `mario` reworked (a pure-character game screen): the whole level is still there — cloud / hill / bush parallax, brick ground with gray mortar seams, the question-block / brick / used-block rows, a standable green pipe, spinning coins, Goombas (two-frame walk + stomped), mushrooms (popped out of a block, bouncing on landing, eaten for +1000), landing dust, `+200/+100/+1000` floating score text and an SMB-style HUD (`MARIO` / score / `◉xNN` / `WORLD 1-1` / `TIME`), with the auto-run predictor aiming at landing spots and hitting blocks at their real height. **The visuals are now pure glyphs**: no ANSI background color is used at all — the sky is just the terminal background (sparse stars), the ground and bricks are filled with `#` and the seams drawn with `|` `-` `+`, question blocks are `#` fill + `?` + rivets, pipes are `#` fill + highlight / dark edge, and hills and clouds use outlines + dotted hatching, everything colored per object (orange brick, brown earth, green hill, white cloud, gold coin, Mario red / skin / blue / brown). ASCII by default (`# o = *`); `--unicode` uses `█ ▀ ▄` solid blocks; Mario is a hand-drawn 12×7 sprite: cap / sideburn / eye / mustache / overalls / yellow button / brown shoe, in four frames — stand / run×2 / jump. Along the way this fixed "background color left over in later effects after visiting an effect that paints a background": the background fallback now writes `40` (the black background at program start) and a reset is appended when a whole frame has no background cells; Canvas background-reset and Mario sprite-size tests were added. **Stomp detection fixed**: previously it only checked horizontal distance and "2.5 rows above the ground", so a Goomba passing underneath would launch an airborne Mario again (`vy = -15`), bouncing him to the top of the screen over and over and inflating the score; now a stomp requires **falling** (`vy > 0`) with the feet within the Goomba's height band (ground-8..ground), and the horizontal test is narrowed to 6 cells; a stomped Goomba is **removed after 0.35 s** (no respawn), plus new `vy` clamping (±40) and a floor of `y` not below -1 as a safety net; 4 regression tests were added: no trigger when passing high above, no trigger while rising, gone once flattened, and staying near the ground over 30 s of continuous running.
+- `fish` Aquarium (formerly "Fish Tank"): bubbles reworked — the characters are fixed to `o` / `O` / `8`, and **each bubble gets one random light or dark shade** (0.42–0.95 brightness); rising became **straight**: every bubble has a fixed `base_x` and its horizontal offset is only a sine function of climb height, with `sway_cycles` randomized 0–3, so it swings left and right at most 3 times over the whole trip and never drifts sideways; rise speed was lowered to 0.45–2.0 cells/s (was 0.8–3.4) and the count narrowed from 16–70 to 10–36; also fixed the **mouth bobbing up and down** on leftward fish (the tail wag was computed from the wrong mirrored column, so the ripple landed on the mouth cell) and removed the whole-fish vertical bob, adding unit tests such as `mouth_never_moves` and `bubbles_rise_straight_with_at_most_three_swings`; re-recorded `docs/fish.png` and `docs/fish.gif`.
+- `shanghai` river surface and night sky: added **two random boats** — the type is picked at random from a sailboat (mast + hard triangular sail + bow lantern), a freighter (deckhouse + smoking funnel + masthead light) and a ferry (main cabin + wheelhouse + funnel), and the two are always different; size, hull palette (amber / teal / steel gray / rose), waterline depth and left-right drift direction are randomized independently as well; the distant boat is small and sits on the water while the foreground boat is about twice the hull and sits in front of the scene, and the two are guaranteed not to overlap horizontally, with vertical positions staggered by river depth. A hull is built from the deck line + flared gunwale + a porthole side band + bottom, colored per part (deck / side / deckhouse / window glow / funnel / masthead light / lantern), with breathing deckhouse window light, a blinking masthead lamp, white funnel smoke drifting up, a stern wake and a two-row rippled reflection, plus a per-type bobbing rhythm (the small boat rocks more, the ferry barely at all); each boat wraps in from the other side after leaving the screen. **Every 3–5 s** the night sky releases **1–2 shooting stars** at random (about 18% of the intervals are skipped), with a white-hot head and a fading ice-blue or warm-gold trail, recycled after crossing the skyline or fading out, and drawn below the city and the moon. ASCII default and `--unicode` (`▔ ▒ ▄ █ ▣ │ ▓ ╱ ╲ ✦ ▸ ●`) behavior are unchanged, with new unit tests for boat randomness / size / position / non-overlap, shooting-star pair counts and trajectories, and ASCII-only rendering; `docs/shanghai.png`, `docs/shanghai-unicode.png` and `docs/shanghai.gif` were all re-recorded.
+- `tiananmen` reworked: the Tiananmen gate tower was scaled up to about **92% of screen width / 62% of screen height** and re-layered after the icon — double-eave orange tile roofs with upturned corners, a red-pillared gatehouse with dark windows and the national emblem, red walls, five archways with white stone surrounds, the long white-framed slogans and central portrait, white stone balustrades with the central causeway, and red flags and side buildings on both sides; details such as the bridge deck are omitted by convention. The radiance became two-stage: golden beams first grow outward and upward from behind the roof ridge one by one (staggered, each with a bright tip), and once fully formed a bright point runs along each beam from root to tip, staggered by `|i - center|` and lighting up cyclically from inside out; the roof eaves breathe gold in sync. ASCII default and `--unicode` solid-block behavior are unchanged, with new beam / phase / large-canvas tests.
+- `traffic` vehicles and lanes reworked: the old 1-row, 3–5-cell "small fish" cars became **8–16 cells long, 3 rows high** side-view cars (bright roof line / solid body / two wheels beneath), with white headlights + a 3-cell headlight cone at the front and red taillights + a 2-cell afterglow at the rear; the lane count is now derived from road height (4 lanes at 200×40, instead of carpeting the road with 14 lanes), lanes are separated by dashed dividers, and **direction alternates per lane** (no more oncoming traffic within a lane), with 3 evenly spaced cars at the same speed per lane so they cannot interleave; the road band moved from 0.42–0.80 to 0.36–0.84. The vertical street became **6 columns × 5–9 rows of top-down cars** (rounded front / rear, windshield and rear window, four wheels, twin headlights / taillights), with direction alternating per column and the lane count derived from width. `--density` now also controls traffic density (default 1.0, 3 cars per horizontal lane, 2 vertical); `--street vertical`, the ASCII default and `--unicode` block-character behavior are unchanged; new lane / size / direction / density unit tests.
+- `life` optimization summary: a gapless family stack (`KID3 -2 / KID2 -1 / ME 0 / WIFE +1 / KID1 +2`, `CAT +3`, friends share `+4`, `DAD/MOM +5/+6`); age labels for family members (the final age at the death point and the top star, blinking in sync for 1 s; non-relatives get no age); bright beams that grow with age while early life keeps dim dots; **an approximately 6 s supernova finale when ME's timeline ends (the flashback and stardust slow down, the comet keeps its original speed)** — a white-light core and cross burst, a life flashback from BIRTH to the death point, 4 double-layer shockwave rings, 64 deterministic stardust particles, a thickened comet and a permanent halo on the top ME star; the flashback scan column stops at ME's stopping line and stays three columns wide instead of disappearing.
+- `fairy` reworked (second version): abandoned the "auto-trace from cross-stitch" route — it averaged the 2 px outline into gray noise, and the white dress would end up the same color as the white background. Instead it is a **30×34 hand-drawn pixel sprite** (`src/data/fairy_sprite.txt`, designed cell by cell): low bun + huadian forehead mark, three-quarter profile (brow, closed eye, nose shadow, lips), right arm raised holding a flower basket, left arm folded across the chest, cross-collar blue bodice, waist sash, white long dress with a leftward hem, bare feet. A 17-color palette, with glyphs such as `# @ : % & *` in ASCII and solid blocks for hair / skin plus `❀` for petals under `--unicode`. The sprite is drawn 1:1 in terminal cells with no second downsampling pass.
+- `fairy` motion simplified: only a slow elliptical orbit (about ±20% of screen width horizontally, ±9% of screen height vertically) and a slight sway remain; every 24 s she performs a 6 s **turn** implemented with `scaleX = cos(θ)` — when her profile narrows to nearly a line a soft light is added, and it is never a flat 360° somersault. The previous version's procedural ribbons and full revolution were removed.
+- `fairy` petals: scattered from the basket mouth, inheriting her current horizontal velocity, trailing behind her and then scattering down under gravity and sideways sway; the remaining petals drift in from the top of the frame. `--petal-count` / `--petal-speed` keep their meaning.
+- `fairy` night scene simplified: a pale moon, sparse stars, a gradient backdrop; cloud bands and excess stardust were removed.
+- `storm` improvements: a layer of gray-white high cloud was added at the top of the screen — two-frequency noise plus per-cell jitter produces irregular, non-blocky clumps (about the top quarter of the height, covering roughly 40% of the cells); the color shifted to pale gray-blue-white with higher brightness, the bottom two rows fade into the sky, and the layer as a whole **drifts slowly right** (about 3 columns/s by default, with all noise layers translating at the same speed so they never slip out of alignment); it only fills empty cells and never covers the existing cloud bands, rain, lightning, city or ground.
+- `blackhole`: the outer stars became a **plump elliptical ring tilted like "/"** (about 29° visual inclination, 0.52 minor-axis ratio); it fills the screen with the outer edge pressed against the top and bottom edges; the outermost ring now uses random low-density `.` / `:` / `+` scatter (no more tangential wireframe, which formed a second ring); a mid-band of stardust was added between the inner and outer layers for a more even nebula density; rotation became same-direction and gentler in its differential — the inner ring is still fast and the outer still slow, but the outer stardust / accretion band / edge scatter speed up together, so the whole thing reads as one rotating elliptical disk; the base orbital speed is ×1.7 overall; the accretion band is tilted to match and its radius widened to ×1.5.
+- `buddha` halo improvements: the expanding mandala rings now use **equidistant expansion** — all rings share one expansion phase and the radial gap between neighbors is constant; the first ring's radius is computed from the Buddha's actual drawn extent (body, head halo, lotus seat), so the whole layer starts outside the figure and no longer presses on the Buddha or overlaps the head halo; at most 5 rings; ring brightness is kept below the Buddha's gold (0.6 on the inner ring, about 0.2 at the outer edge) and still dims layer by layer outward.
+- `tornado` toned down: fill brightness dropped from 0.66~1.38 to 0.42~0.85, particles per row from 28 to 20, and the spiral highlights and dark edges were dimmed too; overall height dropped another step (0.38~0.78 → 0.28~0.58 of screen height), with the top kept on screen and the original `≈` closure retained; 30 debris particles now drift outward at the bottom (random direction / distance / height, thrown out in an arc and then fading).
+- `demoneye`: the iris / vertical pupil / corneal highlight now translate together with the gaze target (previously only the highlight moved); each dart lands in about 0.1 s and always returns to dead center facing the viewer within 0.45–0.85 s, with no dart during the short gap of a double blink; pupil scaling, eyelids, blood vessels, shockwaves and the HUD are unchanged.
+- `demoneye` pace slowed: blinking now happens every 8–15 s, randomly a single or a double blink when the time comes (about 7:3); between two blinks only 1–2 darts are scheduled ("dart out + return to center" counts as one), consecutive darts start at least 5 s apart, and if they do not fit only 1 dart is scheduled.
+- `demoneye`: added `--eye-motion dart|still` (default `dart`, i.e. eye darting) with the aliases `--eye-still` / `--eye-dart`; in `still` the eye is pinned to center and only blinking, pupil scaling and the pupil highlight's jump remain.
+- `demoneye`: the corneal white highlight returns to its original look (a white main spot at radius 0.20/0.30 plus a small 0.07 secondary spot, no breathing, no trail) and now jumps quickly across the iris every 0.55–1.6 s (landing in about 0.09–0.18 s), keeping the original liveliness; occlusion protection was added: the vertical pupil and its hot edge always draw above the highlight, so the white never covers the pupil's black hole.
+- Added `life` Threads of Life: a horizontal 0–100 age timeline with a glowing lifeline on each side; six tracks start out — me / grandpa / grandma / dad / mom / brother — and the grandparents, parents and brother exit one after another, turning into end stars; girlfriend → wife, exactly 3 children, grandchildren, and classmates / coworkers / friends enter and leave on schedule; children keep going past the end point without becoming stars, looping forever.
+- `life` improvements: humans all use `@` and differ only by color (dogs `d`, cats `c`); names sit in the same row as the beams, at the very front, using uppercase abbreviations (such as `ME` / `KID3` / `GRAND1`) that are kept through the star phase; recent history is drawn as long beams (`=` / `~` / `*`) and early history as dim dots that never disappear; me / parents / grandparents never switch lanes and couples stay adjacent; the death meteor is now a straight line at half speed; on/off-screen movement is half as fast. The default cycle is now 120 s.
+- `life` copy: the bottom-left event text no longer uses "leave the frame" and now uses life-like phrasing such as "goes to a farther place"; `PAL` / `UNI` / `WORK` / `FRIEND` expand to a full role description when they enter.
+- `life` relationships and tracks: `GPA/GMA` are paired tightly together within 3–4 rows above, `DAD/MOM` are paired below WIFE with one empty row between them, and `BRO` sits below MOM and yields together with the parents; `KID1` gets a reserved row below WIFE while `KID2/KID3` sit above the close body, each on its own track; `PAL/UNI/WORK/FRIEND` share one row near the body; `CAT` appears together with the first child and sits outside it; `GRAND` hugs the parent generation; GF only becomes WIFE after 1–2 years close to me; `WORK/FRIEND` always share the near row, never take a child or pet row and never move close to the parents; `WIFE` becomes a star at 75–90, later than the protagonist; `PARTNER` no longer appears and grandchildren get their own tracks following the parent generation; every character's full history is kept as visible dim dots from birth, with the recent part as a long beam; AGE drops leading zeros; after a character dies the species symbol stays at the head but the label there is removed, leaving the label only at the end point; at the end humans all use `*` and cats and dogs `+`, with pronounced blinking and rays.
+- `life` new animals: a `dog` appears at a random point in the first 20 years (for 10–12 years), and a `cat` appears at a random point within 20 years of the first child's birth (for 10–12 years); each has its own symbol and its own end-star symbol.
+- Added `--life-cycle <seconds>` to control the length of one 0–100 lifetime, default 120 s, with speeds scaled automatically from the period; shortcut `y`.
+- `dragon` full-body undulation: **2.6 traveling waves that propagate from head to tail** are layered onto the dragon's centerline, with amplitude fading in behind the neck and growing toward the tail; the overall Lissajous flight path and coiling feel remain, but the circular outline now undulates continuously into a serpentine shape and the tail sways naturally with the waves. The wave direction is taken from the smoothed tangent between neighboring body samples, avoiding the normal flips near the path's cusps; the head / neck stay stable. **The previous version's occasional random tail flick** and the temporary brightening / tail-fin spread logic were removed. New unit tests cover head-neck stability, amplitude growth toward the tail, canvas bounds and frame-to-frame smoothness.
 
 ## 0.8.0 — 2026-10-18
 
-- **ASCII 优先**：所有同时支持 ASCII / Unicode 的特效（含 `matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`tiananmen`、`fairy`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`shanghai`、`traffic`）默认以 ASCII 启动；Unicode 改为显式 `--unicode` / `--charset unicode`。项目约定写入 `AGENTS.md`，并新增默认字符集 / ASCII-only 测试；清理 `landscape`、`solar` 默认 ASCII 下残留的 Unicode 字符。
-- 新增 `monalisa` 蒙娜丽莎动态油画：整屏 sfumato 山水与金色画框，人物呼吸、眼神游移/眨眼、微笑微动、油彩反光与浮尘；默认 ASCII，`--unicode` 切换。
-- 新增 `ballet` 舞动芭蕾：男女双人舞者始终手拉手（共享一个发光 clasp），沿 Lissajous 路径在整屏舞动；tutu、足尖、tunic、飘带、聚光灯、浮尘与运动残影。
-- 新增 `demoneye` 恶魔之眼：整屏巨大血眼，虹膜随机扫视并偶尔直视观众，竖瞳缩放、随机眨眼/双击眨眼、眼睑压迫阴影、血丝与眨眼冲击波。
-- 快捷键新增 `o` 蒙娜丽莎、`v` 舞动芭蕾、`g` 恶魔之眼；帮助面板、`--list` 与 README 更新到 26 个特效。
-- 火焰：底部合并成一整片宽火床，中间最高，两侧火舌倾斜散开。
-- 太阳系：八大行星（移除冥王星）；太阳移到左上角，光线向右下扇形分层传播，不越过行星线。
-- 黑洞：移除所有绕过 spin 的绘制侧旋转；盘面/星尘/坠星/吸积带/透镜环统一减速。
-- 龙卷风：更扭曲、顶部再加宽 1.5–2 倍、底部收尖；每团密度/亮度再 ×2，碎片更多且被卷向高空。
-- 蒲公英：3 丛×2 茎/6 花头；左右根向中间弯曲；花头尺寸 ×1.5。
-- 佛光：回退上一版；原有三层曼陀罗粒子环改为同时可见、按相位向外扩散。
-- 心电：降至约 56 BPM，随机心搏间隔、上下高度、QRS 宽度和平直段长度。
-- 光束保持 `--beam-motion straight|jump`。
-- 版本提升到 `0.8.0`；自动发布 macOS universal + Linux static 包。
+- **ASCII first**: every effect that supports both ASCII and Unicode (including `matrix`, `mario`, `ecg`, `dandelion`, `fish`, `landscape`, `tiananmen`, `fairy`, `tornado`, `storm`, `monalisa`, `ballet`, `demoneye`, `shanghai`, `traffic`) now starts in ASCII by default; Unicode became an explicit `--unicode` / `--charset unicode`. The convention was written into `AGENTS.md` and default-charset / ASCII-only tests were added; leftover Unicode characters under default ASCII were cleaned up in `landscape` and `solar`.
+- Added `monalisa` Mona Lisa, a dynamic oil painting: a full-screen sfumato landscape and gilded frame, with the figure breathing, gaze wandering / blinking, a faintly moving smile, oil-paint glints and floating dust; ASCII by default, switched with `--unicode`.
+- Added `ballet` Ice Ballet: a male and a female dancer who always hold hands (sharing one glowing clasp), dancing across the whole screen along a Lissajous path; tutu, pointe shoes, tunic, ribbons, spotlights, floating dust and motion trails.
+- Added `demoneye` Demon Eye: a huge bloodshot eye filling the screen, with the iris scanning randomly and occasionally staring straight at the viewer, pupil scaling, random / double blinks, eyelid pressure shadows, blood vessels and blink shockwaves.
+- New shortcuts `o` for Mona Lisa, `v` for Ice Ballet and `g` for Demon Eye; the help panel, `--list` and the README were updated to 26 effects.
+- Fire: the bottom merged into one wide fire bed, highest in the middle, with tilted tongues of flame spreading to both sides.
+- Solar system: eight planets (Pluto removed); the sun moved to the top-left corner and its rays propagate down-right in layered fans without crossing the planet line.
+- Black hole: removed all draw-side rotation that bypassed spin; the disk / stardust / falling stars / accretion band / lensing ring all slow down together.
+- Tornado: more twisted, the top widened another 1.5–2×, and the bottom tapered to a point; each clump's density / brightness doubled again, with more debris carried high into the air.
+- Dandelion: 3 clumps × 2 stems / 6 flower heads; the left and right roots curve toward the middle; flower head size ×1.5.
+- Buddha's Halo: reverted the previous version; the original three mandala particle rings are now visible at the same time and expand outward by phase.
+- ECG: dropped to about 56 BPM, with randomized beat intervals, vertical height, QRS width and flat-segment length.
+- Beams keep `--beam-motion straight|jump`.
+- Version bumped to `0.8.0`; automatic release of macOS universal + Linux static packages.
 
 
 ## 0.7.0 — 2026-10-18
 
-- 新增 8 个场景：`fish` 鱼缸、`landscape` 五光十色山水、`shanghai` 东方明珠、`tiananmen` 光芒万丈、`traffic` 车水马龙、`fairy` 仙女散花、`tornado` 龙卷风、`storm` 电闪雷鸣。
-- `shanghai` / `traffic` 默认 ASCII，`--unicode` 切换 Unicode；`traffic` 支持 `--street horizontal|vertical`。
-- `fairy` 支持 `--petal-count` / `--petal-speed`；`tornado` 支持 `--tornado-count` / `--tornado-speed`。
-- `storm` 落雷时全屏亮白闪屏；`fish` 大小鱼随机方向/姿态。
-- 直接运行 `trix` 自动循环全部 23 个特效；支持 `--playlist cycle|random` 与 `--switch <秒>`。
-- 帮助面板改为双列，支持 23 个特效与新快捷键 `f/l/b/j/c/x/z/k`。
-- 代码雨蓝/绿双色；火焰底部加宽连接、火苗分开。
-- 版本提升到 `0.7.0`；自动发布 macOS universal + Linux static。
+- Added 8 scenes: `fish` Aquarium (formerly Fish Tank), `landscape` Colorful Landscape, `shanghai` Oriental Pearl, `tiananmen` Tiananmen Radiance, `traffic` Traffic Flow, `fairy` Fairy Scattering Petals, `tornado` Tornado, `storm` Thunderstorm.
+- `shanghai` / `traffic` default to ASCII, switched to Unicode with `--unicode`; `traffic` supports `--street horizontal|vertical`.
+- `fairy` supports `--petal-count` / `--petal-speed`; `tornado` supports `--tornado-count` / `--tornado-speed`.
+- `storm` flashes the whole screen white on a lightning strike; `fish` fish of different sizes take random directions / postures.
+- Running `trix` directly auto-cycles all 23 effects; supports `--playlist cycle|random` and `--switch <seconds>`.
+- The help panel became two columns and supports the 23 effects and the new shortcuts `f/l/b/j/c/x/z/k`.
+- Code Rain in blue / green two-tone; the fire bottom widened and joined, with the flames kept separate.
+- Version bumped to `0.7.0`; automatic release of macOS universal + Linux static.
 
 ## 0.6.0 — 2026-10-17
 
-- 新增 `mario` 超级马里奥：自动闯关、顶问号砖块、蘑菇弹出与金币收集；Unicode 实心精灵 + `--ascii` 两版。
-- 新增 `ecg` 心率跳动：绿色心电网格、P-QRS-T 波形、扫描线、HR/SpO2 监护界面；Unicode + `--ascii` 两版。
-- 新增 `dandelion` 蒲公英：左侧多株盛开蒲公英、种子向右飘散；`--seed-count` / `--seed-speed` 控制数量和速度。
-- 代码雨改为 **蓝/绿双色**。
-- 火焰底部火床进一步加宽、连接；上方火苗保持分开，中间最高。
-- 帮助面板加入 `m/e/d` 快捷键，可显示 15 个特效。
-- 版本号提升到 `0.6.0`；推送 tag 自动发布 macOS universal + Linux static 包。
+- Added `mario` Super Mario: auto level running, bumping question blocks, mushrooms popping out and coin collection; a Unicode solid-block sprite version plus `--ascii`.
+- Added `ecg` Heartbeat Monitor: a green ECG grid, P-QRS-T waveform, sweep line and an HR/SpO2 monitor UI; Unicode plus `--ascii`.
+- Added `dandelion` Dandelion: several blooming dandelions on the left with seeds drifting right; `--seed-count` / `--seed-speed` control count and speed.
+- Code Rain became **blue / green two-tone**.
+- The fire bed at the bottom was widened and joined further; the flames above stay separate, highest in the middle.
+- The help panel gained the `m/e/d` shortcuts and can show 15 effects.
+- Version bumped to `0.6.0`; pushing a tag automatically releases macOS universal + Linux static packages.
 
 ## 0.5.1 — 2026-10-17
 
-- 新增 GitHub Actions 自动构建/发布：`.github/workflows/release.yml`。
-- tag `v*` 自动生成 **macOS universal**（arm64 + x86_64）与 **Linux x86_64 static musl** 发布包，并创建 GitHub Release。
-- 版本号提升到 `0.5.1`。
+- Added GitHub Actions automatic build / release: `.github/workflows/release.yml`.
+- The `v*` tag automatically builds **macOS universal** (arm64 + x86_64) and **Linux x86_64 static musl** release packages and creates a GitHub Release.
+- Version bumped to `0.5.1`.
 
 ## 0.5.0 — 2026-10-17
 
-- 项目正式从 `texiao` 更名为 **`trix`**；Rust package/binary、CLI 帮助、文档、脚本与工具全部同步改名。
-- 版本号提升到 `0.5.0`；此前 **v0.1.0 / v0.2.0 / v0.3.0 / v0.4.0** 的提交、tag 与备份全部保留，可回溯。
-- 功能与 v0.4.0 一致（Unicode NASA 登录、连通火焰、多组可调参数等）。
+- The project officially renamed from `texiao` to **`trix`**; the Rust package/binary, CLI help, docs, scripts and tooling were all renamed to match.
+- Version bumped to `0.5.0`; the commits, tags and backups of **v0.1.0 / v0.2.0 / v0.3.0 / v0.4.0** are all preserved and traceable.
+- Features match v0.4.0 (Unicode NASA login, connected fire, several groups of tunable parameters, etc.).
 
 ## 0.4.0 — 2026-10-17
 
-- **火焰 `fire`**：底部火焰连成连续火床，上方保留多股分开的细长火舌；中间燃料堆固定最高，其余随机高度。
-- **NASA `matrix`**：改为 **Unicode 蓝色 NASA 横幅**（白色大字、红色 swoosh、白色星点、蓝白流光），NASA 与登录框整体下移并居中；登录框、进度条、雷达改用 Unicode 边框/块字符；保留 `--ascii` 纯 ASCII 回退。
-- **黑洞 `blackhole`**：夜空随机方向流星；`--spin` 调整吸积盘/内落旋转速度，默认比旧版慢；`--meteors` 调整流星数量。
-- **光束 `beams`**：改为单向（左→右），`--density` 调密度、`--beam-speed` 调速度。
-- **烟花 `fireworks`**：`--density` 调烟花密度。
-- **太阳系 `solar`**：行星改为更圆的球体；左上角增加金色发散太阳光；太阳/行星比例修正。
-- **银河 `galaxy`**：增加动态星团弧、星光闪烁、流星；`--density`、`--twinkle`、`--meteors` 可调。
-- **佛光 `buddha`**：佛祖整体垂直居中。
-- **Tom & Jerry**：默认速度放慢，默认不跳跃；`--speed`/`+`/`-` 调速，`--jump` 开启跳跃；HUD 显示有效追逐倍率。
-- 新增全局参数：`--density`、`--spin`、`--twinkle`、`--meteors`、`--beam-speed`、`--jump/--no-jump`、`--unicode/--ascii`、`--charset unicode`。
-- 版本提升到 `0.4.0`；`v0.3.0` 及更早 tag/备份保留用于回退。
-- 39 个测试通过；真实 PTY CPU 约 **0.32–1.61%** 单核、RSS **2.05–2.28 MiB**、二进制约 **603 KiB**。
+- **Fire `fire`**: the bottom flames join into a continuous fire bed while several separate, thin, elongated tongues remain above; the middle fuel pile is pinned highest and the rest vary randomly in height.
+- **NASA `matrix`**: became a **Unicode blue NASA banner** (white block lettering, red swoosh, white stars, blue-white light streaks), with NASA and the login box shifted down and centered as a whole; the login box, progress bars and radar now use Unicode borders / block characters; the pure-ASCII `--ascii` fallback is retained.
+- **Black hole `blackhole`**: meteors in random directions in the night sky; `--spin` adjusts accretion disk / infall rotation speed, slower than the old default; `--meteors` adjusts the meteor count.
+- **Beams `beams`**: made one-way (left→right), with `--density` for density and `--beam-speed` for speed.
+- **Fireworks `fireworks`**: `--density` adjusts firework density.
+- **Solar system `solar`**: planets became rounder spheres; golden radiating sunlight was added at the top-left; the sun / planet ratio was corrected.
+- **Galaxy `galaxy`**: added dynamic star-cluster arcs, star twinkling and meteors; `--density`, `--twinkle` and `--meteors` are tunable.
+- **Buddha's Halo `buddha`**: the Buddha is now vertically centered as a whole.
+- **Tom & Jerry**: slower default speed and no jumping by default; `--speed`/`+`/`-` adjust the speed and `--jump` enables jumping; the HUD shows the effective chase multiplier.
+- Added global parameters: `--density`, `--spin`, `--twinkle`, `--meteors`, `--beam-speed`, `--jump/--no-jump`, `--unicode/--ascii`, `--charset unicode`.
+- Version bumped to `0.4.0`; the `v0.3.0` and earlier tags / backups are kept for rollback.
+- 39 tests pass; on a real PTY, CPU is about **0.32–1.61%** of one core, RSS **2.05–2.28 MiB** and the binary about **603 KiB**.
 
 ## 0.3.0 — 2026-10-17
 
-- **火焰 `fire`**：改为多个随机燃料堆（位置/宽度/热量/漂移独立），形成多股细长火舌，不再是单一火堆；保留真实火焰色、火星与爆燃。
-- **黑客帝国 `matrix`**：重做为 **NASA 后台登录大屏**。大号 ASCII NASA 字样（蓝/白/红流光）、OPERATOR/PASSWORD/2FA 字段、AUTH/DECRYPT 进度、日志、雷达、ACCESS GRANTED。
-- **新增 7 个特效**：
-  - `blackhole` 黑洞吞噬恒星：事件视界、连续光子环、吸积盘、透镜弧、喷流、内落恒星与计数。
-  - `beams` 横向随机亮色不规则光束。
-  - `fireworks` 双层粒子烟花、延迟爆裂、城市/星空。
-  - `solar` 太阳与九大行星一维排列，独立颜色/大小、土星环、卫星、彗星。
-  - `galaxy` 满屏星河、中央稠密银河带、暗尘与流星。
-  - `buddha` 佛光普照：ASCII 佛祖、头光/光环、莲座、曼陀罗、金色粒子。
-  - `tomjerry` Tom 追 Jerry 的太空站动画，`--speed`/`+`/`-` 调整追逐速度。
-- 所有新场景增加满屏 ASCII 点缀（星空、网格、粒子、光晕、城市/走廊）。
-- 快捷键扩展到 `1`–`9`、`0`、`[`、`]`；帮助面板列出 12 个特效。
-- 版本号提升到 `0.3.0`；`v0.1.0` / `v0.2.0` tag 与备份保留。
-- 真实 PTY 实测：CPU 约 **0.43–2.93%** 单核、RSS 约 **2.03–2.27 MiB**、二进制约 **587 KiB**、启动约 2 ms；37 个测试通过。
+- **Fire `fire`**: changed to multiple random fuel piles (position / width / heat / drift independent), producing several thin elongated tongues instead of a single fire pile; realistic flame colors, embers and bursts are retained.
+- **Matrix `matrix`**: reworked into a **NASA backend login big screen**. Large ASCII NASA lettering (blue / white / red light streaks), OPERATOR/PASSWORD/2FA fields, AUTH/DECRYPT progress, logs, radar, ACCESS GRANTED.
+- **Added 7 effects**:
+  - `blackhole` Black Hole devouring stars: event horizon, continuous photon ring, accretion disk, lensing arcs, jets, infalling stars and a counter.
+  - `beams` horizontal random bright-color irregular light beams.
+  - `fireworks` two-layer particle fireworks, delayed bursts, city / night sky.
+  - `solar` the sun and nine planets in a one-dimensional row, with independent colors / sizes, Saturn's rings, moons and comets.
+  - `galaxy` a screen full of stars, a dense central galactic band, dark dust and meteors.
+  - `buddha` Buddha's Halo: an ASCII Buddha, head light / halo, lotus seat, mandala and golden particles.
+  - `tomjerry` a space-station animation of Tom chasing Jerry, with `--speed`/`+`/`-` adjusting the chase speed.
+- All new scenes gained full-screen ASCII accents (stars, grids, particles, glows, city / corridors).
+- Shortcuts were extended to `1`–`9`, `0`, `[`, `]`; the help panel lists 12 effects.
+- Version bumped to `0.3.0`; the `v0.1.0` / `v0.2.0` tags and backups are preserved.
+- Measured on a real PTY: CPU about **0.43–2.93%** of one core, RSS about **2.03–2.27 MiB**, binary about **587 KiB** and startup about 2 ms; 37 tests pass.
 
 ## 0.2.0 — 2026-10-17
 
-- **火焰 `fire`**：更高、更明亮的火舌；底部宽、顶部收窄的三角轮廓；保留真实红/橙/黄/白火焰色、火星与爆燃。
-- **黑客帝国 `matrix`**：改为横向 NASA/JPL 入侵控制台。横向代码/十六进制数据流、防火墙与解密进度、日志打字机、雷达、ACCESS GRANTED、glitch；默认 ASCII，`--charset kana` 可混入半角片假名。
-- **巨龙 `dragon`**：重做为全屏飞行的中国龙。长蛇形龙身按弧长跟随飞行轨迹，带鹿角、龙须、鬃毛、獠牙、四爪、背鳍、尾鳍、龙鳞与金色脊线；在整屏 Lissajous 航线上飞行。
-- 版本号提升到 `0.2.0`；`v0.1.0` 的 git tag、源码 tar 包与二进制备份保留用于回退。
-- 新增本 CHANGELOG。
+- **Fire `fire`**: taller, brighter flames; a triangular silhouette that is wide at the bottom and narrows toward the top; realistic red / orange / yellow / white flame colors, embers and bursts are retained.
+- **Matrix `matrix`**: changed to a horizontal NASA/JPL intrusion console. Horizontal code / hex data streams, firewall and decrypt progress, typewriter logs, radar, ACCESS GRANTED, glitch; ASCII by default, with `--charset kana` mixing in half-width katakana.
+- **Dragon `dragon`**: reworked into a full-screen flying Chinese dragon. Its long serpentine body follows the flight path by arc length, with antlers, whiskers, mane, fangs, four claws, dorsal fin, tail fin, scales and a golden spine ridge; it flies along a full-screen Lissajous path.
+- Version bumped to `0.2.0`; the `v0.1.0` git tag, source tarball and binary backup are kept for rollback.
+- Added this CHANGELOG.
 
 ## 0.1.0 — 2026-10-17
 
-- 初始版本：`rain` / `fire` / `dragon` / `map` / `matrix` 五个特效。
-- libc raw mode、diff canvas、truecolor/256/16/mono、8 套主题、snapshot/bench、交互快捷键。
-- 真实 PTY 验证与性能测量。
+- Initial version: five effects — `rain` / `fire` / `dragon` / `map` / `matrix`.
+- libc raw mode, diff canvas, truecolor/256/16/mono, 8 themes, snapshot/bench, interactive shortcuts.
+- Verified on a real PTY and performance measured.

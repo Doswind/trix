@@ -9,6 +9,7 @@ pub mod scene;
 pub mod scenes;
 pub mod term;
 pub mod theme;
+pub mod transition;
 pub mod world;
 
 pub use app::run;

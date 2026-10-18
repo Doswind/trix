@@ -1,320 +1,367 @@
 # trix
 
-> 前身：texiao（原项目名）；从 v0.5.0 起正式更名为 **trix**。
+**English** | [简体中文](README.zh-CN.md)
 
-> 终端里的科幻 ASCII / Unicode 特效引擎 — 代码雨、火焰、巨龙、世界地图、NASA 登录、黑洞、光束、烟花、太阳系、银河、佛光、Tom & Jerry、超级马里奥、心率跳动、蒲公英、鱼缸、山水、东方明珠、天安门、车水马龙、仙女散花、龙卷风、电闪雷鸣、蒙娜丽莎、冰上芭蕾、恶魔之眼、生命的轨迹。
-> Rust 单线程、无异步运行时、diff 渲染，启动约 **2 ms**，常驻内存约 **2.1–2.3 MB**，30 FPS 下 CPU 约 **0.2–1.4%** 单核。当前 **v0.8.0**；开发版新增「生命的轨迹」，共 **27** 个特效，双字形特效默认 ASCII。
+> Formerly **texiao** (the original project name); renamed to **trix** starting with v0.5.0.
+
+> A sci-fi ASCII / Unicode effects engine for the terminal — code rain, fire, a flying dragon, a world map, a NASA login, a black hole, light beams, fireworks, the solar system, a galaxy, Buddha's halo, Tom & Jerry, Super Mario, a heartbeat, a dandelion, an aquarium, a landscape, the Oriental Pearl, Tiananmen, traffic, a petal-scattering fairy, tornadoes, a thunderstorm, Mona Lisa, ice ballet, a demon eye, and the threads of life.
+> Single-threaded Rust, no async runtime, diff rendering. Starts in about **2 ms**, resident memory around **2.1–2.3 MB**, CPU around **0.2–1.4%** of one core at 30 FPS. Current release **v0.8.0**; the development build adds “Threads of Life”, for **27** effects total. Effects that support both glyph sets start in ASCII.
 
 ![release](https://github.com/Doswind/trix/actions/workflows/release.yml/badge.svg)
 
 ![trix overview](docs/overview.png)
 
-> 动图：[代码雨](docs/rain.gif) · [火焰](docs/fire.gif) · [巨龙](docs/dragon.gif) · [NASA 登录](docs/matrix.gif) · [黑洞](docs/blackhole.gif) · [光束](docs/beams.gif) · [烟花](docs/fireworks.gif) · [太阳系](docs/solar.gif) · [银河](docs/galaxy.gif) · [佛光](docs/buddha.gif) · [Tom & Jerry](docs/tomjerry.gif) · [马里奥](docs/mario.gif) · [心电](docs/ecg.gif) · [蒲公英](docs/dandelion.gif) · [鱼缸](docs/fish.gif) · [山水](docs/landscape.gif) · [东方明珠](docs/shanghai.gif) · [天安门](docs/tiananmen.gif) · [车水马龙](docs/traffic.gif) · [仙女](docs/fairy.gif) · [龙卷风](docs/tornado.gif) · [电闪雷鸣](docs/storm.gif) · [蒙娜丽莎](docs/monalisa.gif) · [冰上芭蕾](docs/ballet.gif) · [恶魔之眼](docs/demoneye.gif) · [生命的轨迹](docs/life.gif)
+> GIFs / previews: [Code Rain](docs/rain.gif) · [Blazing Fire](docs/fire.gif) · [Coiling Dragon](docs/dragon.gif) · [NASA Login](docs/matrix.gif) · [Black Hole](docs/blackhole.gif) · [Light Beams](docs/beams.gif) · [Fireworks](docs/fireworks.gif) · [Solar System](docs/solar.gif) · [Starry Galaxy](docs/galaxy.gif) · [Buddha's Halo](docs/buddha.gif) · [Tom & Jerry](docs/tomjerry.gif) · [Super Mario](docs/mario.gif) · [Heartbeat](docs/ecg.gif) · [Dandelion](docs/dandelion.gif) · [Aquarium](docs/fish.gif) · [Landscape](docs/landscape.gif) · [Oriental Pearl](docs/shanghai.gif) · [Tiananmen](docs/tiananmen.gif) · [Traffic Flow](docs/traffic.gif) · [Fairy](docs/fairy.gif) · [Tornado](docs/tornado.gif) · [Thunderstorm](docs/storm.gif) · [Mona Lisa](docs/monalisa.png) · [Ghost edition](docs/monalisa-ghost.gif) · [Ice Ballet](docs/ballet.gif) · [Demon Eye](docs/demoneye.gif) · [Threads of Life](docs/life.gif)
 
-## 特效
+## Effects
 
-| 代码雨 `rain` | 燃烧火焰 `fire` | 巨龙盘旋 `dragon` |
+Every effect name below is given in English and Chinese.
+
+| id | English | 中文 |
+| --- | --- | --- |
+| `rain` | Code Rain | 代码雨 |
+| `fire` | Blazing Fire | 燃烧火焰 |
+| `dragon` | Coiling Dragon | 巨龙盘旋 |
+| `map` | World Map | 世界地图 |
+| `matrix` | The Matrix | 黑客帝国 |
+| `blackhole` | Black Hole | 黑洞 |
+| `beams` | Light Beams | 光束 |
+| `fireworks` | Fireworks | 烟花 |
+| `solar` | Solar System | 太阳系 |
+| `galaxy` | Starry Galaxy | 满天星河 |
+| `buddha` | Buddha's Halo | 佛光普照 |
+| `tomjerry` | Tom & Jerry | 猫和老鼠 |
+| `mario` | Super Mario | 超级马里奥 |
+| `ecg` | Heartbeat Monitor | 心率跳动 |
+| `dandelion` | Dandelion | 蒲公英 |
+| `fish` | Aquarium | 水族馆 |
+| `landscape` | Colorful Landscape | 五光十色 |
+| `shanghai` | Oriental Pearl | 东方明珠 |
+| `tiananmen` | Tiananmen Radiance | 光芒万丈 |
+| `traffic` | Traffic Flow | 车水马龙 |
+| `fairy` | Fairy Scattering Petals | 仙女散花 |
+| `tornado` | Tornado | 龙卷风 |
+| `storm` | Thunderstorm | 电闪雷鸣 |
+| `monalisa` | Mona Lisa | 蒙娜丽莎 |
+| `ballet` | Ice Ballet | 冰上芭蕾 |
+| `demoneye` | Demon Eye | 恶魔之眼 |
+| `life` | Threads of Life | 生命的轨迹 |
+
+| Code Rain (代码雨) `rain` | Blazing Fire (燃烧火焰) `fire` | Coiling Dragon (巨龙盘旋) `dragon` |
 | --- | --- | --- |
 | ![rain](docs/rain.png) | ![fire](docs/fire.png) | ![dragon](docs/dragon.png) |
 
-| 世界地图 `map` | 黑客帝国 `matrix` | 黑洞 `blackhole` |
+| World Map (世界地图) `map` | The Matrix (黑客帝国) `matrix` | Black Hole (黑洞) `blackhole` |
 | --- | --- | --- |
 | ![map](docs/map.png) | ![matrix](docs/matrix.png) | ![blackhole](docs/blackhole.png) |
 
-| 光束 `beams` | 烟花 `fireworks` | 太阳系 `solar` |
+| Light Beams (光束) `beams` | Fireworks (烟花) `fireworks` | Solar System (太阳系) `solar` |
 | --- | --- | --- |
 | ![beams](docs/beams.png) | ![fireworks](docs/fireworks.png) | ![solar](docs/solar.png) |
 
-| 满天星河 `galaxy` | 佛光普照 `buddha` | 猫和老鼠 `tomjerry` |
+| Starry Galaxy (满天星河) `galaxy` | Buddha's Halo (佛光普照) `buddha` | Tom & Jerry (猫和老鼠) `tomjerry` |
 | --- | --- | --- |
 | ![galaxy](docs/galaxy.png) | ![buddha](docs/buddha.png) | ![tomjerry](docs/tomjerry.png) |
 
-| 超级马里奥 `mario` | 心率跳动 `ecg` | 蒲公英 `dandelion` |
+| Super Mario (超级马里奥) `mario` | Heartbeat Monitor (心率跳动) `ecg` | Dandelion (蒲公英) `dandelion` |
 | --- | --- | --- |
 | ![mario](docs/mario.png) | ![ecg](docs/ecg.png) | ![dandelion](docs/dandelion.png) |
 
-| 鱼缸 `fish` | 五光十色 `landscape` | 东方明珠 `shanghai` |
+| Aquarium (水族馆) `fish` | Colorful Landscape (五光十色) `landscape` | Oriental Pearl (东方明珠) `shanghai` |
 | --- | --- | --- |
 | ![fish](docs/fish.png) | ![landscape](docs/landscape.png) | ![shanghai](docs/shanghai.png) |
 
-| 光芒万丈 `tiananmen` | 车水马龙 `traffic` | 仙女散花 `fairy` |
+| Tiananmen Radiance (光芒万丈) `tiananmen` | Traffic Flow (车水马龙) `traffic` | Fairy Scattering Petals (仙女散花) `fairy` |
 | --- | --- | --- |
 | ![tiananmen](docs/tiananmen.png) | ![traffic](docs/traffic.png) | ![fairy](docs/fairy.png) |
 
-| 龙卷风 `tornado` | 电闪雷鸣 `storm` | 蒙娜丽莎 `monalisa` |
+| Tornado (龙卷风) `tornado` | Thunderstorm (电闪雷鸣) `storm` | Mona Lisa (蒙娜丽莎) `monalisa` |
 | --- | --- | --- |
 | ![tornado](docs/tornado.png) | ![storm](docs/storm.png) | ![monalisa](docs/monalisa.png) |
 
-| 冰上芭蕾 `ballet` | 恶魔之眼 `demoneye` | 生命的轨迹 `life` |
+| Ice Ballet (冰上芭蕾) `ballet` | Demon Eye (恶魔之眼) `demoneye` | Threads of Life (生命的轨迹) `life` |
 | --- | --- | --- |
 | ![ballet](docs/ballet.png) | ![demoneye](docs/demoneye.png) | ![life](docs/life.png) |
 
-| 特效 | 说明 |
+| Effect | Description |
 | --- | --- |
-| `rain` 代码雨 | 逐列头/尾、随机速度与深度、白热头、**蓝/绿双色尾**、二进制雾、横向数据包、CRT 扫描 |
-| `fire` 燃烧火焰 | **底部合并成一整片宽火床**；中间火苗最高，两侧火舌向左右倾斜散开；火星与爆燃 |
-| `dragon` 巨龙盘旋 | 整屏 Lissajous 飞行的中国龙：弧长跟随龙身、鹿角、龙须、鬃毛、獠牙、四爪、背鳍、尾鳍、龙鳞 |
-| `map` 世界地图 | 内嵌 Natural Earth 陆地掩膜、城市节点、大圆弧数据包、扫描波束、UTC 时钟 |
-| `matrix` 黑客帝国 | **NASA 后台登录大屏**：**默认 ASCII**，`--unicode` 切换蓝色 NASA 横幅 + 白色大字 + 红色 swoosh、Unicode 登录框；OPERATOR/PASSWORD/2FA、AUTH/DECRYPT、雷达、ACCESS GRANTED |
-| `blackhole` 黑洞 | 事件视界、光子环、吸积盘、透镜弧、喷流、流星；**外围星星呈 "/" 倾斜的饱满椭圆环绕**，整体铺满屏幕、外缘压住上下边；最外圈为 `.` / `:` / `+` 低密度散点，中段补密；整体同向差速旋转（内快外慢），看起来是一个完整转动的椭圆盘 |
-| `beams` 光束 | **单向**横向光束，随机亮色；`--beam-motion straight\|jump`（默认直线），`--density`/`--beam-speed` |
+| Code Rain (代码雨) `rain` | Per-column heads and tails, randomized speed and depth, white-hot heads, **blue/green two-tone tails**, binary mist, horizontal data packets, CRT scanline |
+| Blazing Fire (燃烧火焰) `fire` | **The bottom merges into one wide fire bed**; the tallest flames sit in the middle, while the tongues on both sides lean outward; embers and flare-ups |
+| Coiling Dragon (巨龙盘旋) `dragon` | A Chinese dragon flying across the whole screen on a Lissajous path: arc-length body tracking, antlers, whiskers, mane, fangs, four claws, dorsal fin, tail fin, scales; a traveling wave runs from head to tail along the entire body; the default backdrop adds two ink-wash mountain ridges and a denser drifting cloud sea; `--plain` restores the old starfield-only backdrop |
+| World Map (世界地图) `map` | Embedded Natural Earth land mask, city nodes, great-circle data packets, scan beams, UTC clock |
+| The Matrix (黑客帝国) `matrix` | **A NASA backend login wall**: **ASCII by default**; `--unicode` switches to a blue NASA banner with white wordmark, red swoosh and a Unicode login frame; OPERATOR/PASSWORD/2FA, AUTH/DECRYPT, radar, ACCESS GRANTED |
+| Black Hole (黑洞) `blackhole` | Event horizon, photon ring, accretion disk, lensing arcs, jets, meteors; **the outer stars form a full "/"-tilted ellipse** that fills the screen and presses past the top and bottom edges; the outermost ring is sparse `.` / `:` / `+` scatter with a denser middle band; every layer rotates in the same direction with differential speed (fast inside, slow outside), reading as one rotating elliptical disk |
+| Light Beams (光束) `beams` | **One-way** horizontal beams in random bright colors; `--beam-motion straight\|jump` (straight by default), `--density` / `--beam-speed` |
+| Fireworks (烟花) `fireworks` | Rockets climb, then inner and outer particle rings bloom with delayed bursts; `--density` controls the firework density; city skyline and starfield |
+| Solar System (太阳系) `solar` | **Eight planets** (no Pluto); the Sun sits in the top-left, light spreads in layered fans toward the lower right and stops above the planet line; round planets, Saturn's rings, moons, a comet |
+| Starry Galaxy (满天星河) `galaxy` | A full-screen star sea with a dense central Milky Way band; animated star clusters, dark dust, constellation lines; `--density`, `--twinkle`, `--meteors` |
+| Buddha's Halo (佛光普照) `buddha` | Outward mandala rings **expand at equal spacing**: every ring shares one expansion phase and the radial gap stays constant; **the first ring starts outside the whole Buddha figure (body, head halo, lotus base)**, so it never covers the figure or overlaps the halo; at most 5 rings; ring brightness stays below the Buddha's gold (0.6 on the inner ring) and fades toward the outside; head halo, lotus base and particles are kept |
+| Tom & Jerry (猫和老鼠) `tomjerry` | Tom chasing Jerry through a space station; slowed down and non-jumping by default, `--speed` / `+` `-` to adjust, `--jump` to enable jumping |
+| Super Mario (超级马里奥) `mario` | **A pure-glyph 1-1 level**: clouds, hills and bushes, a brick floor with mortar seams, a **question-block / brick / used-block** row, green pipes, spinning coins, Goombas and mushrooms; auto running and jumping, blocks that pop out coins or mushrooms, stomped enemies, `+200/+100/+1000` score popups. **Uses no terminal background color at all**: ASCII colored glyphs by default (`# o = *`), `--unicode` uses `█ ▀ ▄` solid blocks; hills, clouds, pipes and bricks are each colored per object |
+| Heartbeat Monitor (心率跳动) `ecg` | A green ECG monitor; **about 56 BPM with random beat intervals** and clearly random amplitude, QRS width and flat-segment length; **ASCII by default**, `--unicode` to switch |
+| Dandelion (蒲公英) `dandelion` | 3 clumps × 2 stems, 6 flower heads; the roots and lower stems of the left and right clumps bend toward the center; **flower heads are 1.5× larger**, everything else unchanged |
+| Aquarium (水族馆) `fish` | A full-screen aquarium: **5 hand-drawn sprite fish** (small 20×5 / medium 30×7 / large 38×8, forked tails, bright eyes and mouths; only the tails swish, the head and mouth stay fixed), plus 8–30 small `<==o>` / `<=-o>` fish (about 35% double-layer, 15% triple-layer bold, one eye only); bubbles use `o` / `O` / `8` with **a random shade per bubble**, each rising **slowly in a straight line** along a fixed column and swaying no more than 3 times over the whole climb; the count settles at 10–36; plants get random heights and spacing and grow in small patches; ASCII by default, `--unicode` switches to `█ ▓ ▒` |
+| Colorful Landscape (五光十色) `landscape` | Layered distant mountains, a calm lake, a boat, white geese, jungle on both sides; animated water, mist and petals |
+| Oriental Pearl (东方明珠) `shanghai` | The Shanghai Bund at night, the Oriental Pearl Tower, neon high-rises, Huangpu River reflections; **two random boats on the river, each with a different size, shape and position** (sailboat / freighter / ferry, with deck, portholes, lit cabin windows, smoking funnel, mast lights, wake and water reflection); **1–2 meteors cross the night sky every 3–5 seconds** (white-hot head plus fading tail); **ASCII by default**, `--unicode` available |
+| Tiananmen Radiance (光芒万丈) `tiananmen` | Tiananmen gate enlarged to about **92% of the width and 62% of the height**: double golden-tile eaves with upturned corners, a red-pillared gate tower with the national emblem, red walls, five archways with white stone surrounds, white-framed slogans and the central portrait, red flags and side buildings; golden beams first grow outward and upward from behind the roof, then light up in order from the inside out, cycling |
+| Traffic Flow (车水马龙) `traffic` | City street with high-rises on both sides, neon and traffic; horizontal traffic is 3 rows of cars (roof / body / wheels, 8–16 cells long) across 4–5 lanes with dashed dividers and alternating directions; vertical traffic is 6 columns of top-down cars (5–9 rows, front/rear lights and side wheels); `--street horizontal\|vertical`; `--density` controls traffic density; **ASCII by default**, `--unicode` available |
+| Fairy Scattering Petals (仙女散花) `fairy` | A 30×34 hand-pixelled lady (low bun, profile brows and eyes, raised basket, folded arm, crossed blue collar, white skirt hem); a slow elliptical orbit plus a 6-second turn every 24 seconds (`scaleX`, no somersault); petals are thrown from the basket, follow her, then scatter and fall; `--petal-count` / `--petal-speed` |
+| Tornado (龙卷风) `tornado` | 1–8 tornadoes move from left to right; twisted, pointed at the base and wider at the top; overall **one step shorter** than before (0.28–0.58 of the screen height) and **lighter and sparser** (brightness 0.42–0.85, 20 particles per row); 30 debris particles **drift outward** at the base |
+| Thunderstorm (电闪雷鸣) `storm` | Dark clouds, slanting rain, a city silhouette, lightning; a layer of **gray-white, irregular high cloud** sits above the screen (denser, fading out at the bottom, **drifting slowly to the right** at about 3 columns per second) to add depth against the existing cloud band; lightning lights the whole screen white ([still](docs/storm-flash.png)) |
+| Mona Lisa (蒙娜丽莎) `monalisa` | A background-free portrait: the figure (hair, face, neck and shoulders, folded hands) is baked from a reference pixel painting; ANSI color blocks carry skin tones and shading, with ASCII glyphs for detail; no landscape, frame or floating dust; the figure is about 12% wider, closer to the original proportions; **the default block version is static and does not blink**; `--unicode` uses half blocks for more vertical resolution; `--ghost` switches to the original pure-ASCII “ghost” version (no background blocks, blinking kept, [still](docs/monalisa-ghost.png) / [GIF](docs/monalisa-ghost.gif)); optional `--gallery` adds a faint warm gallery halo and floor glow behind the portrait ([preview](docs/monalisa-gallery.png)) |
+| Ice Ballet (冰上芭蕾) `ballet` | An ice-ballet duet: a 39-second choreography loops through 13 sections (glide, crossover, arabesque, promenade, **overhead lift**, pair spin, death spiral, sissonne, Ina Bauer, final pose); joints use two-bone IK, clasped hands align automatically, limbs have soft edges and lag behind the torso; the routine covers most of the screen, three rows of spectators behind the boards sway, raise their hands and fire flashbulbs, and skate marks and reflections stay on the ice; `--speed` |
+| Demon Eye (恶魔之眼) `demoneye` | One huge bloodshot eye fills the screen: it blinks every 8–15 seconds, singly or doubly (about 7:3); between blinks the eyeball darts only 1–2 times (darts at least 5 seconds apart), reaching the target in about 0.1 s and always returning to center within 0.45–0.85 s; the vertical pupil scales, eyelids press in, blood vessels and a blink shockwave; `--eye-motion dart\|still` (default `dart`), `--eye-still` pins the eyeball dead center |
+| Threads of Life (生命的轨迹) `life` | A 0–100 age timeline with glowing life lines on both sides; every human uses `@` with a colored uppercase abbreviation on the same row and **the relative's own age** (friends who are not family carry no age); the bright beam grows with age (late in life it can cover most of the lifetime), fading from dark dots / dashes at the tail up to `=` at the head, with a `****@` comet tail; the first ~22%–42% of life (at most about 22 years) stays as sparse dim dots; when a track ends its row can be reused by someone later (school-age `PAL/UNI` +1 row → GF/WIFE, `DOG` −1 row → KID2, and the cat / parents' rows are reclaimed by later friends); `DOG` stays at −1 next to me for life; when `PAL/UNI/WORK/FRIEND` coexist they **share one row**: during the school years it sits on the other side at +1, and while a minor KID exists the whole group retreats to the nearest free row outside KID/CAT (usually +4; only rows actually used by children/pets are yielded, no longer fixed −5/−7), and all KIDs move back inside once grown; `ME 0 / WIFE +1`; `KID1 +2`, `KID2 −1` (reusing the row next to me that DOG gave up), `KID3 −2`; before adulthood `KID3 −2 / KID2 −1 / ME 0 / WIFE +1 / KID1 +2` is **contiguous with no empty rows**, and `GRAND1/GRAND2` always hug their parent's row (moving with them as they drift); `CAT +3` is born with the first child, just below KID1; `DAD/MOM +3/+4` start yielding to `+5/+6` two years before the child is born, and `BRO +5→+7` follows; GPA/GMA/DAD/MOM get suitable random starting ages when I am 0 (58–70 / 56–68 / 25–33 / 23–31), BRO 0–4, ME 0; KID/GRAND/CAT/DOG count from their own birth, GF/WIFE are within ±2 years of my age; every row is fixed at one terminal row (it does not scale with terminal height, and tall terminals never produce empty rows from rounding); when `ME` ends, a roughly 6-second **supernova finale** plays (the flashback and stardust slow down while the comet keeps its speed: white core, life flashback, shockwave, stardust, brightened comet and a permanent halo at the top; the flashback beam that reaches ME's stop line stays three columns wide and never disappears); the death point and the top star keep `@` + name + final age and appear/disappear in sync once per second; all the dead rise to the top in death order, one row apart, and their end labels fade in 0.5 s after the meteor arrives; humans blink as `*`, cats and dogs as `+`; GF approaches for 2 years, then stays 1–2 years before becoming WIFE; WIFE lives to 75–90 and dies after I become a star; AGE has no leading zeros; `--life-cycle` sets the length of one round |
 
-光束两种运动模式：
+> Screenshots are mostly 120×36, truecolor, offscreen renders; `monalisa` uses a 120×60 portrait canvas. Some screenshots / GIFs show Unicode glyphs; at runtime every dual-glyph effect starts in ASCII (add `--unicode` to switch).
 
-| 直线（默认） | 上下跳跃 |
+Light Beams has two motion modes:
+
+| Straight (default) | Jumping up and down |
 | --- | --- |
 | ![beams straight](docs/beams.png) | ![beams jump](docs/beams-jump.png) |
-| `fireworks` 烟花 | 火箭升空，内外双层粒子环绽放，延迟爆裂；`--density` 调烟花密度；城市天际线/星空 |
-| `solar` 太阳系 | **八大行星**（无冥王星）；太阳在左上角，光线向右下扇形分层扩散，并截止在行星线上方；圆形行星、土星环、卫星、彗星 |
-| `galaxy` 满天星河 | 满屏星海、中央稠密银河带；动态星团/暗尘/星座线；`--density`、`--twinkle`、`--meteors` 可调 |
-| `buddha` 佛光普照 | 外扩曼陀罗环**等距扩散**：所有环共用扩散相位、径向间距恒定；**首层从整尊佛像（佛身、头顶光环、莲座）之外起扩**，不压佛像也不与头光重叠；最多 5 层；环亮度压在佛像金色之下（内层 0.6），并由内向外逐层变暗；头光/莲座/粒子保留 |
-| `tomjerry` 猫和老鼠 | Tom 追逐 Jerry 的太空站动画；默认放慢且不跳跃，`--speed` / `+` `-` 调速，`--jump` 开启跳跃 |
-| `mario` 超级马里奥 | 自动闯关：顶问号砖块、弹出蘑菇、吃金币；**默认 ASCII 经典字符**，`--unicode` 切换实心精灵版 |
-| `ecg` 心率跳动 | 绿色心电监护仪；**约 56 BPM，随机心搏间隔**，上下幅度、QRS 宽度、平直段长度明显随机；**默认 ASCII**，`--unicode` 切换 |
-| `dandelion` 蒲公英 | 3 丛×2 茎、6 个花头；左右两丛根/下段向中间弯曲；**花头尺寸 ×1.5**，其它不变 |
-| `fish` 鱼缸 | 全屏水族箱，大小鱼随机方向/姿态游动，水草、气泡、沙底与光斑 |
-| `landscape` 五光十色 | 层叠远山、平湖、小船、白鹅、两侧丛林；水面/雾气/花瓣动态 |
-| `shanghai` 东方明珠 | 上海外滩夜景、东方明珠、高楼霓虹、黄浦江倒影；**默认 ASCII**，`--unicode` 可切换 |
-| `tiananmen` 光芒万丈 | 放大到约 92% 宽 / 62% 高的天安门：双层金瓦飞檐、红柱城楼与国徽、红墙、白石门套五门洞、白框标语与中央画像、红旗与两侧小楼；金色光束先从城楼后方向外向上生成，再按光束由内向外依次循环点亮 |
-| `traffic` 车水马龙 | 城市街道两侧高楼、霓虹、车流；横向 3 行车（车顶/车身/车轮，8–16 格长）分 4–5 条车道、车道间有虚线，方向按车道交替；纵向 6 列俯视车（5–9 行，带前后灯与侧轮）；`--street horizontal\|vertical`；`--density` 调车流密度；**默认 ASCII**，`--unicode` 可切换 |
-| `fairy` 仙女散花 | 30×34 手工像素仕女（低发髻、侧脸眉眼、举篮、收臂、交领蓝襟、白裙裙裾）；缓慢椭圆环绕 + 每 24 秒一次 6 秒的转身（`scaleX`，不翻跟斗）；花瓣从篮口跟随抛出后四散飘落；`--petal-count` / `--petal-speed` |
-| `tornado` 龙卷风 | 1–8 股龙卷风从左向右；扭曲、底部收尖、顶部更宽；整体比原来**更矮一档**（0.28～0.58 屏高）且**更淡更疏**（亮度 0.42～0.85、每行 20 颗）；底部有 30 颗碎屑**向外飘散** |
-| `storm` 电闪雷鸣 | 乌云、斜雨、城市剪影、闪电；屏幕上方叠一层**灰白、不规则的高云**（较密、底部淡出、**缓慢向右飘移**（约 3 列/秒））与原有云带形成层次；落雷时全屏白色亮闪（[效果图](docs/storm-flash.png)） |
-| `monalisa` 蒙娜丽莎 | 整屏动态油画：sfumato 山水、金框、深色衣裙与交叠双手；呼吸、眼神游移/眨眼、若隐若现的微笑、油彩微光与浮尘 |
-| `ballet` 冰上芭蕾 | 冰场双人舞：39 秒编舞循环 13 个舞段（滑行、压步、arabesque、promenade、**头顶托举**、联合旋转、death spiral、sissonne 跳跃、Ina Bauer、收势），关节用两骨 IK 求解、牵手自动对齐，四肢带柔边并延迟跟随躯干；整场滑行覆盖大部分画面，围板后有三排会摇晃/举手/打闪光灯的观众，冰面留下冰刀刻痕与倒影；`--speed` 调速 |
-| `demoneye` 恶魔之眼 | 整屏一只巨大血眼：眨眼每 8～15 秒一次、单眨或双眨（约 7:3），每两次眨眼之间只甩出 1～2 次（两次跳动相隔 ≥5 秒），约 0.1 秒到位、0.45～0.85 秒内必回正中直视观众；竖瞳缩放、眼睑压暗、血丝与眨眼冲击波；`--eye-motion dart\|still`（默认 dart），`--eye-still` 让眼球钉在正中 |
-| `life` 生命的轨迹 | 0～100 岁时间轴与左右生命线；人类统一 `@` 符号 + 同排彩色大写简写 + **家属本人年龄**（非亲属朋友不带年龄）；亮光束随年龄增长（年长后可覆盖大部分生命），由尾部的暗点/短划线渐亮到 `=`，头部为 `****@` 彗尾；生命最初约 22%～42%（最多约 22 年）保留为稀疏暗淡的点；每条轨迹结束后其行位可被后来者复用（学龄 `PAL/UNI` 的 +1 行 → GF/WIFE，`DOG` 的 -1 行 → KID2，猫/父母的行位也会被后来的朋友接回）；`DOG` 终身在 -1 紧挨我；`PAL/UNI/WORK/FRIEND` 同时出现时**共用同一行**：学龄期在 +1 另一侧，有未成年 KID 时整组退到 KID/CAT 外侧最近的空行（通常为 +4；只让出孩子/宠物实际占用的行，不再固定 -5/-7），所有 KID 成年后回到内侧；`ME 0 / WIFE +1`；`KID1 +2`、`KID2 -1`（复用 DOG 让出的紧邻行）、`KID3 -2`；成年前 `KID3 -2 / KID2 -1 / ME 0 / WIFE +1 / KID1 +2` **连续无空行**，`GRAND1/GRAND2` 始终紧贴父辈一行（父辈成年漂移后随之移动）；`CAT +3` 与第一个孩子同时出生，紧贴 KID1 下方；`DAD/MOM +3/+4` 在孩子出生前两年开始让位到 `+5/+6`，`BRO +5→+7` 紧随让位；GPA/GMA/DAD/MOM 在我 0 岁时随机得到合适起始年龄（58～70 / 56～68 / 25～33 / 23～31），BRO 0～4，ME 0；KID/GRAND/CAT/DOG 从各自出生起算，GF/WIFE 与我同龄上下 2 岁；所有行固定为 1 个终端行（不随终端高度缩放，高终端也不会因取整出现空行）；`ME` 结束时触发约 6 秒的**超新星终章**（回闪与星屑放慢、彗星保持原速；白光核心、一生回闪、冲击波、星屑、加亮彗星与顶部永久光晕；回闪扫描光柱到达 ME 的停止线后以三列宽永久保留，不再消失）；死亡点与顶部星标保留 `@` + 名称 + 最终年龄，并以每秒 1 次同步显现/消失；所有死亡角色升到顶部按死亡顺序隔行排列，终点标签在流星抵达后 0.5 秒淡入；人类 `*`、猫狗 `+` 闪烁；GF 用 2 年靠近、再停留 1～2 年变 WIFE；WIFE 75～90 岁、晚于我化星；AGE 无前导零；`--life-cycle` 控制一轮秒数 |
 
-> 截图均为 120×36、truecolor、离屏渲染；部分截图/动图展示 Unicode 字形，实际运行默认 ASCII（加 `--unicode` 切换）。
+### ASCII / Unicode editions
 
-### ASCII / Unicode 双版本
+**Every effect that supports both glyph sets starts in ASCII**: `matrix`, `mario`, `ecg`, `dandelion`, `fish`, `landscape`, `tiananmen`, `fairy`, `tornado`, `storm`, `monalisa`, `ballet`, `demoneye`, `life`, `shanghai`, `traffic`. Add `--unicode` (or `--charset unicode`) to opt in; `--ascii` forces ASCII again. `monalisa`'s default block portrait is static; `monalisa --ghost` is a separate pure-ASCII drawing (blinking kept) that emits neither Unicode nor background blocks.
 
-**所有同时支持两种字形的特效默认以 ASCII 启动**：`matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`tiananmen`、`fairy`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`life`、`shanghai`、`traffic`。需要 Unicode 时显式加 `--unicode`（或 `--charset unicode`）；`--ascii` 可再次强制 ASCII。
+`mario` / `ecg` in both glyph sets:
 
-`mario` / `ecg` 两种字形：
-
-| ASCII（默认） | Unicode（`--unicode`） |
+| ASCII (default) | Unicode (`--unicode`) |
 | --- | --- |
 | ![mario ascii](docs/mario-ascii.png) | ![mario unicode](docs/mario.png) |
 | ![ecg ascii](docs/ecg-ascii.png) | ![ecg unicode](docs/ecg.png) |
 
-`shanghai` / `traffic` 两种字形：
+`shanghai` / `traffic` in both glyph sets:
 
-| ASCII（默认） | Unicode（`--unicode`） |
+| ASCII (default) | Unicode (`--unicode`) |
 | --- | --- |
 | ![shanghai ascii](docs/shanghai.png) | ![shanghai unicode](docs/shanghai-unicode.png) |
 | ![traffic ascii](docs/traffic.png) | ![traffic unicode](docs/traffic-unicode.png) |
 
-纵向街道：
+Vertical street:
 
 ![traffic vertical](docs/traffic-vertical.png)
 
-雷暴全屏亮闪：
+Full-screen lightning flash:
 
 ![storm flash](docs/storm-flash.png)
 
 ```bash
-trix mario              # 默认 ASCII 经典字符
-trix mario --unicode    # Unicode 实心精灵
-trix ecg                # 默认 ASCII 心电监护
-trix ecg --unicode      # Unicode 心电监护
+trix mario              # ASCII classic glyphs by default
+trix mario --unicode    # solid Unicode sprites
+trix ecg                # ASCII ECG monitor by default
+trix ecg --unicode      # Unicode ECG monitor
 ```
 
-## 特性
+## Features
 
-- **27 个可切换特效**：支持命令行参数、运行时热切换与主题。
-- **ASCII 优先**：同时支持 ASCII / Unicode 的特效默认以 ASCII 启动；需要 Unicode 时显式加 `--unicode`。
-- **低资源**：单线程、无 async、无事件循环框架；默认 30 FPS；仅依赖 `libc`。
-- **快速启动**：`--version` 中位数约 **2.0 ms**；发布版二进制约 **733 KB**。
-- **低内存**：交互模式 RSS 约 **2.08–2.27 MB**（120×36，truecolor）。
-- **diff 渲染**：双缓冲 Canvas，只重绘变化单元格并合并 SGR，降低终端写入与 CPU。
-- **颜色动画**：24-bit truecolor；8 套主题；可降级到 256 色、16 色或单色。
-- **满屏点缀**：每个场景都有星空、粒子、网格、光晕或城市/走廊背景，避免大面积空白。
-- **科幻 / 中国风**：NASA 大屏、黑洞吸积、粒子烟花、全息太阳系、银河、佛光、中国龙。
-- **可录制 / 可压测**：内置 `--snapshot` 与 `--bench`。
-- **安全退出**：raw mode、备用屏幕、光标/自动换行在正常退出、Ctrl-C、SIGTERM 和 panic 时都会恢复。
+- **27 switchable effects**: command-line arguments, runtime hot-switching and themes.
+- **Smooth hand-off**: every effect change can fade through black or cross-dissolve (`--transition fade|dissolve|none`, 0.6 s by default); the outgoing scene keeps animating while it fades.
+- **ASCII first**: effects that support both ASCII and Unicode start in ASCII; opt into Unicode explicitly with `--unicode`.
+- **Low resource use**: single-threaded, no async, no event-loop framework; 30 FPS by default; `libc` is the only dependency.
+- **Fast startup**: `--version` median about **2.0 ms**; the release binary is about **733 KB**.
+- **Low memory**: interactive RSS about **2.08–2.27 MB** (120×36, truecolor).
+- **Diff rendering**: double-buffered canvas that repaints only changed cells and merges SGR sequences, cutting terminal writes and CPU.
+- **Color animation**: 24-bit truecolor; 8 themes; degrades to 256 colors, 16 colors or monochrome.
+- **Full-screen detail**: every scene has stars, particles, grids, glows or a city / corridor backdrop, so large empty areas never appear.
+- **Sci-fi / Chinese style**: NASA wall, black-hole accretion, particle fireworks, a holographic solar system, a galaxy, Buddha's halo, a Chinese dragon.
+- **Recordable / benchmarkable**: built-in `--snapshot` and `--bench`.
+- **Clean exit**: raw mode, the alternate screen, cursor and autowrap are restored on normal exit, Ctrl-C, SIGTERM and panic.
 
-## 快速开始
+## Quick start
 
-要求 Rust 1.70+（推荐 stable）。
+Requires Rust 1.70+ (stable recommended).
 
 ```bash
 cargo build --release
 ./target/release/trix rain
 ```
 
-安装到 `PATH`：
+Install onto `PATH`:
 
 ```bash
 cargo install --path . --locked
 trix dragon
 ```
 
-### 一条命令一个特效
+### One command per effect
 
 ```bash
-trix rain                          # 代码雨
-trix fire --fps 60                 # 多堆细长火焰
-trix dragon --theme gold           # 金色巨龙
-trix map --theme ice               # 全息世界地图
-trix matrix                        # NASA 登录大屏（默认 ASCII；--unicode 大屏）
-trix blackhole                     # 黑洞吞噬恒星
-trix beams                         # 横向随机亮色光束
-trix fireworks                     # 双层烟花绽放
-trix solar                         # 太阳系八大行星一线
-trix galaxy                        # 满天星河 / 银河
-trix buddha --theme gold           # 佛光普照
-trix tomjerry --speed 0.8          # 默认 0.6x 左右，可调
-trix mario                         # 超级马里奥（Unicode）
-trix ecg                           # 心率跳动（Unicode）
-trix dandelion                     # 蒲公英飘散
-trix fish                          # 鱼缸
-trix landscape                     # 五光十色山水
-trix shanghai                      # 东方明珠（ASCII）
-trix tiananmen                     # 光芒万丈
-trix traffic --street vertical     # 车水马龙纵向
-trix fairy                         # 仙女散花
-trix tornado                       # 龙卷风
-trix storm                         # 电闪雷鸣
-trix monalisa                      # 蒙娜丽莎动态油画
-trix ballet --speed 1.3            # 冰上芭蕾（双人冰舞，48 秒编舞循环）
-trix demoneye                      # 恶魔之眼（随机注视 / 眨眼）
-trix demoneye --eye-still          # 眼球钉在正中，只保留眨眼与瞳孔动态
-trix life                          # 生命的轨迹（默认 120 秒一轮）
-trix life --life-cycle 60          # 更快，1 分钟走完 0～100 岁
-trix tomjerry --jump               # 开启跳跃
-trix --list                        # 列出特效和主题
+trix rain                          # Code Rain
+trix fire --fps 60                 # more, slimmer fire stacks
+trix dragon --theme gold           # golden dragon
+trix dragon --plain                # old starfield-only backdrop
+trix map --theme ice               # holographic world map
+trix matrix                        # NASA login wall (ASCII; --unicode for the full wall)
+trix blackhole                     # a black hole devouring a star
+trix beams                         # horizontal beams in random bright colors
+trix fireworks                     # double-layer firework bursts
+trix solar                         # the eight planets in a line
+trix galaxy                        # starry galaxy / Milky Way
+trix buddha --theme gold           # Buddha's halo
+trix tomjerry --speed 0.8          # around 0.6x by default, adjustable
+trix mario                         # Super Mario (ASCII by default; --unicode for solid sprites)
+trix ecg                           # Heartbeat Monitor (ASCII by default; --unicode for solid glyphs)
+trix dandelion                     # drifting dandelion seeds
+trix fish                          # Aquarium
+trix landscape                     # colorful landscape
+trix shanghai                      # Oriental Pearl (ASCII)
+trix tiananmen                     # Tiananmen Radiance
+trix traffic --street vertical     # vertical Traffic Flow
+trix fairy                         # Fairy Scattering Petals
+trix tornado                       # Tornado
+trix storm                         # Thunderstorm
+trix monalisa                      # Mona Lisa portrait (blocks + glyphs, static)
+trix ballet --speed 1.3            # Ice Ballet (duet, 39-second choreography loop)
+trix demoneye                      # Demon Eye (random gaze / blinks)
+trix demoneye --eye-still          # pin the eyeball to the center, keep blinks and pupil motion
+trix life                          # Threads of Life (120 s per round by default)
+trix life --life-cycle 60          # faster: 0–100 in one minute
+trix tomjerry --jump               # enable jumping
+trix --list                        # list effects and themes
 
-# 参数示例
-trix matrix --unicode                       # Unicode 大屏
-trix blackhole --spin 0.25 --meteors 8      # 更慢旋转 + 更多流星
-trix beams --density 1.5 --beam-speed 1.2   # 更密、更快
-trix beams --beam-motion jump              # 上下起伏
-trix fireworks --density 2                  # 更多烟花
+# Option examples
+trix matrix --unicode                       # Unicode wall
+trix blackhole --spin 0.25 --meteors 8      # slower rotation + more meteors
+trix beams --density 1.5 --beam-speed 1.2   # denser and faster
+trix beams --beam-motion jump              # rise and fall
+trix fireworks --density 2                  # more fireworks
 trix galaxy --density 1.5 --twinkle 2 --meteors 8
-trix tomjerry --chase-speed 0.8 --jump      # 追逐速度 / 跳跃
-trix mario --unicode                        # 马里奥 Unicode 版
-trix ecg --unicode                          # 心电 Unicode 版
+trix tomjerry --chase-speed 0.8 --jump      # chase speed / jumping
+trix mario --unicode                        # Super Mario Unicode edition
+trix ecg --unicode                          # ECG Unicode edition
 trix dandelion --seed-count 180 --seed-speed 1.4
-trix shanghai --unicode                       # 东方明珠 Unicode
-trix traffic --street vertical --unicode      # 纵向 Unicode
+trix shanghai --unicode                       # Oriental Pearl Unicode
+trix traffic --street vertical --unicode      # vertical Unicode
 trix fairy --petal-count 160 --petal-speed 1.5
 trix tornado --tornado-count 5 --tornado-speed 1.6
-trix monalisa --unicode                      # 蒙娜丽莎 Unicode 版
-trix ballet --speed 1.3                      # 更快节奏
-trix demoneye                                # 恶魔之眼
+trix monalisa --unicode                      # half-block Unicode edition (finer detail)
+trix monalisa --ghost                        # pure-ASCII ghost edition (still blinks)
+trix monalisa --gallery                      # optional gallery halo behind the portrait
+trix ballet --speed 1.3                      # faster tempo
+trix demoneye                                # Demon Eye
 ```
 
-## 直接运行：自动循环播放
+## Run with no arguments: automatic playback
 
-不带特效名直接运行 `trix`，会在**当前终端循环播放全部 27 个特效**：
+Running `trix` without an effect name **loops through all 27 effects in the current terminal**:
 
 ```bash
-trix                                   # 默认 cycle，每 12 秒切换
-trix --playlist random --switch 8      # 随机顺序，每 8 秒切换
-trix --playlist cycle --switch 20      # 循环顺序，每 20 秒切换
+trix                                   # cycle by default, 12 s per effect
+trix --playlist random --switch 8      # random order, 8 s per effect
+trix --playlist cycle --switch 20      # sequential order, 20 s per effect
+trix --transition dissolve --switch 6  # cross-dissolve instead of a fade
 ```
 
-切换时有白闪过渡；按 `n`/`p` 手动切换，会自动重置计时。指定特效名时（如 `trix fire`）不会自动轮播。
+Switches blend with a 0.6 s fade (fade to black, then fade the next effect in) by default; `--transition dissolve` cross-dissolves the two scenes cell by cell, and `--transition none` restores the old instant cut with a white flash. The blend is capped at half of `--switch`, so short slots still show each effect. Press `n` / `p` to switch manually and reset the timer. Naming an effect (for example `trix fire`) disables automatic playback.
 
-## 命令行
+## Command line
 
 ```text
 trix <effect> [options]
 
-  -e, --effect <name>     与位置参数等价；省略则循环播放
-      --playlist <mode>   cycle | random                      [默认: cycle]
-      --switch <secs>     每个特效停留秒数                    [默认: 12]
-  -f, --fps <1-240>       目标帧率                          [默认: 30]
-  -s, --speed <0.05-8>    动画速度倍率                      [默认: 1.0]
-      --chase-speed <f>   --speed 的别名（Tom & Jerry）
-  -t, --theme <name>      配色主题                          [特效默认]
-      --charset <mode>    kana | ascii | unicode                [默认: ascii]
+  -e, --effect <name>     same as the positional argument; cycles when omitted
+      --playlist <mode>   cycle | random                      [default: cycle]
+      --switch <secs>     seconds per effect                  [default: 12]
+      --transition <mode> fade | dissolve | none              [default: fade]
+      --transition-secs <s> blend length in seconds           [default: 0.6]
+      --no-fade           alias for --transition none
+  -f, --fps <1-240>       target frame rate                  [default: 30]
+  -s, --speed <0.05-8>    animation speed multiplier         [default: 1.0]
+      --chase-speed <f>   alias for --speed (Tom & Jerry)
+  -t, --theme <name>      color theme                        [effect default]
+      --charset <mode>    kana | ascii | unicode                [default: ascii]
       --unicode           Opt in to Unicode single-cell glyphs
       --ascii             Force ASCII glyphs (the default)
-      --color <mode>      auto | truecolor | 256 | 16 | mono [默认: auto]
-      --density <f>       beams/fireworks/galaxy/traffic 密度  [默认: 1.0]
-      --spin <f>          black hole rotation speed          [默认: 0.5]
-      --twinkle <f>       galaxy twinkle rate                [默认: 1.0]
-      --meteors <n>       black hole / galaxy meteors        [默认: 3]
-      --beam-speed <f>    beams horizontal speed             [默认: 1.0]
-      --beam-motion <m>   straight | jump                    [默认: straight]
-      --beam-jump         --beam-motion jump 的别名
-      --life-cycle <secs> life: 0～100 岁一轮时长              [默认: 120]
-      --eye-motion <m>    demoneye: dart | still              [默认: dart]
-      --eye-still         --eye-motion still 的别名
-      --seed-count <n>    dandelion seed count                [默认: 90]
-      --seed-speed <f>    dandelion seed drift speed          [默认: 1.0]
-      --street <dir>      horizontal | vertical               [默认: horizontal]
-      --petal-count <n>   仙女散花花瓣数量                    [默认: 80]
-      --petal-speed <f>   花瓣下落速度                        [默认: 1.0]
-      --tornado-count <n> 龙卷风数量                          [默认: 3]
-      --tornado-speed <f> 龙卷风移动速度                      [默认: 1.0]
-      --jump              Tom & Jerry jumps                  [默认: off]
-      --seed <u64>        固定随机种子（可复现）
-      --duration <secs>   运行 N 秒后自动退出
-      --no-alt            不使用备用屏幕（保留终端历史）
-  -l, --list              列出特效/主题
-  -h, --help              帮助
-  -V, --version           版本
+      --color <mode>      auto | truecolor | 256 | 16 | mono [default: auto]
+      --density <f>       beams/fireworks/galaxy/traffic density  [default: 1.0]
+      --spin <f>          black hole rotation speed          [default: 0.5]
+      --twinkle <f>       galaxy twinkle rate                [default: 1.0]
+      --meteors <n>       black hole / galaxy meteors        [default: 3]
+      --beam-speed <f>    beams horizontal speed             [default: 1.0]
+      --beam-motion <m>   straight | jump                    [default: straight]
+      --beam-jump         alias for --beam-motion jump
+      --life-cycle <secs> life: seconds per 0-100 round      [default: 120]
+      --eye-motion <m>    demoneye: dart | still              [default: dart]
+      --eye-still         alias for --eye-motion still
+      --ghost             monalisa: pure-ASCII ghost edition (no background blocks)
+      --gallery           monalisa: soft warm gallery glow (optional)
+      --plain             dragon: plain starfield (no mountains/cloud sea)
+      --seed-count <n>    dandelion seed count                [default: 90]
+      --seed-speed <f>    dandelion seed drift speed          [default: 1.0]
+      --street <dir>      horizontal | vertical               [default: horizontal]
+      --petal-count <n>   fairy petals                        [default: 80]
+      --petal-speed <f>   petal fall speed                    [default: 1.0]
+      --tornado-count <n> number of tornadoes                 [default: 3]
+      --tornado-speed <f> tornado travel speed                [default: 1.0]
+      --jump              Tom & Jerry jumps                  [default: off]
+      --seed <u64>        fixed random seed (reproducible)
+      --duration <secs>   exit automatically after N seconds
+      --no-alt            do not use the alternate screen (keep scrollback)
+  -l, --list              list effects / themes
+  -h, --help              help
+  -V, --version           version
 
-录制 / 压测
-      --snapshot <path>   模拟 --frames 步后输出一帧 ANSI 到文件（'-' = stdout）
-      --frames <n>        模拟步数（不是输出帧数）
-      --size <WxH>        离屏画布尺寸，例如 120x36
-      --bench             离屏渲染压测（包含 diff ANSI 编码）
+Recording / benchmarking
+      --snapshot <path>   simulate --frames steps and write one ANSI frame to a file ('-' = stdout)
+      --frames <n>        number of simulation steps (not output frames)
+      --size <WxH>        offscreen canvas size, e.g. 120x36
+      --bench             offscreen render benchmark (including diff ANSI encoding)
 ```
 
-### 运行时快捷键
+### Runtime keys
 
-| 键 | 作用 |
+| Key | Action |
 | --- | --- |
-| `q` / `Esc` | 退出（帮助面板打开时 `Esc` 先关闭面板） |
-| `Space` | 暂停 / 继续 |
-| `n` / `p`、方向键 | 下一个 / 上一个特效 |
-| `1`–`9`、`0`、`[`、`]` | 前 12 个特效 |
-| `m` / `e` / `d` | 超级马里奥 / 心率跳动 / 蒲公英 |
-| `f` / `l` / `b` / `j` | 鱼缸 / 山水 / 东方明珠 / 天安门 |
-| `c` / `x` / `z` / `k` | 车水马龙 / 仙女散花 / 龙卷风 / 电闪雷鸣 |
-| `o` / `v` / `g` | 蒙娜丽莎 / 冰上芭蕾 / 恶魔之眼 |
-| `y` | 生命的轨迹 |
-| `t` | 循环主题 |
-| `+` / `-` | 加速 / 减速（0.1×–8×），Tom & Jerry 同样生效 |
-| `r` | 用新种子重开当前特效 |
-| `i` | 显示 / 隐藏状态行（FPS、耗时、主题、尺寸、种子） |
-| `h` / `?` | 帮助面板 |
+| `q` / `Esc` | Quit (`Esc` closes the help panel first when it is open) |
+| `Space` | Pause / resume |
+| `n` / `p`, arrow keys | Next / previous effect |
+| `1`–`9`, `0`, `[`, `]` | First 12 effects |
+| `m` / `e` / `d` | Super Mario / Heartbeat Monitor / Dandelion |
+| `f` / `l` / `b` / `j` | Aquarium / Landscape / Oriental Pearl / Tiananmen |
+| `c` / `x` / `z` / `k` | Traffic Flow / Fairy Scattering Petals / Tornado / Thunderstorm |
+| `o` / `v` / `g` | Mona Lisa / Ice Ballet / Demon Eye |
+| `y` | Threads of Life |
+| `t` | Cycle themes |
+| `+` / `-` | Faster / slower (0.1×–8×); Tom & Jerry included |
+| `r` | Restart the current effect with a new seed |
+| `i` | Show / hide the status line (FPS, elapsed, theme, size, seed) |
+| `h` / `?` | Help panel |
 
-数字键顺序：`1 rain`、`2 fire`、`3 dragon`、`4 map`、`5 matrix`、`6 blackhole`、`7 beams`、`8 fireworks`、`9 solar`、`0 galaxy`、`[ buddha`、`] tomjerry`；字母键：`m mario`、`e ecg`、`d dandelion`、`f fish`、`l landscape`、`b shanghai`、`j tiananmen`、`c traffic`、`x fairy`、`z tornado`、`k storm`、`o monalisa`、`v ballet`、`g demoneye`、`y life`。
+Number keys: `1 rain`, `2 fire`, `3 dragon`, `4 map`, `5 matrix`, `6 blackhole`, `7 beams`, `8 fireworks`, `9 solar`, `0 galaxy`, `[ buddha`, `] tomjerry`; letter keys: `m mario`, `e ecg`, `d dandelion`, `f fish`, `l landscape`, `b shanghai`, `j tiananmen`, `c traffic`, `x fairy`, `z tornado`, `k storm`, `o monalisa`, `v ballet`, `g demoneye`, `y life`.
 
-## 主题
+## Themes
 
-| 主题 | 风格 | 默认用于 |
+| Theme | Style | Default for |
 | --- | --- | --- |
-| `neon` | 霓虹青 / 紫 | rain、beams、tomjerry |
-| `matrix` | 矩阵绿 | matrix |
-| `ember` | 真实火焰（红→橙→黄→白） | fire |
-| `aurora` | 翡翠龙 / 极光金 | dragon |
-| `ice` | 全息冰蓝 | map、solar、galaxy |
-| `plasma` | 品红 / 高能 | blackhole、fireworks |
-| `gold` | 帝王金 | buddha |
-| `chrome` | 银灰单色 | 任意 |
+| `neon` | Neon cyan / purple | rain, beams, tomjerry |
+| `matrix` | Matrix green | matrix |
+| `ember` | Realistic fire (red → orange → yellow → white) | fire |
+| `aurora` | Emerald dragon / aurora gold | dragon |
+| `ice` | Holographic ice blue | map, solar, galaxy |
+| `plasma` | Magenta / high energy | blackhole, fireworks |
+| `gold` | Imperial gold | buddha |
+| `chrome` | Silver-gray monochrome | any |
 
-`fire` 的火焰颜色来自主题调色板的 5 个锚点；`--theme ice` 会得到“冷焰”，`--theme ember` 是默认燃烧火焰。
+`fire` derives its flame colors from five anchors in the theme palette; `--theme ice` gives a “cold flame”, and `--theme ember` is the default fire.
 
-## 自动构建与发布
+## Automated builds and releases
 
-仓库包含 [`.github/workflows/release.yml`](.github/workflows/release.yml)：
+The repository contains [`.github/workflows/release.yml`](.github/workflows/release.yml):
 
-- 推送 `v*` tag 时自动构建并创建 GitHub Release。
-- **macOS**：`aarch64-apple-darwin` + `x86_64-apple-darwin`，用 `lipo` 合并为 **universal** 二进制。
-- **Linux**：`x86_64-unknown-linux-musl` 静态二进制，不依赖目标机器的 glibc。
-- Release 资产：
+- Pushing a `v*` tag builds the binaries and creates a GitHub Release.
+- **macOS**: `aarch64-apple-darwin` + `x86_64-apple-darwin`, merged with `lipo` into a **universal** binary.
+- **Linux x86_64**: static `x86_64-unknown-linux-musl`, independent of the target machine's glibc.
+- **Linux ARM64**: static `aarch64-unknown-linux-musl`, cross-compiled with `cross` and smoke-tested under QEMU, independent of glibc; runs natively on ARM64 servers, 64-bit Raspberry Pi 4/5, AWS Graviton and similar machines.
+- Release assets:
   - `trix-<version>-macos-universal.tar.gz`
   - `trix-<version>-linux-x86_64.tar.gz`
+  - `trix-<version>-linux-aarch64.tar.gz`
   - `SHA256SUMS`
-- 也可以在 GitHub Actions 页面手动 `Run workflow` 只构建 artifacts（不会创建 Release）。
+- You can also run `Run workflow` manually on the GitHub Actions page to build artifacts only (no Release is created).
 
-发布新版本：
+Release a new version:
 
 ```bash
 git tag -a v0.8.0 -m "trix v0.8.0"
@@ -322,46 +369,46 @@ git push origin master
 git push origin v0.8.0
 ```
 
-> macOS 二进制未做 Apple Developer 签名/公证；首次下载如被 Gatekeeper 拦截，可右键打开，或 `xattr -d com.apple.quarantine trix`。
+> The macOS binary is not signed or notarized by Apple. If Gatekeeper blocks the first launch, right-click to open it or run `xattr -d com.apple.quarantine trix`.
 
-## 性能
+## Performance
 
-环境：Apple Silicon (ARM64)、macOS、Rust 1.96.1、`--release`（LTO + `codegen-units=1` + `panic=abort` + `strip`）。
-画布 160×48，240 帧离屏压测：
+Environment: Apple Silicon (ARM64), macOS, Rust 1.96.1, `--release` (LTO + `codegen-units=1` + `panic=abort` + `strip`).
+Canvas 160×48, 240-frame offscreen benchmark:
 
-| 特效 | 平均渲染 | p95 | diff 输出 |
+| Effect | Mean render | p95 | Diff output |
 | --- | ---: | ---: | ---: |
-| rain | 0.080 ms | 0.101 ms | 14.3 KiB/帧 |
-| fire | 0.454 ms | 0.548 ms | 68.3 KiB/帧 |
-| dragon | 0.124 ms | 0.157 ms | 15.0 KiB/帧 |
-| map | 0.161 ms | 0.189 ms | 43.6 KiB/帧 |
-| matrix | 0.071 ms | 0.087 ms | 12.0 KiB/帧 |
-| blackhole | 0.133 ms | 0.172 ms | 28.0 KiB/帧 |
-| beams | 0.085 ms | 0.113 ms | 24.9 KiB/帧 |
-| fireworks | 0.040 ms | 0.064 ms | 8.6 KiB/帧 |
-| solar | 0.039 ms | 0.045 ms | 7.6 KiB/帧 |
-| galaxy | 0.129 ms | 0.163 ms | 23.4 KiB/帧 |
-| buddha | 0.061 ms | 0.072 ms | 11.4 KiB/帧 |
-| tomjerry | 0.019 ms | 0.022 ms | 2.4 KiB/帧 |
-| mario | 0.013 ms | 0.016 ms | 0.7 KiB/帧 |
-| ecg | 0.038 ms | 0.046 ms | 7.3 KiB/帧 |
-| dandelion | 0.024 ms | 0.028 ms | 3.6 KiB/帧 |
-| fish | 0.023 ms | 0.045 ms | 2.1 KiB/帧 |
-| landscape | 0.038 ms | 0.043 ms | 1.7 KiB/帧 |
-| shanghai | 0.032 ms | 0.036 ms | 3.3 KiB/帧 |
-| tiananmen | 0.095 ms | 0.105 ms | 7.0 KiB/帧 |
-| traffic | 0.029 ms | 0.036 ms | 1.7 KiB/帧 |
-| fairy | 0.018 ms | 0.022 ms | 2.0 KiB/帧 |
-| tornado | 0.043 ms | 0.051 ms | 7.8 KiB/帧 |
-| storm | 0.109 ms | 0.122 ms | 29.9 KiB/帧 |
-| monalisa | 0.380 ms | 0.489 ms | 15.3 KiB/帧 |
-| ballet | 0.120 ms | 0.151 ms | 14.5 KiB/帧 |
-| demoneye | 0.273 ms | 0.398 ms | 15.4 KiB/帧 |
-| life | 0.158 ms | 0.209 ms | 5.6 KiB/帧 |
+| rain | 0.080 ms | 0.101 ms | 14.3 KiB/frame |
+| fire | 0.454 ms | 0.548 ms | 68.3 KiB/frame |
+| dragon | 0.112 ms | 0.134 ms | 8.9 KiB/frame |
+| map | 0.161 ms | 0.189 ms | 43.6 KiB/frame |
+| matrix | 0.071 ms | 0.087 ms | 12.0 KiB/frame |
+| blackhole | 0.133 ms | 0.172 ms | 28.0 KiB/frame |
+| beams | 0.085 ms | 0.113 ms | 24.9 KiB/frame |
+| fireworks | 0.040 ms | 0.064 ms | 8.6 KiB/frame |
+| solar | 0.039 ms | 0.045 ms | 7.6 KiB/frame |
+| galaxy | 0.129 ms | 0.163 ms | 23.4 KiB/frame |
+| buddha | 0.061 ms | 0.072 ms | 11.4 KiB/frame |
+| tomjerry | 0.019 ms | 0.022 ms | 2.4 KiB/frame |
+| mario | 0.013 ms | 0.016 ms | 0.7 KiB/frame |
+| ecg | 0.038 ms | 0.046 ms | 7.3 KiB/frame |
+| dandelion | 0.024 ms | 0.028 ms | 3.6 KiB/frame |
+| fish | 0.023 ms | 0.045 ms | 2.1 KiB/frame |
+| landscape | 0.038 ms | 0.043 ms | 1.7 KiB/frame |
+| shanghai | 0.032 ms | 0.036 ms | 3.3 KiB/frame |
+| tiananmen | 0.095 ms | 0.105 ms | 7.0 KiB/frame |
+| traffic | 0.029 ms | 0.036 ms | 1.7 KiB/frame |
+| fairy | 0.018 ms | 0.022 ms | 2.0 KiB/frame |
+| tornado | 0.043 ms | 0.051 ms | 7.8 KiB/frame |
+| storm | 0.109 ms | 0.122 ms | 29.9 KiB/frame |
+| monalisa | 0.021 ms | 0.032 ms | 0.0 KiB/frame (after going static) |
+| ballet | 0.120 ms | 0.151 ms | 14.5 KiB/frame |
+| demoneye | 0.273 ms | 0.398 ms | 15.4 KiB/frame |
+| life | 0.158 ms | 0.209 ms | 5.6 KiB/frame |
 
-真实 PTY、truecolor、120×36、30 FPS、运行 5 秒（CPU = 子进程 `utime+stime / 5s`，含 PTY 写入，不含终端模拟器自身绘制）：
+Real PTY, truecolor, 120×36, 30 FPS, 5 seconds (CPU = child process `utime+stime / 5s`, including PTY writes but not the terminal emulator's own drawing):
 
-| 特效 | CPU（单核） | RSS | 5 秒输出 |
+| Effect | CPU (one core) | RSS | 5 s output |
 | --- | ---: | ---: | ---: |
 | rain | 0.46% | 2.06 MiB | 1.4 MiB |
 | fire | 1.38% | 2.09 MiB | 6.0 MiB |
@@ -387,40 +434,41 @@ git push origin v0.8.0
 | tornado | 0.27% | 2.08 MiB | 0.7 MiB |
 | storm | 0.63% | 2.19 MiB | 3.6 MiB |
 
-- 30 FPS 下约 33.3 ms/帧预算；最重的 `fire` 离屏渲染约 **1.3% 单核**（0.433 ms/帧），实际交互约 **1.4%**（含 PTY 写入）。
-- 启动：`--version` 中位数约 **2.0 ms**；真实 PTY 首屏字节中位约 **1.6–2.4 ms**。
-- 内存：真实 PTY 最大 RSS **2.08–2.27 MiB**。
-- 二进制：**733 KiB**。
-- 交互模式会遵守 `NO_COLOR`；离屏 `--snapshot` / `--bench` 默认 truecolor，可用 `--color` 覆盖。
+- At 30 FPS the frame budget is about 33.3 ms; the heaviest effect, `fire`, costs about **1.3% of one core** offscreen (0.433 ms/frame) and about **1.4%** interactively (including PTY writes).
+- Startup: `--version` median about **2.0 ms**; real-PTY first-screen bytes about **1.6–2.4 ms** median.
+- Memory: peak RSS under a real PTY **2.08–2.27 MiB**.
+- Binary: **733 KiB**.
+- Interactive mode honors `NO_COLOR`; offscreen `--snapshot` / `--bench` default to truecolor and can be overridden with `--color`.
 
 ```bash
 scripts/bench.sh
 ./target/release/trix fire --bench --size 160x48 --frames 300
 ```
 
-## 实现
+## Implementation
 
-- **终端驱动**（`src/term.rs`）：libc 设置 raw mode、备用屏幕、隐藏光标、关闭自动换行；非阻塞读键、`TIOCGWINSZ` 尺寸检测、SIGINT/SIGTERM/SIGHUP 标志、panic hook。
-- **Canvas**（`src/canvas.rs`）：`Cell { char, fg }` 双缓冲；逐行变化区间；颜色变化才发 SGR；支持 truecolor/256/16/mono。
-- **零框架**：唯一依赖 `libc`；没有 tokio/crossterm/线程任务。
-- **代码雨**：逐列头/尾、随机速度与深度、二进制雾、横向数据包、CRT 扫描。
-- **火焰**：Doom-fire 元胞传播；底部合并成一整片宽火床，中间火苗最高，两侧火舌向左右倾斜散开。
-- **巨龙**：飞行轨迹按弧长重采样，长蛇身 splat 到强度/深度缓冲；大型中国龙头、鹿角、龙须、鬃毛、四爪、背鳍、尾鳍、龙鳞；整屏 Lissajous 飞行。
-- **世界地图**：Natural Earth 陆地掩膜、覆盖率采样、城市节点、大圆弧、扫描波束。
-- **黑客帝国**：NASA 后台登录大屏。默认 ASCII；`--unicode` 切换蓝色 NASA 横幅（白色大字、红色 swoosh、白色星点、蓝白流光）、居中下移的 Unicode 边框登录框；OPERATOR/PASSWORD/2FA、AUTH/DECRYPT 进度、日志、雷达、ACCESS GRANTED。
-- **黑洞**：事件视界、光子环、吸积盘、透镜弧、喷流、流星、内落；外围星尘沿 "/" 倾斜的饱满椭圆环绕，整体铺满屏幕；最外圈用 `.` / `:` / `+` 随机低密度散点，内层与外层之间补一层中段星尘；整体同向差速旋转（内快外慢，外圈与吸积带同步提速），看起来是一个完整转动的椭圆盘；整体公转速度 ×1.7；`--spin` 调整体旋转。
-- **光束**：单向从左向右；默认直线，`--beam-motion jump` 上下起伏；`--density`/`--beam-speed` 调密度与速度。
-- **烟花**：火箭 + 内外双环粒子 + 延迟爆裂；粒子拖尾、重力、城市剪影、星空。
-- **太阳系**：太阳在左上角；八大行星在下方轨道线；阳光向右下扇形分层传播，且在行星线上方截止。
-- **银河**：预计算星点沿斜向银河带 + 中央核球；动态星团弧、暗尘、流星、星座线；`--density`/`--twinkle`/`--meteors` 可调。
-- **佛光**：回退上一版；原三层曼陀罗粒子环改为动态向外扩散，头光/莲座/粒子保留。
-- **Tom & Jerry**：太空站走廊；运行帧动画；默认慢速、不跳跃；`--speed`/`+`/`-` 调速，`--jump` 开启跳跃；HUD 显示倍率。
-- **超级马里奥**：自动奔跑/跳跃，问号砖块顶出蘑菇、金币与分数；滚动天空/山丘/地面/板栗仔；默认 ASCII 经典字符，`--unicode` 切换实心精灵。
-- **心率跳动**：ECG 网格、P-QRS-T 波形、扫描线、HR/SpO2/SYS-DIA；默认 ASCII 波形，`--unicode` 切换 Unicode 框线/实心波形。
-- **蒲公英**：3 丛×2 茎/6 花头；左右根向中间弯曲；花头尺寸 ×1.5。
-- **地图数据离线生成**：`tools/gen_land.py` 下载 Natural Earth 并栅格化为 `src/data/land_720x360.bin`，运行时不访问网络。
+- **Terminal driver** (`src/term.rs`): libc sets raw mode, the alternate screen, a hidden cursor and disabled autowrap; non-blocking key reads, `TIOCGWINSZ` size detection, SIGINT/SIGTERM/SIGHUP flags and a panic hook.
+- **Canvas** (`src/canvas.rs`): `Cell { char, fg, bg }` double buffering; per-row changed spans; SGR is emitted for both foreground and background changes, and the background falls back to `40` (the black the program started with) so the previous scene's background never lingers; truecolor / 256 / 16 / mono (mono draws glyphs only). The `monalisa` block portrait uses background color; `mario` does not.
+- **Zero framework**: `libc` is the only dependency; no tokio, crossterm or worker threads.
+- **Code rain**: per-column heads and tails, random speed and depth, binary mist, horizontal data packets, CRT scanline.
+- **Fire**: Doom-fire cellular propagation; the bottom merges into one wide fire bed, the middle flames are tallest, and the side tongues lean outward.
+- **Dragon**: the flight path is resampled by arc length and the long serpent body is splatted into intensity / depth buffers; a large Chinese dragon head, antlers, whiskers, mane, four claws, dorsal fin, tail fin and scales; full-screen Lissajous flight.
+- **World map**: Natural Earth land mask, coverage sampling, city nodes, great-circle arcs, scan beams.
+- **The Matrix**: a NASA backend login wall. ASCII by default; `--unicode` switches to a blue NASA banner (white wordmark, red swoosh, white star points, blue-white light sweep) and a centered, lowered Unicode-framed login box; OPERATOR/PASSWORD/2FA, AUTH/DECRYPT progress, logs, radar, ACCESS GRANTED.
+- **Black hole**: event horizon, photon ring, accretion disk, lensing arcs, jets, meteors, infall; outer stardust follows a full "/"-tilted ellipse that fills the screen; the outermost ring uses random low-density `.` / `:` / `+` scatter, with a middle stardust band between the inner and outer layers; all layers rotate in the same direction with differential speed (fast inside, slow outside, while the outer ring and accretion band speed up together), reading as one rotating elliptical disk; overall orbital speed ×1.7; `--spin` adjusts the whole rotation.
+- **Beams**: one-way, left to right; straight by default, `--beam-motion jump` makes them rise and fall; `--density` / `--beam-speed` adjust density and speed.
+- **Fireworks**: rockets + inner/outer particle rings + delayed bursts; particle trails, gravity, a city silhouette, a starfield.
+- **Solar system**: the Sun in the top-left; the eight planets on orbital lines below; sunlight spreads in layered fans toward the lower right and stops above the planet line.
+- **Galaxy**: precomputed stars along a diagonal Milky Way band plus a central bulge; animated cluster arcs, dark dust, meteors, constellation lines; `--density` / `--twinkle` / `--meteors` are adjustable.
+- **Buddha's halo**: reverted to the previous edition; the three static mandala particle rings now expand outward dynamically; head halo, lotus base and particles are kept.
+- **Tom & Jerry**: a space-station corridor; frame animation; slow and non-jumping by default; `--speed` / `+` / `-` adjust speed, `--jump` enables jumping; the HUD shows the multiplier.
+- **Super Mario**: automatic running and jumping; question blocks pop out mushrooms, coins and score; scrolling sky / hills / ground / Goombas; ASCII classic glyphs by default, `--unicode` switches to solid sprites.
+- **Heartbeat Monitor**: ECG grid, P-QRS-T waveform, scan line, HR/SpO2/SYS-DIA; ASCII waveform by default, `--unicode` switches to Unicode box drawing / solid waveform.
+- **Dandelion**: 3 clumps × 2 stems / 6 flower heads; left and right roots bend toward the center; flower heads ×1.5.
+- **Oriental Pearl**: Bund night view + Oriental Pearl + Huangpu River reflections; two random boats on the river — hull type (sailboat / freighter / ferry), size, hull palette, channel depth and drift direction are all random; distant boats sit low on the water while near boats are large and press against the frame, with decks / portholes / lit cabin windows / smoking funnels / mast lights / bow lanterns / wakes and water reflections; 1–2 meteors cross the night sky every 3–5 seconds (about 18% of intervals are skipped), with a white-hot head and an ice-blue or warm-gold fading tail, flying into the skyline or fading out and being recycled.
+- **Offline map data**: `tools/gen_land.py` downloads Natural Earth and rasterizes it into `src/data/land_720x360.bin`; runtime never touches the network.
 
-## 录制与文档工具
+## Recording and documentation tools
 
 ```bash
 trix dragon --snapshot dragon.ans --size 120x36 --frames 145 --seed 7
@@ -428,15 +476,16 @@ python3 tools/ansi2png.py dragon.ans dragon.png --size 120x36 --label "trix drag
 python3 tools/render_gif.py dragon docs/dragon.gif --start 100 --frames 24 --step 3
 ```
 
-## 兼容性
+## Compatibility
 
-- 支持 macOS、Linux、WSL（Unix termios）；原生 Windows 未实现。
-- 推荐 24-bit truecolor；`--color auto` 会自动降级。
-- 同时支持 ASCII / Unicode 的特效**默认一律 ASCII**；需要 Unicode 时加 `--unicode` 或 `--charset unicode`。`matrix` 的 Unicode 版包含蓝白大字、Unicode 边框/进度条；`--charset kana` 可混入半角片假名。
-- 非 TTY 会提示使用 `--snapshot`。
-- 画布黑底；建议深色终端。
+- Runs on macOS, Linux and WSL (Unix termios); native Windows is not implemented.
+- 24-bit truecolor is recommended; `--color auto` degrades automatically.
+- Effects that support both ASCII and Unicode **always start in ASCII**; add `--unicode` or `--charset unicode` for Unicode. The Unicode `matrix` includes the blue/white wordmark and Unicode borders / progress bars; `--charset kana` can mix in half-width katakana.
+- Linux binaries are static musl builds for `x86_64` and `aarch64`, so they run on any distribution (including Alpine) on those architectures.
+- Non-TTY runs suggest `--snapshot`.
+- The canvas is black; a dark terminal is recommended.
 
-## 测试
+## Testing
 
 ```bash
 cargo test
@@ -444,30 +493,30 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-当前 **76 个**单元/集成测试：颜色转换、按键解析、CLI/新参数校验、Canvas 裁剪/差分、地图掩膜、27 个特效多尺寸/主题/颜色/Unicode 降级、默认字符集 ASCII-only、小终端不 panic、确定性种子、Tom & Jerry 速度/跳跃、龙卷风高不见顶/恶魔之眼 8～15 秒眨眼节奏/注视/看出去再回正/瞳孔不被高光遮挡/静止开关、芭蕾牵手/满屏路径、生命的轨迹世代/时间轴/狗猫/符号/核心 0 次变轨/死亡头部/终点符号等。
+There are currently **144** unit / integration tests: color conversion, key parsing, CLI / new-argument validation, canvas clipping / diffing, the map mask, 27 effects across sizes / themes / colors / Unicode fallback, ASCII-only default charsets, no panic in small terminals, deterministic seeds, Tom & Jerry speed / jump, tornado height, Demon Eye blink rhythm (8–15 s) / gaze / dart-and-return / pupil never covered by the highlight / still switch, ballet hand-holding / full-screen path, and Threads of Life generations / timeline / dog and cat / symbols / zero lane changes for the core / death heads / end markers.
 
-真实 PTY 实测：`q`/`Esc`/`Ctrl-C`/`SIGTERM`、暂停、帮助、数字/`[`/`]` 切换、`i` 状态、缩放、`--no-alt`、颜色降级、退出恢复。
+Real-PTY checks: `q` / `Esc` / `Ctrl-C` / `SIGTERM`, pause, help, number / `[` / `]` switching, `i` status, resize, `--no-alt`, color fallback, and terminal restoration on exit.
 
-## 版本与回退
+## Versions and rollback
 
-- **当前版本：0.8.0**（`trix --version`），tag **`v0.8.0`**。
-- 上一版：tag **`v0.7.0`**（鱼缸/山水/东方明珠/天安门/车水马龙/仙女/龙卷风/雷暴、播放列表）；**`v0.6.0`**（马里奥/心电/蒲公英、蓝绿代码雨）；**`v0.5.1`**（自动发布流水线）。
-- 更早：tag **`v0.4.0`**（Unicode NASA 登录、连通火焰、可调参数）；**`v0.3.0`**（多堆火焰、7 个新特效）；**`v0.2.0`**（中国龙、NASA 入侵）；**`v0.1.0`**（初始基线）。
-- 回退：
+- **Current version: 0.8.0** (`trix --version`), tag **`v0.8.0`**.
+- Previous: tag **`v0.7.0`** (aquarium / landscape / Oriental Pearl / Tiananmen / traffic / fairy / tornado / thunderstorm, playlists); **`v0.6.0`** (Mario / ECG / dandelion, blue-green code rain); **`v0.5.1`** (automated release pipeline).
+- Earlier: tag **`v0.4.0`** (Unicode NASA login, connected fire, adjustable parameters); **`v0.3.0`** (multi-stack fire, 7 new effects); **`v0.2.0`** (Chinese dragon, NASA intrusion); **`v0.1.0`** (initial baseline).
+- Rollback:
   ```bash
-  git checkout v0.7.0     # 只看上一版（detached HEAD）
+  git checkout v0.7.0     # inspect the previous version only (detached HEAD)
   git switch master
-  git reset --hard v0.7.0 # 彻底退回上一版
+  git reset --hard v0.7.0 # fully revert to the previous version
   ```
-- 额外备份（不进 git）：`backups/trix-v0.1.0-*` 到 `trix-v0.7.0-*`，含源码 tar 与 aarch64 macOS 二进制。
-- 改动记录：[CHANGELOG.md](CHANGELOG.md)。
+- Extra backups (not in git): `backups/trix-v0.1.0-*` through `trix-v0.7.0-*`, containing source tarballs and aarch64 macOS binaries.
+- Change log: [English](CHANGELOG.md) · [中文](CHANGELOG.zh-CN.md).
 
-## 数据来源、参考与许可
+## Data sources, references and license
 
-- 陆地轮廓：[Natural Earth](https://www.naturalearthdata.com/) 1:110m land，**public domain**，经 [natural-earth-vector](https://github.com/nvkelso/natural-earth-vector) GeoJSON 转换。
-- Doom-fire 灵感：[pserey/doom-fire-algorithm](https://github.com/pserey/doom-fire-algorithm)、[horizonwiki/fire](https://github.com/horizonwiki/fire)；本项目的 Rust 实现、多燃料堆、配色与渲染均为独立编写。
-- 佛祖 ASCII 艺术改编自 [ascii.co.uk/art/buddha](https://ascii.co.uk/art/buddha)（原作者署名 `hjw`），用于 `buddha` 场景；本项目补充了颜色、光环、莲座、粒子与动画。
-- 本项目代码：[MIT](LICENSE)。
+- Land outlines: [Natural Earth](https://www.naturalearthdata.com/) 1:110m land, **public domain**, converted from GeoJSON via [natural-earth-vector](https://github.com/nvkelso/natural-earth-vector).
+- Doom-fire inspiration: [pserey/doom-fire-algorithm](https://github.com/pserey/doom-fire-algorithm), [horizonwiki/fire](https://github.com/horizonwiki/fire); this project's Rust implementation, multiple fuel stacks, palette and rendering are independently written.
+- The Buddha ASCII art is adapted from [ascii.co.uk/art/buddha](https://ascii.co.uk/art/buddha) (original author credited as `hjw`) for the `buddha` scene; this project adds color, halo, lotus base, particles and animation.
+- This project's code: [MIT](LICENSE).
 
 ---
 

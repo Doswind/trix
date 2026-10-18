@@ -41,6 +41,11 @@ def main() -> int:
         action="store_true",
         help="render the Unicode charset (docs GIFs use it; the binary defaults to ASCII)",
     )
+    ap.add_argument(
+        "--ghost",
+        action="store_true",
+        help="render the monalisa pure-ASCII ghost mode",
+    )
     args = ap.parse_args()
     w, h = map(int, args.size.lower().split("x"))
     images = []
@@ -65,6 +70,8 @@ def main() -> int:
             ]
             if args.unicode:
                 cmd.append("--unicode")
+            if args.ghost:
+                cmd.append("--ghost")
             subprocess.run(
                 cmd,
                 check=True,

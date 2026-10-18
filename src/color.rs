@@ -256,6 +256,24 @@ pub fn write_fg(out: &mut Vec<u8>, color: Rgb, mode: ColorMode) {
     }
 }
 
+/// Write the escape sequence selecting `color` as the background color.
+pub fn write_bg(out: &mut Vec<u8>, color: Rgb, mode: ColorMode) {
+    match mode {
+        ColorMode::True => {
+            let _ = write!(out, "\x1b[48;2;{};{};{}m", color.r, color.g, color.b);
+        }
+        ColorMode::Ansi256 => {
+            let _ = write!(out, "\x1b[48;5;{}m", color.ansi256());
+        }
+        ColorMode::Ansi16 => {
+            let i = color.ansi16();
+            let code = if i < 8 { 40 + i } else { 100 + (i - 8) };
+            let _ = write!(out, "\x1b[{}m", code);
+        }
+        ColorMode::Mono => {}
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

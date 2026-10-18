@@ -14,8 +14,20 @@ ASCII by default**.
   another charset mode.
 - When adding or changing a dual-form effect, update:
   - `src/scene.rs` (`default_charset` test coverage),
-  - `README.md` charset examples/tables,
-  - `CHANGELOG.md` under `Unreleased`.
+  - `README.md` and `README.zh-CN.md` charset examples/tables,
+  - `CHANGELOG.md` and `CHANGELOG.zh-CN.md` under `Unreleased`.
+
+## Docs and localization
+
+- English is the primary documentation language: `README.md` and
+  `CHANGELOG.md`.
+- Keep `README.zh-CN.md` and `CHANGELOG.zh-CN.md` in sync with their English
+  counterparts; both versions must contain the same sections and facts.
+- Both READMEs must list every effect with its English **and** Chinese name;
+  `trix --list` uses the same names (`EffectId::title_en` / `title_zh`).
+- Linux release builds are static musl binaries for `x86_64` and `aarch64`;
+  update both READMEs and `.github/workflows/release.yml` together when
+  targets change.
 
 ## General checks
 
