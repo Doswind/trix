@@ -512,6 +512,10 @@ cargo fmt --check
 - 资产：`trix-tui-<version>-macos-universal.tar.gz`、`trix-tui-<version>-linux-x86_64.tar.gz`、`trix-tui-<version>-linux-aarch64.tar.gz`，以及 `SHA256SUMS`。
 - 在 Actions 页面手动 `Run workflow` 只构建产物，不创建 Release。
 
+## 参与贡献
+
+欢迎提 Issue 和 PR。开发环境、提交前检查和截图规范见 [CONTRIBUTING.md](CONTRIBUTING.md)，社区约定见 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)；发布文案和渠道草稿在 [docs/LAUNCH.md](docs/LAUNCH.md)。
+
 ## 数据来源、参考与许可
 
 - 陆地轮廓：[Natural Earth](https://www.naturalearthdata.com/) 1:110m land，**public domain**，经 [natural-earth-vector](https://github.com/nvkelso/natural-earth-vector) GeoJSON 转换。

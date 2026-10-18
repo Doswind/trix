@@ -1,0 +1,36 @@
+name: Feature request
+description: Suggest a new effect, flag, theme or usability improvement.
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Small, concrete proposals are easiest to review.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the use case, not only the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: What should `trix` do? Include flags or key bindings if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: textarea
+    id: visual
+    attributes:
+      label: Mockup, reference or GIF
+      description: ASCII sketch, screenshot, or a link to a similar effect.
+    validations:
+      required: false

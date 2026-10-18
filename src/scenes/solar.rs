@@ -112,7 +112,7 @@ impl SolarScene {
             self.asteroids.push(Asteroid {
                 x: self.rng.range(mars + 1.0, jup - 1.0),
                 y: self.baseline + self.rng.range(-2.2, 2.2),
-                ch: [b'.', b'\'', b',', b'`'][self.rng.below(4)],
+                ch: b".',`"[self.rng.below(4)],
                 bright: self.rng.range(0.2, 0.8),
             });
         }

@@ -1,0 +1,55 @@
+name: Bug report
+description: Something renders wrong, crashes, or behaves differently than the docs say.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please include the exact command and, if possible,
+        a `--snapshot` frame or a screenshot. Do not paste secrets.
+  - type: input
+    id: environment
+    attributes:
+      label: OS and terminal
+      description: OS, terminal emulator, shell, and whether you use tmux/SSH.
+      placeholder: "macOS 15, iTerm2, zsh; or Ubuntu 24.04, GNOME Terminal, bash"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `trix --version`.
+      placeholder: "trix-tui 0.9.0"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The exact command that triggers the problem.
+      render: shell
+      placeholder: "trix --unicode --color truecolor"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include error text, a screenshot, or an ANSI snapshot.
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Font, TERM, COLORTERM, NO_COLOR, `trix --help` output, anything else.
+    validations:
+      required: false

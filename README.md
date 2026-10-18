@@ -512,6 +512,10 @@ There are currently **199** unit / integration tests. See `.github/workflows/ci.
 - Assets: `trix-tui-<version>-macos-universal.tar.gz`, `trix-tui-<version>-linux-x86_64.tar.gz`, `trix-tui-<version>-linux-aarch64.tar.gz`, plus `SHA256SUMS`.
 - `Run workflow` on the Actions page builds artifacts without creating a Release.
 
+## Contributing
+
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup and the checks to run, and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for the community rules. Launch copy and channel drafts live in [docs/LAUNCH.md](docs/LAUNCH.md).
+
 ## Data sources, references and license
 
 - Land outlines: [Natural Earth](https://www.naturalearthdata.com/) 1:110m land, **public domain**, converted from GeoJSON via [natural-earth-vector](https://github.com/nvkelso/natural-earth-vector).
