@@ -189,7 +189,7 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | 光芒万丈 (Tiananmen Radiance) `tiananmen` | 放大到约 92% 宽 / 62% 高的天安门：双层金瓦飞檐、红柱城楼与国徽、红墙、白石门套五门洞、白框标语与中央画像、红旗与两侧小楼；金色光束先从城楼后方向外向上生成，再按光束由内向外依次循环点亮 |
 | 车水马龙 (Traffic Flow) `traffic` | 城市街道两侧高楼、霓虹、车流；横向 3 行车（车顶/车身/车轮，8–16 格长）分 4–5 条车道、车道间有虚线，方向按车道交替；纵向 6 列俯视车（5–9 行，带前后灯与侧轮）；`--street horizontal\|vertical`；`--density` 调车流密度；**默认 ASCII**，`--unicode` 可切换 |
 | 龙卷风 (Tornado) `tornado` | 1–8 股龙卷风从左向右；扭曲、底部收尖、顶部更宽；整体比原来**更矮一档**（0.28～0.58 屏高）且**更淡更疏**（亮度 0.42～0.85、每行 20 颗）；底部有 30 颗碎屑**向外飘散** |
-| 电闪雷鸣 (Thunderstorm) `storm` | 乌云、斜雨、城市剪影、闪电；屏幕上方叠一层**灰白、不规则的高云**（较密、底部淡出、**缓慢向右飘移**（约 3 列/秒））与原有云带形成层次；落雷时全屏白色亮闪（[效果图](docs/storm-flash.png)） |
+| 电闪雷鸣 (Thunderstorm) `storm` | 乌云、斜雨、城市剪影、闪电；屏幕上方叠一层**灰白、不规则的高云**（较密、底部淡出、**缓慢向右飘移**（约 3 列/秒））与原有云带形成层次；落雷时全屏白色亮闪（[效果图](docs/storm-flash-ascii.png)） |
 | 蒙娜丽莎 (Mona Lisa) `monalisa` | 去背景人物像：从参考像素画烘焙的人物（头发、脸、颈肩、交叠双手），ANSI 色块承载肤色/明暗 + ASCII 字符勾细节；没有山水/画框/浮尘；人物横向加宽约 12%，更接近原作体态；**画面静态，不眨眼**；`--unicode` 用半块提高垂直分辨率；`--ghost` 进入原纯 ASCII“鬼影”版（无背景色块、保留眨眼，[静态预览](docs/monalisa-ghost.png) / [动图](docs/monalisa-ghost.gif)）；可选 `--gallery` 在人物后方加淡暖色展厅光晕与地面微光（[预览](docs/monalisa-gallery.png)） |
 | 冰上芭蕾 (Ice Ballet) `ballet` | 冰场双人舞：39 个场景秒的编舞循环 13 个舞段；默认 2× 节奏约 19.5 秒一轮（滑行、压步、arabesque、promenade、**头顶托举**、联合旋转、death spiral、sissonne 跳跃、Ina Bauer、收势），关节用两骨 IK 求解、牵手自动对齐，四肢带柔边并延迟跟随躯干；整场滑行覆盖大部分画面，围板后有三排会摇晃/举手/打闪光灯的观众，冰面留下冰刀刻痕与倒影；`--speed` 调速 |
 | 恶魔之眼 (Demon Eye) `demoneye` | 整屏一只巨大血眼：眨眼每 8～15 秒一次、单眨或双眨（约 7:3），每两次眨眼之间只甩出 1～2 次（两次跳动相隔 ≥5 秒），约 0.1 秒到位、0.45～0.85 秒内必回正中直视观众；竖瞳缩放、眼睑压暗、血丝与眨眼冲击波；`--eye-motion dart\|still`（默认 dart），`--eye-still` 让眼球钉在正中 |
@@ -227,7 +227,7 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 
 全屏闪电：
 
-![storm flash](docs/storm-flash.png)
+![storm flash](docs/storm-flash-ascii.png)
 
 ```bash
 trix mario              # 默认 ASCII 经典字形
