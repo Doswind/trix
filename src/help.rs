@@ -611,6 +611,7 @@ fn curated_options(style: &HelpStyle) -> Vec<String> {
                 "--meteors",
                 "--beam-speed",
                 "--beam-motion",
+                "--trail",
                 "--seed-count",
                 "--seed-speed",
                 "--street",
@@ -717,8 +718,12 @@ fn keys_block(style: &HelpStyle) -> Vec<String> {
     }
     out.push(line.trim_end().to_string());
     let details =
-        "1-9 0 [ ] jump to the first 12 effects · m e d f l b j c z k o v g y select more";
+        "1-9 0 [ ] jump to the first 12 effects · m e d f l b j c z k o v g y u w select more";
     for line in wrap(details, style.width.saturating_sub(6)) {
+        out.push(format!("    {}", dim(&line, style)));
+    }
+    let note = "tunnel / helix / lights / volcano / tesseract / launch / plasma: no single-key shortcut, use trix <effect>";
+    for line in wrap(note, style.width.saturating_sub(6)) {
         out.push(format!("    {}", dim(&line, style)));
     }
     out
@@ -916,6 +921,7 @@ fn tuning_example(flag: &str) -> &'static str {
         "--tornado-speed" => "1.6",
         "--life-cycle" => "60",
         "--eye-motion" => "still",
+        "--trail" => "1.5",
         _ => "",
     }
 }
@@ -988,6 +994,8 @@ pub fn effect(id: EffectId, base: &HelpStyle) -> String {
             "full"
         },
         id.shortcut()
+            .map(|c| c.to_string())
+            .unwrap_or_else(|| "-".to_string())
     );
     for line in wrap(&meta, body_width) {
         body.push(format!("  {}", paint(&line, TEXT, &style)));
@@ -1041,8 +1049,14 @@ pub fn effect(id: EffectId, base: &HelpStyle) -> String {
     body.push(String::new());
     let prev = id.prev();
     let next = id.next();
-    let prev_text = format!("prev {} {}", prev.key(), prev.shortcut());
-    let next_text = format!("next {} {}", next.key(), next.shortcut());
+    let prev_text = match prev.shortcut() {
+        Some(key) => format!("prev {} {}", prev.key(), key),
+        None => format!("prev {}", prev.key()),
+    };
+    let next_text = match next.shortcut() {
+        Some(key) => format!("next {} {}", next.key(), key),
+        None => format!("next {}", next.key()),
+    };
     if body_width >= 38 {
         body.push(format!(
             "  {}  ·  {}",
@@ -1217,6 +1231,12 @@ const TUNING: &[OptRow] = &[
         arg: "",
         desc: "alias for --beam-motion jump",
         default: None,
+    },
+    OptRow {
+        flags: "--trail",
+        arg: "<f>",
+        desc: "DeepSeek Harness afterimage strength (0 = off)",
+        default: Some("1.0"),
     },
     OptRow {
         flags: "--seed-count",

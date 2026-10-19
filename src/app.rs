@@ -84,6 +84,7 @@ fn tune_for(opts: &Options) -> Tune {
         tornado_speed: opts.tornado_speed,
         life_cycle: opts.life_cycle,
         eye_still: opts.eye_still,
+        trail: opts.trail,
         ghost: opts.ghost,
         plain: opts.plain,
         gallery: opts.gallery,
@@ -814,6 +815,7 @@ fn info_params(
                     "dart".to_string()
                 }
             }
+            "--trail" => format!("{:.2}", tune.trail),
             "--ghost" => {
                 if tune.ghost {
                     "on".to_string()

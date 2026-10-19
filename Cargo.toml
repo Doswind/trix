@@ -1,9 +1,9 @@
 [package]
 name = "trix-effects"
-version = "0.9.1"
+version = "0.11.0"
 edition = "2021"
 rust-version = "1.70"
-description = "26 animated ASCII/Unicode effects for the terminal in one fast, dependency-free Rust binary"
+description = "35 animated ASCII/Unicode effects for the terminal in one fast, dependency-free Rust binary"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/Doswind/trix-effects"

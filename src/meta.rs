@@ -218,6 +218,13 @@ const TOMJERRY_TUNING: &[Tuning] = &[Tuning {
     desc: "enable jumping",
 }];
 
+const DSH_TUNING: &[Tuning] = &[Tuning {
+    flag: "--trail",
+    value: "<f>",
+    default: "1.0",
+    desc: "afterimage strength (0 = off)",
+}];
+
 impl EffectId {
     /// One short line for the overview grid and `--list`.
     pub fn summary(self) -> &'static str {
@@ -248,6 +255,15 @@ impl EffectId {
             EffectId::Ballet => "Ice-ballet duet looping through 13 sections",
             EffectId::DemonEye => "Giant bloodshot eye that blinks and darts its gaze",
             EffectId::Life => "A 0-100 life timeline of family, love and generations",
+            EffectId::Dsh => "Giant DEEPSEEK HARNESS wordmark with afterimage and scan beams",
+            EffectId::Vibe => "Claude Code transcript typing this scene's own Rust source",
+            EffectId::Tunnel => "First-person warp tunnel with a rolling camera and star streaks",
+            EffectId::Helix => "Rotating DNA double helix with A/T/C/G base pairs",
+            EffectId::Lights => "Aurora curtains over a moonlit mountain lake",
+            EffectId::Volcano => "Night eruption with lava fountains, ash and lightning",
+            EffectId::Tesseract => "Rotating 4D hypercube drawn as a depth-shaded wireframe",
+            EffectId::Launch => "Rocket launch from pad to orbit, with plume and booster",
+            EffectId::Plasma => "Classic demoscene plasma with a shifting palette",
         }
     }
 
@@ -280,6 +296,15 @@ impl EffectId {
             EffectId::Ballet => "A 39-scene-second duet looping through 13 sections: glide, crossover, arabesque, promenade, overhead lift, pair spin, death spiral, sissonne, Ina Bauer and finale. Joints use two-bone IK; the default tempo is 2x, about 19.5 seconds per loop.",
             EffectId::DemonEye => "One huge bloodshot eye fills the screen; it blinks every 8-15 seconds and darts its gaze 1-2 times between blinks. --eye-motion dart|still.",
             EffectId::Life => "A 0-100 age timeline with glowing life lines; family, love and generations enter and leave on schedule. The bright beam grows with age; a supernova finale closes ME's timeline. --life-cycle sets the round length.",
+            EffectId::Dsh => "A hand-drawn 3x5/4x5/5x7 wordmark decodes in from random glyphs, drags a swaying afterimage downward and is crossed by horizontal and vertical light beams. A short VHS slice glitch fires about every 11 seconds. ASCII by default; --unicode uses solid blocks, and --trail sets the afterimage strength.",
+            EffectId::Vibe => "A Claude Code-style transcript reads src/scenes/vibe.rs (or an embedded copy), types it with a small Rust syntax highlighter and loops through six windows per turn; only the lines up to the typing head are visible, and each loop starts from a clean transcript. ASCII by default; --unicode swaps in the Claude Code prompt, tool and spinner glyphs.",
+            EffectId::Tunnel => "Sixteen depth-spaced rings expand toward the viewer while ten radial spokes rotate and projected stars streak past. Pure ASCII: +, *, # and @ carry the perspective.",
+            EffectId::Helix => "Two sine strands wrap around a vertical axis; A/T/C/G base pairs join them, depth comes from each strand's cosine, and the whole helix rotates in place. Pure ASCII.",
+            EffectId::Lights => "Three noisy aurora curtains drift over a starry sky, snow-capped ridges and a moonlit lake reflection. ASCII only: the vertical glyphs and stars are the effect.",
+            EffectId::Volcano => "A jagged mountain silhouette, a glowing crater, ballistic lava fountains, two lava streams, drifting ash and periodic lightning. ASCII by default; --unicode uses solid blocks for the mountain.",
+            EffectId::Tesseract => "Sixteen vertices and thirty-two edges rotate in four dimensions, project to three and then two, and draw as a depth-shaded ASCII wireframe. Pure ASCII.",
+            EffectId::Launch => "A twenty-two second launch loop: countdown on the pad, ignition smoke, ascent with a flame plume, booster separation and an Earth-limb view. Pure ASCII.",
+            EffectId::Plasma => "Four interfering sine fields drive a glyph ramp and a slowly cycling palette, with a subtle scanline. ASCII by default; --unicode uses a compact block ramp.",
         }
     }
 
@@ -295,7 +320,9 @@ impl EffectId {
             | EffectId::Storm
             | EffectId::Dandelion
             | EffectId::Landscape
-            | EffectId::FishTank => Category::Nature,
+            | EffectId::FishTank
+            | EffectId::Lights
+            | EffectId::Volcano => Category::Nature,
             EffectId::Matrix
             | EffectId::BlackHole
             | EffectId::Beams
@@ -303,52 +330,71 @@ impl EffectId {
             | EffectId::Ecg
             | EffectId::Traffic
             | EffectId::Shanghai
-            | EffectId::Tiananmen => Category::SciFi,
+            | EffectId::Tiananmen
+            | EffectId::Dsh
+            | EffectId::Vibe
+            | EffectId::Tunnel
+            | EffectId::Helix
+            | EffectId::Tesseract
+            | EffectId::Launch => Category::SciFi,
             EffectId::Buddha
             | EffectId::TomJerry
             | EffectId::Mario
             | EffectId::MonaLisa
             | EffectId::Ballet
             | EffectId::DemonEye
-            | EffectId::Life => Category::Art,
+            | EffectId::Life
+            | EffectId::Plasma => Category::Art,
         }
     }
 
-    /// The key that jumps straight to this effect in the interactive app.
-    pub fn shortcut(self) -> char {
+    /// Optional single-key shortcut; the newest generative scenes have none.
+    pub fn shortcut(self) -> Option<char> {
         match self {
-            EffectId::Rain => '1',
-            EffectId::Fire => '2',
-            EffectId::Dragon => '3',
-            EffectId::Map => '4',
-            EffectId::Matrix => '5',
-            EffectId::BlackHole => '6',
-            EffectId::Beams => '7',
-            EffectId::Fireworks => '8',
-            EffectId::Solar => '9',
-            EffectId::Galaxy => '0',
-            EffectId::Buddha => '[',
-            EffectId::TomJerry => ']',
-            EffectId::Mario => 'm',
-            EffectId::Ecg => 'e',
-            EffectId::Dandelion => 'd',
-            EffectId::FishTank => 'f',
-            EffectId::Landscape => 'l',
-            EffectId::Shanghai => 'b',
-            EffectId::Tiananmen => 'j',
-            EffectId::Traffic => 'c',
-            EffectId::Tornado => 'z',
-            EffectId::Storm => 'k',
-            EffectId::MonaLisa => 'o',
-            EffectId::Ballet => 'v',
-            EffectId::DemonEye => 'g',
-            EffectId::Life => 'y',
+            EffectId::Rain => Some('1'),
+            EffectId::Fire => Some('2'),
+            EffectId::Dragon => Some('3'),
+            EffectId::Map => Some('4'),
+            EffectId::Matrix => Some('5'),
+            EffectId::BlackHole => Some('6'),
+            EffectId::Beams => Some('7'),
+            EffectId::Fireworks => Some('8'),
+            EffectId::Solar => Some('9'),
+            EffectId::Galaxy => Some('0'),
+            EffectId::Buddha => Some('['),
+            EffectId::TomJerry => Some(']'),
+            EffectId::Mario => Some('m'),
+            EffectId::Ecg => Some('e'),
+            EffectId::Dandelion => Some('d'),
+            EffectId::FishTank => Some('f'),
+            EffectId::Landscape => Some('l'),
+            EffectId::Shanghai => Some('b'),
+            EffectId::Tiananmen => Some('j'),
+            EffectId::Traffic => Some('c'),
+            EffectId::Tornado => Some('z'),
+            EffectId::Storm => Some('k'),
+            EffectId::MonaLisa => Some('o'),
+            EffectId::Ballet => Some('v'),
+            EffectId::DemonEye => Some('g'),
+            EffectId::Life => Some('y'),
+            EffectId::Dsh => Some('u'),
+            EffectId::Vibe => Some('w'),
+            EffectId::Tunnel
+            | EffectId::Helix
+            | EffectId::Lights
+            | EffectId::Volcano
+            | EffectId::Tesseract
+            | EffectId::Launch
+            | EffectId::Plasma => None,
         }
     }
 
     pub fn from_shortcut(c: char) -> Option<Self> {
         let c = c.to_ascii_lowercase();
-        EffectId::ALL.iter().copied().find(|e| e.shortcut() == c)
+        EffectId::ALL
+            .iter()
+            .copied()
+            .find(|e| e.shortcut() == Some(c))
     }
 
     pub fn charset_support(self) -> CharsetSupport {
@@ -367,7 +413,11 @@ impl EffectId {
             | EffectId::DemonEye
             | EffectId::Life
             | EffectId::Shanghai
-            | EffectId::Traffic => CharsetSupport::Dual,
+            | EffectId::Traffic
+            | EffectId::Dsh
+            | EffectId::Vibe
+            | EffectId::Volcano
+            | EffectId::Plasma => CharsetSupport::Dual,
             _ => CharsetSupport::Ascii,
         }
     }
@@ -387,6 +437,7 @@ impl EffectId {
             EffectId::MonaLisa => MONALISA_TUNING,
             EffectId::Dragon => DRAGON_TUNING,
             EffectId::TomJerry => TOMJERRY_TUNING,
+            EffectId::Dsh => DSH_TUNING,
             _ => &[],
         }
     }
@@ -397,6 +448,15 @@ impl EffectId {
             EffectId::Life => 30.0,
             EffectId::Ballet => 12.0,
             EffectId::MonaLisa => 2.0,
+            EffectId::Vibe => 10.0,
+            EffectId::Dsh => 6.0,
+            EffectId::Tunnel => 6.0,
+            EffectId::Helix => 6.0,
+            EffectId::Lights => 8.0,
+            EffectId::Volcano => 8.0,
+            EffectId::Tesseract => 6.0,
+            EffectId::Launch => 12.0,
+            EffectId::Plasma => 5.0,
             EffectId::Fireworks => 6.0,
             EffectId::Storm => 6.0,
             EffectId::Shanghai => 6.0,
@@ -417,7 +477,9 @@ mod tests {
         for id in EffectId::ALL {
             assert!(!id.summary().is_empty(), "{id:?} summary");
             assert!(!id.about().is_empty(), "{id:?} about");
-            assert!(id.shortcut().is_ascii(), "{id:?} shortcut");
+            if let Some(c) = id.shortcut() {
+                assert!(c.is_ascii(), "{id:?} shortcut");
+            }
             assert!(id.preview_secs() >= 1.0, "{id:?} preview");
         }
     }
@@ -442,10 +504,11 @@ mod tests {
     fn shortcuts_are_unique_and_round_trip() {
         let mut seen = Vec::new();
         for id in EffectId::ALL {
-            let c = id.shortcut();
-            assert!(!seen.contains(&c), "duplicate shortcut {c}");
-            seen.push(c);
-            assert_eq!(EffectId::from_shortcut(c), Some(id));
+            if let Some(c) = id.shortcut() {
+                assert!(!seen.contains(&c), "duplicate shortcut {c}");
+                seen.push(c);
+                assert_eq!(EffectId::from_shortcut(c), Some(id));
+            }
         }
     }
 
@@ -473,7 +536,11 @@ mod tests {
                 "monalisa",
                 "ballet",
                 "demoneye",
-                "life"
+                "life",
+                "dsh",
+                "vibe",
+                "volcano",
+                "plasma"
             ]
         );
     }

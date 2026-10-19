@@ -62,6 +62,8 @@ pub struct Options {
     pub tornado_speed: f32,
     pub life_cycle: f32,
     pub eye_still: bool,
+    /// dsh: afterimage strength (0 turns it off).
+    pub trail: f32,
     /// monalisa: draw the flat pure-ASCII "ghost" portrait.
     pub ghost: bool,
     /// dragon: plain starfield, no cloud sea / mountains.
@@ -106,6 +108,7 @@ impl Default for Options {
             tornado_speed: 1.0,
             life_cycle: 120.0,
             eye_still: false,
+            trail: 1.0,
             ghost: false,
             plain: false,
             gallery: false,
@@ -235,6 +238,14 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                 }
                 "eye-still" | "no-eye-dart" | "eye-fixed" => opts.eye_still = true,
                 "eye-dart" => opts.eye_still = false,
+                "trail" => {
+                    let v = take_value(args, &mut i, inline, "--trail")?;
+                    let n = parse_num(&v, "--trail")?;
+                    if !(0.0..=3.0).contains(&n) {
+                        return Err("--trail must be between 0 and 3".into());
+                    }
+                    opts.trail = n;
+                }
                 "ghost" | "ghost-mode" | "ascii-art" | "mono-art" => opts.ghost = true,
                 "no-ghost" => opts.ghost = false,
                 "plain" | "no-bg" | "no-background" => opts.plain = true,

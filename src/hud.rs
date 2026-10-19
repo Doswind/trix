@@ -590,7 +590,7 @@ mod tests {
         let mut canvas = Canvas::new(100, 24);
         draw_playlist(&mut canvas, &f, EffectId::Rain, 12.0, 3.0);
         let line = row(&canvas, 22);
-        assert!(line.contains("playlist 1/26"), "{line:?}");
+        assert!(line.contains("playlist 1/35"), "{line:?}");
         assert!(line.contains("next 9s"), "{line:?}");
     }
 
