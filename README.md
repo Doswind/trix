@@ -71,7 +71,7 @@ trix ballet --speed 1.3            # faster ice ballet
 trix demoneye --eye-still          # pin the eyeball, keep blinking
 trix life --life-cycle 60          # 0–100 in one minute
 trix dsh                           # DEEPSEEK HARNESS wordmark
-trix dsh --trail 0                 # no afterimage, beams only
+trix dsh --trail 0                 # no drop ghost, beam only
 trix vibe --unicode                # Claude Code glyphs, self-typing source
 trix tunnel                        # warp tunnel
 trix plasma                        # plasma field
@@ -225,14 +225,14 @@ Every effect name is given in English and Chinese; `trix --list` uses the same n
 | Ice Ballet (冰上芭蕾) `ballet` | An ice-ballet duet: a 39-scene-second choreography loops through 13 sections; the default 2x tempo makes one loop about 19.5 seconds (glide, crossover, arabesque, promenade, **overhead lift**, pair spin, death spiral, sissonne, Ina Bauer, final pose); joints use two-bone IK, clasped hands align automatically, limbs have soft edges and lag behind the torso; the routine covers most of the screen, three rows of spectators behind the boards sway, raise their hands and fire flashbulbs, and skate marks and reflections stay on the ice; `--speed` |
 | Demon Eye (恶魔之眼) `demoneye` | One huge bloodshot eye fills the screen: it blinks every 8–15 seconds, singly or doubly (about 7:3); between blinks the eyeball darts only 1–2 times (darts at least 5 seconds apart), reaching the target in about 0.1 s and always returning to center within 0.45–0.85 s; the vertical pupil scales, eyelids press in, blood vessels and a blink shockwave; `--eye-motion dart\|still` (default `dart`), `--eye-still` pins the eyeball dead center |
 | Threads of Life (生命的轨迹) `life` | A 0–100 age timeline with glowing life lines on both sides; every human uses `@` with a colored uppercase abbreviation on the same row and **the relative's own age** (friends who are not family carry no age); the bright beam grows with age (late in life it can cover most of the lifetime), fading from dark dots / dashes at the tail up to `=` at the head, with a `****@` comet tail; the first ~22%–42% of life (at most about 22 years) stays as sparse dim dots; when a track ends its row can be reused by someone later (school-age `PAL/UNI` +1 row → GF/WIFE, `DOG` −1 row → KID2, and the cat / parents' rows are reclaimed by later friends); `DOG` stays at −1 next to me for life; when `PAL/UNI/WORK/FRIEND` coexist they **share one row**: during the school years it sits on the other side at +1, and while a minor KID exists the whole group retreats to the nearest free row outside KID/CAT (usually +4; only rows actually used by children/pets are yielded, no longer fixed −5/−7), and all KIDs move back inside once grown; `ME 0 / WIFE +1`; `KID1 +2`, `KID2 −1` (reusing the row next to me that DOG gave up), `KID3 −2`; before adulthood `KID3 −2 / KID2 −1 / ME 0 / WIFE +1 / KID1 +2` is **contiguous with no empty rows**, and `GRAND1/GRAND2` always hug their parent's row (moving with them as they drift); `CAT +3` is born with the first child, just below KID1; `DAD/MOM +3/+4` start yielding to `+5/+6` two years before the child is born, and `BRO +5→+7` follows; GPA/GMA/DAD/MOM get suitable random starting ages when I am 0 (58–70 / 56–68 / 25–33 / 23–31), BRO 0–4, ME 0; KID/GRAND/CAT/DOG count from their own birth, GF/WIFE are within ±2 years of my age; every row is fixed at one terminal row (it does not scale with terminal height, and tall terminals never produce empty rows from rounding); when `ME` ends, a roughly 6-second **supernova finale** plays (the flashback and stardust slow down while the comet keeps its speed: white core, life flashback, shockwave, stardust, brightened comet and a permanent halo at the top; the flashback beam that reaches ME's stop line stays three columns wide and never disappears); the death point and the top star keep `@` + name + final age and appear/disappear in sync once per second; all the dead rise to the top in death order, one row apart, and their end labels fade in 0.5 s after the meteor arrives; humans blink as `*`, cats and dogs as `+`; GF approaches for 2 years, then stays 1–2 years before becoming WIFE; WIFE lives to 75–90 and dies after I become a star; AGE has no leading zeros; `--life-cycle` sets the length of one round |
-| DeepSeek Harness (深度求索) `dsh` | A giant **DEEPSEEK HARNESS** wordmark (about 60% of the width and 30% of the height) built from a hand-drawn 3×5 / 4×5 / 5×7 font: it **decodes in from random glyphs**, drags a **swaying afterimage** roughly one glyph-height downward, and is crossed by looping **horizontal and vertical light beams**; a short **VHS slice glitch** fires about every 11 seconds; `--trail <f>` sets the afterimage strength (0 turns it off); **ASCII by default**, `--unicode` uses solid blocks ([GIF](docs/dsh.gif)) |
+| DeepSeek Harness (深度求索) `dsh` | A giant **two-line** wordmark: `DEEPSEEK` on top, `HARNESS` below with a clear indent, filling about **85–90% of the width and over half the screen height**. The intro **fades the letters in one by one**, then **drops the lockup in stuttered one-row steps** and leaves a ghost stack below HARNESS. After that the wordmark **never disappears**: a seven-second loop floats a **horizontal beam** down the lockup, joins it with a **vertical beam** at the centre to form a bright **cross**, then sweeps the vertical beam left to right; no fireworks or particle burst. `--trail <f>` sets the drop-ghost strength; **ASCII by default**, `--unicode` uses solid blocks ([GIF](docs/dsh.gif)) |
 | Vibe Coding (氛围编程) `vibe` | A single-column **Claude Code transcript** that reads `src/scenes/vibe.rs` (or an embedded copy), types the source with a hand-written **Rust syntax highlighter**, and loops through six short windows per turn; each loop starts from a clean transcript; it shows the prompt, assistant/tool lines, `+` diff-style code, a rotating spinner with token count, the input box and the bypass-permissions footer; **ASCII by default** (`>`, `*`, `L`, `>>`), `--unicode` switches to Claude Code-style `❯ ◉ └ ✻ ▶▶` glyphs ([GIF](docs/vibe.gif)) |
 | Warp Tunnel (星际隧道) `tunnel` | Sixteen depth-spaced rings expand toward the viewer while ten radial spokes rotate and projected stars streak past. **Pure ASCII**: `+`, `*`, `#` and `@` carry the perspective. |
 | DNA Helix (DNA 双螺旋) `helix` | Two sine strands wrap around a vertical axis; A/T/C/G base pairs join them, depth comes from each strand's cosine, and the whole helix rotates in place. **Pure ASCII.** |
 | Aurora (极光) `lights` | Three wavy aurora ribbons with short hanging curtains drift over a starry sky, snow-capped ridges, a moon and a rippling lake reflection. **Pure ASCII.** |
 | Volcano (火山爆发) `volcano` | A jagged cone, a glowing crater, ballistic lava fountains, two lava streams, a drifting ash plume and periodic lightning. **ASCII by default**; `--unicode` uses solid blocks for the mountain. |
 | Tesseract (四维超立方) `tesseract` | Sixteen vertices and thirty-two edges rotate in four dimensions, project to three and then two, and draw as a depth-shaded ASCII wireframe. **Pure ASCII.** |
-| Rocket Launch (火箭发射) `launch` | A 22-second loop: pad and gantry, ignition smoke, ascent with a flame plume, booster separation, a low cloud deck and an Earth-limb view. **Pure ASCII.** |
+| Rocket Launch (火箭发射) `launch` | A 24-second launch film: a larger two-stage rocket with twin boosters, blue-hour pad, ignition fireball, layered exhaust and world-space smoke, a following camera with shake, max-Q clouds, MECO / stage separation, a second-stage climb and an Earth-limb sunrise; `--rocket-scale` and `--shake`. **Pure ASCII.** |
 | Plasma (等离子) `plasma` | Nine drifting metaballs add into a soft scalar field, textured with sine detail and rendered through a cycling palette. **ASCII by default**; `--unicode` uses a compact block ramp. |
 
 </details>
@@ -333,7 +333,7 @@ trix <effect> [options]
       --meteors <n>       black hole / galaxy meteors      [default: 3]
       --beam-speed <f>    beams horizontal speed           [default: 1.0]
       --beam-motion <m>   straight | jump                  [default: straight]
-      --trail <f>         dsh: afterimage strength          [default: 1.0]
+      --trail <f>         dsh: drop-ghost strength          [default: 1.0]
       --seed-count <n>    dandelion drifting seeds         [default: 90]
       --seed-speed <f>    dandelion seed drift speed       [default: 1.0]
       --street <dir>      horizontal | vertical            [default: horizontal]
@@ -344,6 +344,8 @@ trix <effect> [options]
       --ghost             monalisa: pure-ASCII ghost edition
       --gallery           monalisa: soft gallery glow
       --plain             dragon: plain starfield
+      --rocket-scale <f>  launch: rocket size multiplier   [default: 1.0]
+      --shake <f>         launch: camera shake strength    [default: 1.0]
       --jump              Tom & Jerry: enable jumping
       --no-jump           Tom & Jerry: disable jumping
       --seed <u64>        deterministic random seed
@@ -519,7 +521,8 @@ scripts/bench.sh
 - **Heartbeat Monitor**: ECG grid, P-QRS-T waveform, scan line, HR/SpO2/SYS-DIA; ASCII waveform by default, `--unicode` switches to Unicode box drawing / solid waveform.
 - **Dandelion**: 3 clumps × 2 stems / 6 flower heads; left and right roots bend toward the center; flower heads ×1.5.
 - **Oriental Pearl**: Bund night view + Oriental Pearl + Huangpu River reflections; two random boats on the river — hull type (junk / barge / ferry), size, hull palette, channel depth and drift direction are all random; distant boats sit low on the water while near boats are large and press against the frame, with decks / portholes / lit cabin windows / smoking funnels / mast lights / bow lanterns / wakes and water reflections; 1–2 meteors cross the night sky every 3–5 seconds (about 18% of intervals are skipped), with a white-hot head and an ice-blue or warm-gold fading tail, flying into the skyline or fading out and being recycled.
-- **DeepSeek Harness**: a hand-drawn 3×5 / 4×5 / 5×7 font is rasterised into a per-cell mask; the wordmark decodes in from random glyphs, the afterimage is drawn as several downward-offset copies with a growing sine sway and hash dropout, and horizontal / vertical beams use co-prime periods and additive `add_light` highlights. A short VHS slice glitch overlays red/cyan shifted copies. `--trail` scales the afterimage.
+- **DeepSeek Harness**: a two-line lockup (`DEEPSEEK` / indented `HARNESS`) is laid out from 6×9 / 8×11 display faces with horizontal pixel doubling, so the wide letterforms fill most of the screen. The intro is a per-letter reveal with a top-to-bottom wipe and a quantised one-row drop that leaves a hashed ghost stack below HARNESS. The wordmark then stays on screen forever; a seven-second beam state machine floats a horizontal beam down the lockup, joins it with a vertical beam at the centre to form a bright cross, then sweeps the vertical beam left to right and fades the horizontal one. No flare or particle burst. `--trail` scales the ghosts.
+- **Rocket Launch**: a procedurally scaled two-stage stack (fairing, core, twin boosters and engine bells) is drawn from a 7/9/11-column glyph grid; the camera follows the ascent and shakes on ignition and separation. Exhaust is a layered ASCII plume with a white-hot spine and shock diamonds, backed by world-space smoke, steam and sparks. The blue-hour sky gradient, parallax star layers, cloud deck, MECO flash, tumbling core and boosters, Earth-limb atmosphere and orbital sunrise are drawn around it. `--rocket-scale` and `--shake` tune the framing.
 - **Vibe Coding**: reads `src/scenes/vibe.rs` (falling back to a compile-time copy), normalises it to ASCII, skips the test module and builds six 10-line windows per turn. A hand-written Rust tokenizer colours comments, strings, numbers, keywords, types, macros and function names; the transcript is a typed queue that only reveals lines up to the typing head (the area below stays blank) and clears before the next loop, with a Claude Code-style spinner, token count and composer.
 - **Offline map data**: `tools/gen_land.py` downloads Natural Earth and rasterizes it into `src/data/land_720x360.bin`; runtime never touches the network.
 
@@ -531,7 +534,7 @@ python3 tools/ansi2png.py dragon.ans dragon.png --size 120x36 --label "trix drag
 python3 tools/render_gif.py dragon docs/dragon.gif --start 100 --frames 24 --step 3
 ```
 
-Documentation assets: `docs/help.png` / `docs/help-rain.png` are rendered from `trix --help` with `TRIX_HELP_TTY=1`; `docs/social-preview.png` is the 1280×640 GitHub social preview.
+Documentation assets: `docs/help.png`, `docs/help-rain.png` and `docs/help-full.png` are rendered from `trix --help`, `trix --help rain` and `trix --help all` with `TRIX_HELP_TTY=1` and `--color true`, then converted with `tools/ansi2png.py` (`--size 80x40` for `help-rain`). Always force `--color true`: under a `NO_COLOR` shell the styled help correctly falls back to mono, which would bake a white-only screenshot. `docs/social-preview.png` is the 1280×640 GitHub social preview.
 
 ## Testing
 
@@ -541,7 +544,7 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-There are currently **217** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
+There are currently **223** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
 
 ## Versions and rollback
 

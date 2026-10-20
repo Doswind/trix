@@ -71,7 +71,7 @@ trix ballet --speed 1.3            # 更快的冰上芭蕾
 trix demoneye --eye-still          # 眼球固定，保留眨眼
 trix life --life-cycle 60          # 1 分钟走完 0～100 岁
 trix dsh                           # DEEPSEEK HARNESS 字标
-trix dsh --trail 0                 # 关闭残影，只留光束
+trix dsh --trail 0                 # 关闭丢帧残影，只留光束
 trix vibe --unicode                # Claude Code 符号，自读源码
 trix tunnel                        # 星际隧道
 trix plasma                        # 等离子场
@@ -225,14 +225,14 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | 冰上芭蕾 (Ice Ballet) `ballet` | 冰场双人舞：39 个场景秒的编舞循环 13 个舞段；默认 2× 节奏约 19.5 秒一轮（滑行、压步、arabesque、promenade、**头顶托举**、联合旋转、death spiral、sissonne 跳跃、Ina Bauer、收势），关节用两骨 IK 求解、牵手自动对齐，四肢带柔边并延迟跟随躯干；整场滑行覆盖大部分画面，围板后有三排会摇晃/举手/打闪光灯的观众，冰面留下冰刀刻痕与倒影；`--speed` 调速 |
 | 恶魔之眼 (Demon Eye) `demoneye` | 整屏一只巨大血眼：眨眼每 8～15 秒一次、单眨或双眨（约 7:3），每两次眨眼之间只甩出 1～2 次（两次跳动相隔 ≥5 秒），约 0.1 秒到位、0.45～0.85 秒内必回正中直视观众；竖瞳缩放、眼睑压暗、血丝与眨眼冲击波；`--eye-motion dart\|still`（默认 dart），`--eye-still` 让眼球钉在正中 |
 | 生命的轨迹 (Threads of Life) `life` | 0～100 岁时间轴与左右生命线；人类统一 `@` 符号 + 同排彩色大写简写 + **家属本人年龄**（非亲属朋友不带年龄）；亮光束随年龄增长（年长后可覆盖大部分生命），由尾部的暗点/短划线渐亮到 `=`，头部为 `****@` 彗尾；生命最初约 22%～42%（最多约 22 年）保留为稀疏暗淡的点；每条轨迹结束后其行位可被后来者复用（学龄 `PAL/UNI` 的 +1 行 → GF/WIFE，`DOG` 的 -1 行 → KID2，猫/父母的行位也会被后来的朋友接回）；`DOG` 终身在 -1 紧挨我；`PAL/UNI/WORK/FRIEND` 同时出现时**共用同一行**：学龄期在 +1 另一侧，有未成年 KID 时整组退到 KID/CAT 外侧最近的空行（通常为 +4；只让出孩子/宠物实际占用的行，不再固定 -5/-7），所有 KID 成年后回到内侧；`ME 0 / WIFE +1`；`KID1 +2`、`KID2 -1`（复用 DOG 让出的紧邻行）、`KID3 -2`；成年前 `KID3 -2 / KID2 -1 / ME 0 / WIFE +1 / KID1 +2` **连续无空行**，`GRAND1/GRAND2` 始终紧贴父辈一行（父辈成年漂移后随之移动）；`CAT +3` 与第一个孩子同时出生，紧贴 KID1 下方；`DAD/MOM +3/+4` 在孩子出生前两年开始让位到 `+5/+6`，`BRO +5→+7` 紧随让位；GPA/GMA/DAD/MOM 在我 0 岁时随机得到合适起始年龄（58～70 / 56～68 / 25～33 / 23～31），BRO 0～4，ME 0；KID/GRAND/CAT/DOG 从各自出生起算，GF/WIFE 与我同龄上下 2 岁；所有行固定为 1 个终端行（不随终端高度缩放，高终端也不会因取整出现空行）；`ME` 结束时触发约 6 秒的**超新星终章**（回闪与星屑放慢、彗星保持原速；白光核心、一生回闪、冲击波、星屑、加亮彗星与顶部永久光晕；回闪扫描光柱到达 ME 的停止线后以三列宽永久保留，不再消失）；死亡点与顶部星标保留 `@` + 名称 + 最终年龄，并以每秒 1 次同步显现/消失；所有死亡角色升到顶部按死亡顺序隔行排列，终点标签在流星抵达后 0.5 秒淡入；人类 `*`、猫狗 `+` 闪烁；GF 用 2 年靠近、再停留 1～2 年变 WIFE；WIFE 75～90 岁、晚于我化星；AGE 无前导零；`--life-cycle` 控制一轮秒数 |
-| 深度求索 (DeepSeek Harness) `dsh` | 巨型 **DEEPSEEK HARNESS** 字标（约 60% 屏宽、30% 屏高），手写 3×5 / 4×5 / 5×7 字模；从随机字符**解码入场**，向下拖出**左右摆动的残影**（长度约等于字高），横向与纵向**光束循环扫过**字体；约每 11 秒一次短暂的 **VHS 横切片故障**；`--trail <f>` 调残影强度（0 关闭）；**默认 ASCII**，`--unicode` 用实心块（[GIF](docs/dsh.gif)） |
+| 深度求索 (DeepSeek Harness) `dsh` | 巨型**两行**字标：上行 `DEEPSEEK`，下行 `HARNESS` 并明显右缩进，约占 **85–90% 屏宽、超过一半屏高**。入场时字母**逐个由隐到现**，整块字标以**阶梯式每次下落 1 行**的方式丢帧，并在 HARNESS 下方留下残影；之后字标**不再消失**：7 秒一轮的**十字光束**循环——横向光束沿字标向下浮过，在中央与纵向光束汇成明亮十字，随后纵向光束从左向右扫过，横向光束淡出；没有烟花/粒子爆发。`--trail <f>` 调残影强度；**默认 ASCII**，`--unicode` 用实心块（[GIF](docs/dsh.gif)） |
 | 氛围编程 (Vibe Coding) `vibe` | 单栏 **Claude Code 转录**：读取 `src/scenes/vibe.rs`（找不到时用编译期内置副本），用**手写 Rust 语法高亮**逐字打出源码，每轮循环 6 个短窗口；每轮重新开始时先清空转录，再打新内容；包含 prompt、assistant/tool 行、`+` diff 风格代码、旋转 spinner 与 token 数、输入框和 bypass 权限 footer；**默认 ASCII**（`>`、`*`、`L`、`>>`），`--unicode` 切换为 Claude Code 风格的 `❯ ◉ └ ✻ ▶▶`（[GIF](docs/vibe.gif)） |
 | 星际隧道 (Warp Tunnel) `tunnel` | 16 圈按深度排布的环向观察者扩张，10 条径向辐条缓慢旋转，投影星点向外拖出短线。**纯 ASCII**：`+`、`*`、`#`、`@` 撑起整个透视。 |
 | DNA 双螺旋 (DNA Helix) `helix` | 两条正弦主链绕垂直轴缠绕，A/T/C/G 碱基对连接两链，亮度由每条链的余弦深度决定，整体原地旋转。**纯 ASCII。** |
 | 极光 (Aurora) `lights` | 三条波浪状极光带和短垂帘在星空、雪顶山脊、月亮与湖面倒影上方缓慢流动。**纯 ASCII。** |
 | 火山爆发 (Volcano) `volcano` | 锯齿状火山锥、发光火山口、抛物线熔岩喷泉、两道熔岩流、漂移火山灰柱和周期性闪电。**默认 ASCII**；`--unicode` 用实心块画山体。 |
 | 四维超立方 (Tesseract) `tesseract` | 16 个顶点、32 条棱在四维中旋转，经 4D→3D→2D 投影后画成带深度明暗的 ASCII 线框。**纯 ASCII。** |
-| 火箭发射 (Rocket Launch) `launch` | 22 秒循环：发射台与塔架、点火烟雾、带尾焰的升空、助推器分离、低空云层和地球弧线。**纯 ASCII。** |
+| 火箭发射 (Rocket Launch) `launch` | 24 秒发射大片：更大的两级火箭与双助推器、蓝调发射台、点火火球、多层尾焰与世界坐标烟雾、跟随镜头与震动、Max-Q 云层、MECO / 级间分离、二级爬升和地球弧线日出；`--rocket-scale`、`--shake`。**纯 ASCII。** |
 | 等离子 (Plasma) `plasma` | 9 个漂移的 metaball 叠加成柔和标量场，再叠正弦细节和循环调色板。**默认 ASCII**；`--unicode` 用紧凑块字符 ramp。 |
 
 </details>
@@ -333,7 +333,7 @@ trix <effect> [options]
       --meteors <n>       黑洞 / 银河流星数                 [默认: 3]
       --beam-speed <f>    光束水平速度                      [默认: 1.0]
       --beam-motion <m>   straight | jump                  [默认: straight]
-      --trail <f>         dsh：残影强度                      [默认: 1.0]
+      --trail <f>         dsh：丢帧残影强度                  [默认: 1.0]
       --seed-count <n>    蒲公英种子数                      [默认: 90]
       --seed-speed <f>    蒲公英种子漂移速度                [默认: 1.0]
       --street <dir>      horizontal | vertical            [默认: horizontal]
@@ -344,6 +344,8 @@ trix <effect> [options]
       --ghost             monalisa：纯 ASCII 鬼影版
       --gallery           monalisa：淡暖色展厅光晕
       --plain             dragon：纯星空背景
+      --rocket-scale <f>  launch：火箭尺寸倍率            [默认: 1.0]
+      --shake <f>         launch：镜头震动强度            [默认: 1.0]
       --jump              Tom & Jerry：开启跳跃
       --no-jump           Tom & Jerry：关闭跳跃
       --seed <u64>        固定随机种子
@@ -519,7 +521,8 @@ scripts/bench.sh
 - **心率跳动**：ECG 网格、P-QRS-T 波形、扫描线、HR/SpO2/SYS-DIA；默认 ASCII 波形，`--unicode` 切换 Unicode 框线/实心波形。
 - **蒲公英**：3 丛×2 茎/6 花头；左右根向中间弯曲；花头尺寸 ×1.5。
 - **东方明珠**：外滩夜景 + 东方明珠 + 黄浦江倒影；江面两条随机船只——船型（帆船/货轮/渡轮）、尺寸、船体配色、航道深度与左右漂移方向都随机，远景小船贴水、近景大船压屏，带甲板/舷窗/船楼窗光/烟囱冒烟/桅杆航灯/船首灯笼/尾迹与水面倒影；每 3–5 秒夜空随机 1–2 颗流星（约 18% 的时段空过），白热头部 + 冰蓝或暖金渐隐尾迹，飞入天际线或淡出后回收。
-- **深度求索**：手写 3×5 / 4×5 / 5×7 字模被栅格化成逐格 mask；字标从随机字符解码入场，残影用多份向下偏移的副本、逐渐增大的正弦摆动和哈希丢弃来绘制，横向/纵向光束使用互质周期和 `add_light` 叠加高光；短暂的 VHS 横向切片故障叠加红/青错位副本。`--trail` 缩放残影。
+- **深度求索**：两行字标（`DEEPSEEK` / 右缩进的 `HARNESS`）由 6×9 / 8×11 显示字模横向放大 2 倍排布，宽字形占据大部分屏幕。入场是逐字出现（像素从上到下刷出）与每次 1 行的量化丢帧，并在 HARNESS 下方留下哈希丢弃残影。之后字标**永久保留**；7 秒一轮的光束状态机让横向光束向下浮过，在中央与纵向光束汇成明亮十字，再让纵向光束从左向右扫过并淡出横向光束；没有烟花/粒子爆发。`--trail` 缩放残影。
+- **火箭发射**：程序化缩放的两级火箭（整流罩、芯级、双助推器、发动机喷管）由 7/9/11 列的字符网格生成；镜头跟随升空，并在点火与级间分离时震动。尾焰是带白热核心与马赫环的分层 ASCII 火焰，配合世界坐标烟雾、蒸汽与火星。周围还有蓝调天空渐变、视差星层、云层、MECO 闪光、翻滚的芯级与助推器、地球弧线大气和轨道日出。`--rocket-scale` 与 `--shake` 调整构图和震动。
 - **氛围编程**：读取 `src/scenes/vibe.rs`（找不到时用编译期内置副本），归一化为 ASCII、跳过测试模块，每轮生成 6 个 10 行窗口。手写 Rust tokenizer 为注释、字符串、数字、关键字、类型、宏和函数名上色；转录是一个只显示到当前打字位置的队列（下方保持空白），下一轮开始前会清空，带 Claude Code 风格的 spinner、token 数和输入框。
 - **地图数据离线生成**：`tools/gen_land.py` 下载 Natural Earth 并栅格化为 `src/data/land_720x360.bin`，运行时不访问网络。
 
@@ -531,7 +534,7 @@ python3 tools/ansi2png.py dragon.ans dragon.png --size 120x36 --label "trix drag
 python3 tools/render_gif.py dragon docs/dragon.gif --start 100 --frames 24 --step 3
 ```
 
-文档素材：`docs/help.png` / `docs/help-rain.png` 由 `TRIX_HELP_TTY=1 trix --help` 渲染；`docs/social-preview.png` 是 1280×640 的 GitHub 社交预览图。
+文档素材：`docs/help.png`、`docs/help-rain.png` 与 `docs/help-full.png` 分别由 `TRIX_HELP_TTY=1 trix --help`、`trix --help rain`、`trix --help all` 加上 `--color true` 渲染，再经 `tools/ansi2png.py` 转换（`help-rain` 使用 `--size 80x40`）。务必显式指定 `--color true`：在 `NO_COLOR` 环境下样式化帮助会正确降级为单色，直接截图会得到纯白画面。`docs/social-preview.png` 是 1280×640 的 GitHub 社交预览图。
 
 ## 测试
 
@@ -541,7 +544,7 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-当前 **217** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
+当前 **223** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
 
 ## 版本与回退
 

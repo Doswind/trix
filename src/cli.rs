@@ -70,6 +70,10 @@ pub struct Options {
     pub plain: bool,
     /// monalisa: soft gallery glow behind the portrait.
     pub gallery: bool,
+    /// launch: rocket size multiplier.
+    pub rocket_scale: f32,
+    /// launch: camera shake strength (0 turns it off).
+    pub shake: f32,
     pub seed: Option<u64>,
     pub size: Option<(usize, usize)>,
     pub no_alt: bool,
@@ -112,6 +116,8 @@ impl Default for Options {
             ghost: false,
             plain: false,
             gallery: false,
+            rocket_scale: 1.0,
+            shake: 1.0,
             seed: None,
             size: None,
             no_alt: false,
@@ -252,6 +258,14 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                 "bg" | "background" => opts.plain = false,
                 "gallery" => opts.gallery = true,
                 "no-gallery" => opts.gallery = false,
+                "rocket-scale" | "rocket-size" => {
+                    let v = take_value(args, &mut i, inline, "--rocket-scale")?;
+                    opts.rocket_scale = parse_num(&v, "--rocket-scale")?;
+                }
+                "shake" => {
+                    let v = take_value(args, &mut i, inline, "--shake")?;
+                    opts.shake = parse_num(&v, "--shake")?;
+                }
                 "beam-motion" => {
                     let v = take_value(args, &mut i, inline, "--beam-motion")?;
                     opts.beam_jump = match v.to_ascii_lowercase().as_str() {
@@ -463,6 +477,8 @@ pub const PRIMARY_FLAGS: &[&str] = &[
     "--ghost",
     "--gallery",
     "--plain",
+    "--rocket-scale",
+    "--shake",
     "--jump",
     "--no-jump",
     "--snapshot",
@@ -664,6 +680,12 @@ fn validate(opts: &mut Options) -> Result<(), String> {
     }
     if !opts.tornado_speed.is_finite() || !(0.05..=4.0).contains(&opts.tornado_speed) {
         return Err("--tornado-speed must be between 0.05 and 4.0".into());
+    }
+    if !opts.rocket_scale.is_finite() || !(0.55..=1.6).contains(&opts.rocket_scale) {
+        return Err("--rocket-scale must be between 0.55 and 1.6".into());
+    }
+    if !opts.shake.is_finite() || !(0.0..=2.0).contains(&opts.shake) {
+        return Err("--shake must be between 0 and 2".into());
     }
     Ok(())
 }

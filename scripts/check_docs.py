@@ -21,7 +21,8 @@ PRIMARY_FLAGS = [
     "--density", "--spin", "--twinkle", "--meteors", "--beam-speed",
     "--beam-motion", "--beam-jump", "--trail", "--seed-count", "--seed-speed", "--street",
     "--tornado-count", "--tornado-speed", "--life-cycle", "--eye-motion",
-    "--eye-still", "--ghost", "--gallery", "--plain", "--jump", "--no-jump",
+    "--eye-still", "--ghost", "--gallery", "--plain", "--rocket-scale",
+    "--shake", "--jump", "--no-jump",
     "--snapshot", "--frames", "--size", "--bench", "--seed", "--duration",
     "--list", "--help", "--version", "--completions",
 ]

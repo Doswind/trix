@@ -88,6 +88,8 @@ fn tune_for(opts: &Options) -> Tune {
         ghost: opts.ghost,
         plain: opts.plain,
         gallery: opts.gallery,
+        rocket_scale: opts.rocket_scale,
+        shake: opts.shake,
     }
 }
 
@@ -844,6 +846,8 @@ fn info_params(
                     "off".to_string()
                 }
             }
+            "--rocket-scale" => format!("{:.2}", tune.rocket_scale),
+            "--shake" => format!("{:.2}", tune.shake),
             _ => continue,
         };
         params.push((t.flag.to_string(), value));

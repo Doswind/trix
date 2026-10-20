@@ -1,22 +1,37 @@
-//! dsh — a giant DEEPSEEK HARNESS wordmark with afterimage and scan beams.
+//! dsh — a giant DEEPSEEK HARNESS wordmark, revealed, dropped and scanned.
 //!
-//! The wordmark is hand-built from a compact 3x5 / 5x7 pixel font, so the
-//! scene needs no external font files.  It decodes in from random glyphs,
-//! drags a slightly swaying afterimage downward, and is crossed by horizontal
-//! and vertical light beams.  A short VHS-style slice glitch fires every few
-//! seconds.  ASCII is the default; `--unicode` swaps the pixel fill for solid
-//! blocks and the drips for box-drawing glyphs.
+//! The wordmark is built from a hand-drawn pixel font and laid out as two
+//! staggered lines so the letters can be much wider than a single line allows.
+//! The intro reveals the letters one by one, then drops the lockup in stuttered
+//! steps and leaves a ghost stack behind.  After that the wordmark stays on
+//! screen forever and a cross of light loops over it: a horizontal beam floats
+//! down the lockup, holds at the centre while a vertical beam joins it to form
+//! a cross, then the vertical beam sweeps across while the horizontal one fades.
+//! ASCII is the default; `--unicode` swaps the fill for solid blocks.
 
-use std::f32::consts::TAU;
+#![allow(clippy::needless_range_loop)]
 
 use crate::canvas::Canvas;
 use crate::cli::Charset;
 use crate::color::Rgb;
-use crate::rng::{hash01, hash2, Rng};
+use crate::rng::hash2;
 use crate::scene::{Frame, Scene};
 
-const TEXT: &str = "DEEPSEEK HARNESS";
-const NOISE: &[u8] = b"01#*+=-<>/\\|";
+/// One full horizontal + vertical beam pass.  The intro (reveal and drop) runs
+/// once at scene start; the beam loop continues for as long as the scene lives.
+const BEAM_START: f32 = 4.4;
+const BEAM_LOOP: f32 = 7.0;
+const H_DOWN: f32 = 1.0;
+const CROSS_HOLD: f32 = 1.7;
+const H_END: f32 = 2.9;
+const V_START: f32 = 3.4;
+const V_END: f32 = 6.0;
+
+const T_DROP: f32 = 3.0;
+const DROP_STEP: f32 = 0.14;
+
+const RED: Rgb = Rgb::hex(0xff3b5c);
+const CYAN: Rgb = Rgb::hex(0x38bdf8);
 
 // ---------------------------------------------------------------------------
 // Hand-drawn font.  Only the glyphs used by TEXT are needed.
@@ -70,19 +85,90 @@ const F3_A: [&str; 5] = [".#.", "#.#", "###", "#.#", "#.#"];
 const F3_R: [&str; 5] = ["###", "#.#", "##.", "#.#", "#.#"];
 const F3_N: [&str; 5] = ["#.#", "###", "#.#", "#.#", "#.#"];
 
+// 6x9 display face: 2-row bars, 1-column stems.  Drawn with sx=2 so the
+// stems become two columns wide, matching the chunky reference lockup.
+const F6_D: [&str; 9] = [
+    "######", "#....#", "#....#", "#....#", "#....#", "#....#", "#....#", "#....#", "######",
+];
+const F6_E: [&str; 9] = [
+    "######", "#.....", "#.....", "#.....", "#####.", "#.....", "#.....", "#.....", "######",
+];
+const F6_P: [&str; 9] = [
+    "######", "#....#", "#....#", "#....#", "######", "#.....", "#.....", "#.....", "#.....",
+];
+const F6_S: [&str; 9] = [
+    ".#####", "#.....", "#.....", ".#####", ".....#", ".....#", ".....#", "#....#", ".#####",
+];
+const F6_K: [&str; 9] = [
+    "#....#", "#....#", "#...#.", "#..#..", "###...", "###...", "#..#..", "#...#.", "#....#",
+];
+const F6_H: [&str; 9] = [
+    "#....#", "#....#", "#....#", "#....#", "######", "#....#", "#....#", "#....#", "#....#",
+];
+const F6_A: [&str; 9] = [
+    "..##..", ".#..#.", "#....#", "#....#", "######", "#....#", "#....#", "#....#", "#....#",
+];
+const F6_R: [&str; 9] = [
+    "######", "#....#", "#....#", "#....#", "######", "#..#..", "#...#.", "#....#", "#....#",
+];
+const F6_N: [&str; 9] = [
+    "#....#", "##...#", "##...#", "#.#..#", "#.#..#", "#..#.#", "#...##", "#....#", "#....#",
+];
+
+// 8x11 display face for wide terminals.
+const F8_D: [&str; 11] = [
+    "########", "##....##", "##....##", "##....##", "##....##", "##....##", "##....##", "##....##",
+    "##....##", "##....##", "########",
+];
+const F8_E: [&str; 11] = [
+    "########", "##......", "##......", "##......", "######..", "##......", "##......", "##......",
+    "##......", "##......", "########",
+];
+const F8_P: [&str; 11] = [
+    "########", "##....##", "##....##", "##....##", "########", "##......", "##......", "##......",
+    "##......", "##......", "##......",
+];
+const F8_S: [&str; 11] = [
+    ".######.", "##......", "##......", "##......", ".######.", "......##", "##....##", "##....##",
+    "##....##", "##....##", ".######.",
+];
+const F8_K: [&str; 11] = [
+    "##....##", "##...##.", "##..##..", "##.##...", "####....", "####....", "##.##...", "##..##..",
+    "##...##.", "##....##", "##....##",
+];
+const F8_H: [&str; 11] = [
+    "##....##", "##....##", "##....##", "##....##", "##....##", "########", "##....##", "##....##",
+    "##....##", "##....##", "##....##",
+];
+const F8_A: [&str; 11] = [
+    "...##...", "..####..", ".##..##.", "##....##", "##....##", "########", "##....##", "##....##",
+    "##....##", "##....##", "##....##",
+];
+const F8_R: [&str; 11] = [
+    "########", "##....##", "##....##", "##....##", "########", "##..##..", "##...##.", "##....##",
+    "##....##", "##....##", "##....##",
+];
+const F8_N: [&str; 11] = [
+    "##....##", "###...##", "###...##", "##.#..##", "##.#..##", "##..#.##", "##...###", "##....##",
+    "##....##", "##....##", "##....##",
+];
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Face {
     Wide,
     Mid,
     Compact,
+    Six,
+    Eight,
 }
 
 impl Face {
     fn rows(self) -> usize {
-        if self == Face::Wide {
-            7
-        } else {
-            5
+        match self {
+            Face::Wide => 7,
+            Face::Mid | Face::Compact => 5,
+            Face::Six => 9,
+            Face::Eight => 11,
         }
     }
 
@@ -91,66 +177,90 @@ impl Face {
             Face::Wide => 5,
             Face::Mid => 4,
             Face::Compact => 3,
+            Face::Six => 6,
+            Face::Eight => 8,
         }
     }
 
     fn space_w(self) -> usize {
-        match self {
-            Face::Wide => 3,
-            Face::Mid | Face::Compact => 2,
-        }
+        2
     }
 }
 
 fn glyph(ch: char, face: Face) -> Option<&'static [&'static str]> {
-    match face {
+    let table: &'static [&'static str] = match face {
         Face::Wide => match ch {
-            'D' => Some(&F5_D[..]),
-            'E' => Some(&F5_E[..]),
-            'P' => Some(&F5_P[..]),
-            'S' => Some(&F5_S[..]),
-            'K' => Some(&F5_K[..]),
-            'H' => Some(&F5_H[..]),
-            'A' => Some(&F5_A[..]),
-            'R' => Some(&F5_R[..]),
-            'N' => Some(&F5_N[..]),
-            _ => None,
+            'D' => &F5_D,
+            'E' => &F5_E,
+            'P' => &F5_P,
+            'S' => &F5_S,
+            'K' => &F5_K,
+            'H' => &F5_H,
+            'A' => &F5_A,
+            'R' => &F5_R,
+            'N' => &F5_N,
+            _ => return None,
         },
         Face::Mid => match ch {
-            'D' => Some(&F4_D[..]),
-            'E' => Some(&F4_E[..]),
-            'P' => Some(&F4_P[..]),
-            'S' => Some(&F4_S[..]),
-            'K' => Some(&F4_K[..]),
-            'H' => Some(&F4_H[..]),
-            'A' => Some(&F4_A[..]),
-            'R' => Some(&F4_R[..]),
-            'N' => Some(&F4_N[..]),
-            _ => None,
+            'D' => &F4_D,
+            'E' => &F4_E,
+            'P' => &F4_P,
+            'S' => &F4_S,
+            'K' => &F4_K,
+            'H' => &F4_H,
+            'A' => &F4_A,
+            'R' => &F4_R,
+            'N' => &F4_N,
+            _ => return None,
         },
         Face::Compact => match ch {
-            'D' => Some(&F3_D[..]),
-            'E' => Some(&F3_E[..]),
-            'P' => Some(&F3_P[..]),
-            'S' => Some(&F3_S[..]),
-            'K' => Some(&F3_K[..]),
-            'H' => Some(&F3_H[..]),
-            'A' => Some(&F3_A[..]),
-            'R' => Some(&F3_R[..]),
-            'N' => Some(&F3_N[..]),
-            _ => None,
+            'D' => &F3_D,
+            'E' => &F3_E,
+            'P' => &F3_P,
+            'S' => &F3_S,
+            'K' => &F3_K,
+            'H' => &F3_H,
+            'A' => &F3_A,
+            'R' => &F3_R,
+            'N' => &F3_N,
+            _ => return None,
         },
-    }
+        Face::Six => match ch {
+            'D' => &F6_D,
+            'E' => &F6_E,
+            'P' => &F6_P,
+            'S' => &F6_S,
+            'K' => &F6_K,
+            'H' => &F6_H,
+            'A' => &F6_A,
+            'R' => &F6_R,
+            'N' => &F6_N,
+            _ => return None,
+        },
+        Face::Eight => match ch {
+            'D' => &F8_D,
+            'E' => &F8_E,
+            'P' => &F8_P,
+            'S' => &F8_S,
+            'K' => &F8_K,
+            'H' => &F8_H,
+            'A' => &F8_A,
+            'R' => &F8_R,
+            'N' => &F8_N,
+            _ => return None,
+        },
+    };
+    Some(table)
 }
 
-fn text_width(face: Face, gap: usize) -> usize {
-    let chars: Vec<char> = TEXT.chars().collect();
+fn text_width(face: Face, sx: usize, gap: usize, text: &str) -> usize {
+    let chars: Vec<char> = text.chars().collect();
     let mut width = 0;
     for (i, ch) in chars.iter().enumerate() {
         width += if *ch == ' ' {
-            face.space_w()
+            face.space_w() * sx
         } else {
-            face.glyph_w()
+            face.glyph_w() * sx
         };
         if i + 1 < chars.len() {
             width += gap;
@@ -164,461 +274,536 @@ fn text_width(face: Face, gap: usize) -> usize {
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Copy)]
-struct Layout {
+struct LineLayout {
     face: Face,
-    gap: usize,
+    sx: usize,
     sy: usize,
     left: isize,
     top: isize,
-    text_w: usize,
+    width: usize,
     rows: usize,
+    gap_x: usize,
 }
 
-impl Layout {
+impl LineLayout {
     fn box_h(self) -> usize {
         self.rows * self.sy
     }
 }
 
 #[derive(Clone, Copy)]
+struct Layout {
+    line1: LineLayout,
+    line2: LineLayout,
+    drop_rows: isize,
+    ghost_rows: isize,
+}
+
+#[derive(Clone, Copy)]
 struct MaskCell {
     x: isize,
     y: isize,
-    col: u8,
+    letter: u8,
     row_frac: f32,
 }
 
-struct Drip {
-    x: f32,
-    y: f32,
-    vy: f32,
-    sway: f32,
-    phase: f32,
-    life: f32,
-    max_life: f32,
+/// Position and opacity of the two beams for one instant of the loop.
+#[derive(Clone, Copy, Default)]
+struct BeamState {
+    /// 0 = above the lockup, 1 = below it.
+    horizontal_t: f32,
+    horizontal_alpha: f32,
+    /// 0 = left of the lockup, 1 = right of it.
+    vertical_t: f32,
+    vertical_alpha: f32,
 }
 
 pub struct DshScene {
-    rng: Rng,
     w: usize,
     h: usize,
     layout: Option<Layout>,
     mask: Vec<MaskCell>,
     grid: Vec<bool>,
-    drips: Vec<Drip>,
-    h_phase: f32,
-    v_phase: f32,
-    g_phase: f32,
-    spawn_clock: f32,
 }
 
 impl DshScene {
-    pub fn new(seed: u64) -> Self {
-        let mut rng = Rng::new(seed ^ 0x4453_4800);
-        let h_phase = rng.f32();
-        let v_phase = rng.f32();
-        let g_phase = rng.range(0.0, 11.0);
+    pub fn new(_seed: u64) -> Self {
         DshScene {
-            rng,
             w: 0,
             h: 0,
             layout: None,
             mask: Vec::new(),
             grid: Vec::new(),
-            drips: Vec::new(),
-            h_phase,
-            v_phase,
-            g_phase,
-            spawn_clock: 0.0,
         }
     }
 
     fn choose_layout(w: usize, h: usize) -> Option<Layout> {
-        if w < 8 || h < 8 {
+        if w < 60 || h < 16 {
             return None;
         }
-        let mut best: Option<(f32, Layout)> = None;
-        let wide_gap = if w >= 190 {
-            3
-        } else if w >= 155 {
-            2
-        } else {
-            1
-        };
-        for (face, gap) in [
-            (Face::Wide, wide_gap),
-            (Face::Mid, 2),
-            (Face::Mid, 1),
-            (Face::Compact, 3),
-            (Face::Compact, 2),
-            (Face::Compact, 1),
-            (Face::Compact, 0),
-        ] {
-            if face == Face::Wide && w < 140 {
+        let candidates = [
+            (Face::Eight, 3usize, 1usize),
+            (Face::Eight, 3, 0),
+            (Face::Eight, 2, 1),
+            (Face::Six, 2, 1),
+            (Face::Wide, 2, 1),
+            (Face::Mid, 2, 1),
+            (Face::Compact, 2, 1),
+        ];
+        let mut picked = None;
+        for (face, sx, gap_x) in candidates {
+            if sx == 3 && gap_x == 1 && w < 204 {
                 continue;
             }
-            let tw = text_width(face, gap);
-            if tw + 4 > w {
+            if sx == 3 && gap_x == 0 && w < 192 {
                 continue;
             }
-            let rows = face.rows();
-            let sy = if rows * 2 <= (h as f32 * 0.36) as usize {
-                2
-            } else {
-                1
-            };
-            let box_h = rows * sy;
-            let max_top = h as isize - 3 - box_h as isize;
-            if max_top < 2 {
+            if face == Face::Eight && sx == 2 && h < 34 {
                 continue;
             }
-            let top = ((h as f32 * 0.14).round() as isize).clamp(2, max_top);
-            let layout = Layout {
-                face,
-                gap,
-                sy,
-                left: ((w - tw) / 2) as isize,
-                top,
-                text_w: tw,
-                rows,
-            };
-            // Aim for roughly 60% of the width and 30% of the height, with a
-            // small preference for the more detailed faces.
-            let mut score = (tw as f32 / w as f32 - 0.60).abs() * 2.0
-                + (box_h as f32 / h as f32 - 0.30).abs() * 2.0;
-            match face {
-                Face::Wide => score -= 0.03,
-                Face::Mid => score -= 0.015,
-                Face::Compact => {}
-            }
-            if best.as_ref().map_or(true, |(s, _)| score < *s) {
-                best = Some((score, layout));
+            let w1 = text_width(face, sx, gap_x, "DEEPSEEK");
+            let w2 = text_width(face, sx, gap_x, "HARNESS");
+            if w1 + 4 <= w && w2 + 4 <= w {
+                picked = Some((face, sx, gap_x, w1, w2));
+                break;
             }
         }
-        best.map(|(_, layout)| layout)
+        let (face, sx, gap_x, w1, w2) = picked?;
+        let rows = face.rows();
+        let line_gap = if rows >= 9 { 2 } else { 1 };
+        let block = rows * 2 + line_gap;
+        let max_y = h as isize - 3;
+        let mut drop = ((h as f32 * 0.10).round() as isize).clamp(2, 5);
+        let mut ghost = (drop + 1).clamp(3, 6);
+        while block as isize + drop + ghost > max_y && (ghost > 2 || drop > 2) {
+            if ghost > 2 {
+                ghost -= 1;
+            } else {
+                drop -= 1;
+            }
+        }
+        if block as isize + drop + ghost > max_y {
+            return None;
+        }
+        let left1 = ((w - w1) / 2).max(2) as isize;
+        let max2 = w as isize - w2 as isize - 2;
+        let extra = ((w as f32 * 0.03).round() as isize).max(2);
+        let centered2 = ((w - w2) / 2) as isize;
+        let left2 = (centered2 + extra).min(max2).max(left1 + 3);
+        let spare = max_y - (block as isize + drop + ghost);
+        let bias = if spare > 4 { 2 } else { 0 };
+        let top = ((spare / 2) + bias).max(1);
+        let line1 = LineLayout {
+            face,
+            sx,
+            sy: 1,
+            left: left1,
+            top,
+            width: w1,
+            rows,
+            gap_x,
+        };
+        let line2 = LineLayout {
+            face,
+            sx,
+            sy: 1,
+            left: left2,
+            top: top + rows as isize + line_gap as isize,
+            width: w2,
+            rows,
+            gap_x,
+        };
+        Some(Layout {
+            line1,
+            line2,
+            drop_rows: drop,
+            ghost_rows: ghost,
+        })
     }
 
     fn rebuild(&mut self) {
         self.mask.clear();
         self.grid.clear();
-        self.drips.clear();
-        self.spawn_clock = 0.0;
         let Some(layout) = Self::choose_layout(self.w, self.h) else {
             self.layout = None;
             return;
         };
         self.layout = Some(layout);
         self.grid = vec![false; self.w * self.h];
-        let chars: Vec<char> = TEXT.chars().collect();
-        let mut cx = layout.left;
-        for (ci, ch) in chars.iter().enumerate() {
-            if *ch == ' ' {
-                cx += layout.face.space_w() as isize;
-            } else if let Some(art) = glyph(*ch, layout.face) {
-                for (r, line) in art.iter().enumerate() {
-                    for (c, bit) in line.chars().enumerate() {
-                        if bit != '#' {
-                            continue;
-                        }
-                        for yy in 0..layout.sy {
-                            let y = layout.top + (r * layout.sy + yy) as isize;
-                            let row = r * layout.sy + yy;
-                            let cell = MaskCell {
-                                x: cx + c as isize,
-                                y,
-                                col: ci as u8,
-                                row_frac: row as f32 / layout.box_h().max(1) as f32,
-                            };
-                            self.mask.push(cell);
-                            if cell.x >= 0
-                                && cell.y >= 0
-                                && (cell.x as usize) < self.w
-                                && (cell.y as usize) < self.h
-                            {
-                                self.grid[cell.y as usize * self.w + cell.x as usize] = true;
+        self.build_line(layout.line1, "DEEPSEEK", 0);
+        self.build_line(layout.line2, "HARNESS", 8);
+    }
+
+    fn build_line(&mut self, line: LineLayout, text: &str, base_letter: u8) {
+        let mut x = line.left;
+        for (i, ch) in text.chars().enumerate() {
+            let Some(art) = glyph(ch, line.face) else {
+                x += (line.face.glyph_w() * line.sx + line.gap_x) as isize;
+                continue;
+            };
+            let letter = base_letter + i as u8;
+            for (r, row) in art.iter().enumerate() {
+                for (c, bit) in row.chars().enumerate() {
+                    if bit != '#' {
+                        continue;
+                    }
+                    for dy in 0..line.sy {
+                        for dx in 0..line.sx {
+                            let px = x + (c * line.sx + dx) as isize;
+                            let py = line.top + (r * line.sy + dy) as isize;
+                            if px < 0 || py < 0 || px >= self.w as isize || py >= self.h as isize {
+                                continue;
                             }
+                            let row_frac = (r * line.sy + dy) as f32 / line.box_h().max(1) as f32;
+                            self.mask.push(MaskCell {
+                                x: px,
+                                y: py,
+                                letter,
+                                row_frac,
+                            });
+                            self.grid[py as usize * self.w + px as usize] = true;
                         }
                     }
                 }
-                cx += layout.face.glyph_w() as isize;
             }
-            if ci + 1 < chars.len() {
-                cx += layout.gap as isize;
-            }
+            x += (line.face.glyph_w() * line.sx + line.gap_x) as isize;
         }
     }
 
+    fn beam_state(&self, t: f32) -> BeamState {
+        if t < BEAM_START {
+            return BeamState::default();
+        }
+        let q = (t - BEAM_START).rem_euclid(BEAM_LOOP);
+        let mut beam = BeamState::default();
+        if q < H_END {
+            // Horizontal beam: top -> centre, hold while the vertical beam
+            // joins it, then centre -> bottom.
+            if q < H_DOWN {
+                beam.horizontal_t = 0.5 * smoothstep(q / H_DOWN);
+            } else if q < CROSS_HOLD {
+                beam.horizontal_t = 0.5;
+            } else {
+                beam.horizontal_t = 0.5 + 0.5 * smoothstep((q - CROSS_HOLD) / (H_END - CROSS_HOLD));
+            }
+            let fade_in = smoothstep(q / 0.18);
+            let fade_out = 1.0 - smoothstep((q - (H_END - 0.25)) / 0.25);
+            beam.horizontal_alpha = fade_in * fade_out;
+            // The vertical beam fades in just before the horizontal beam
+            // reaches the centre and fades out again as it resumes.
+            let join = smoothstep((q - (H_DOWN - 0.15)) / 0.30);
+            let leave = 1.0 - smoothstep((q - (CROSS_HOLD - 0.30)) / 0.30);
+            beam.vertical_t = 0.5;
+            beam.vertical_alpha = join * leave;
+        } else if (V_START..V_END).contains(&q) {
+            // Vertical beam sweeps left -> right across the whole lockup.
+            beam.vertical_t = smoothstep((q - V_START) / (V_END - V_START));
+            let fade_in = smoothstep((q - V_START) / 0.18);
+            let fade_out = 1.0 - smoothstep((q - (V_END - 0.25)) / 0.25);
+            beam.vertical_alpha = fade_in * fade_out;
+        }
+        beam
+    }
+
+    fn cell_at(&self, x: isize, y: isize, offset: isize) -> bool {
+        let gy = y - offset;
+        if x < 0 || gy < 0 || x >= self.w as isize || gy >= self.h as isize {
+            return false;
+        }
+        self.grid[gy as usize * self.w + x as usize]
+    }
+
     fn draw_compact(&self, canvas: &mut Canvas, f: &Frame) {
-        let t = f.t as f32;
-        let theme = f.theme;
         let max_y = self.h as isize - 3;
-        let lines = ["DEEPSEEK", "HARNESS"];
-        for (i, line) in lines.iter().enumerate() {
+        if max_y < 2 {
+            return;
+        }
+        let theme = f.theme;
+        for (i, line) in ["DEEPSEEK", "HARNESS"].iter().enumerate() {
             let y = 2 + i as isize * 2;
             if y > max_y {
                 break;
             }
             let x = ((self.w.saturating_sub(line.chars().count())) / 2) as isize;
-            for k in 1..=2 {
-                let yy = y + k;
-                if yy > max_y {
-                    break;
-                }
-                let col = theme.c(2).scale(0.28 / k as f32);
-                canvas.put_str(x, yy, line, col);
-            }
             canvas.put_str_gradient(x, y, line, &[theme.c(3), theme.hot(), theme.c(2)]);
         }
-        if max_y >= 2 {
-            let span = (max_y - 1).max(1) as f32;
-            let hy = 2 + ((t * 2.4) % span) as isize;
+    }
+
+    fn draw_background(&self, canvas: &mut Canvas, f: &Frame, max_y: isize) {
+        let theme = f.theme;
+        let clean = self.layout.map(|layout| {
+            (
+                layout.line1.left - 1,
+                layout.line1.left + layout.line1.width as isize + 1,
+                layout.line1.top - 1,
+                layout.line2.top
+                    + layout.line2.box_h() as isize
+                    + layout.drop_rows
+                    + layout.ghost_rows
+                    + 1,
+            )
+        });
+        for y in 1..=max_y {
             for x in 0..self.w as isize {
-                canvas.set_if_blank(x, hy, '-', theme.c(3).scale(0.22));
-            }
-            let vx = ((t * 3.1) as isize).rem_euclid(self.w.max(1) as isize);
-            for y in 2..=max_y {
-                canvas.set_if_blank(vx, y, '|', theme.c(2).scale(0.18));
+                if let Some((x0, x1, y0, y1)) = clean {
+                    if x >= x0 && x <= x1 && y >= y0 && y <= y1 {
+                        continue;
+                    }
+                }
+                let hsh = hash2(x as i64, y as i64, 0x51ee);
+                if hsh % 197 == 0 {
+                    let tw = 0.5 + 0.5 * (f.t as f32 * 1.2 + (hsh % 100) as f32 * 0.1).sin().abs();
+                    canvas.set(
+                        x,
+                        y,
+                        if hsh & 7 == 0 { '+' } else { '.' },
+                        theme.c(2).scale(0.10 + 0.12 * tw),
+                    );
+                } else if x % 4 == 0 && y % 2 == 0 && hsh % 9 == 0 {
+                    canvas.set(x, y, '.', theme.c(2).scale(0.045));
+                }
             }
         }
     }
 
-    fn draw_trail(&self, canvas: &mut Canvas, f: &Frame, layout: Layout, max_y: isize) {
+    fn draw_ghosts(&self, canvas: &mut Canvas, f: &Frame, max_y: isize) {
+        let Some(layout) = self.layout else {
+            return;
+        };
         let trail = f.tune.trail.clamp(0.0, 3.0);
         if trail <= 0.01 {
             return;
         }
         let t = f.t as f32;
+        let offset = drop_offset(t, layout.drop_rows);
+        let onset = smoothstep((t - 2.2) / 0.8);
+        if onset <= 0.0 {
+            return;
+        }
         let glyph = if f.charset == Charset::Unicode {
-            '█'
+            ['▓', '░']
         } else {
-            '#'
+            ['+', ':']
         };
-        let len = (layout.box_h() as f32 * 0.85).round().max(1.0) as isize;
-        for k in 1..=len {
-            let kf = k as f32 / len as f32;
-            let fade = (-kf * 3.2).exp() * 0.30 * trail;
-            if fade < 0.02 {
+        for k in 1..=layout.ghost_rows {
+            let kf = k as f32 / (layout.ghost_rows + 1) as f32;
+            let a = (1.0 - kf).powf(1.4) * 0.22 * trail * onset;
+            if a < 0.015 {
                 continue;
             }
-            let sway = (t * 1.45 + k as f32 * 0.42).sin() * (0.2 + k as f32 * 0.07);
             for c in &self.mask {
-                let y = c.y + k;
-                if y > max_y || y < 1 {
+                let y = c.y + offset + k;
+                // The two lines are only a couple of rows apart.  DEEPSEEK may
+                // only cast a short ghost into that gap; HARNESS owns the full
+                // afterimage below the lockup.
+                if c.letter < 8 && (k > 2 || y >= layout.line2.top) {
                     continue;
                 }
-                let wave = (c.x as f32 * 0.035 + t * 0.8).sin() * 0.30;
-                let x = c.x + (sway + wave).round() as isize;
-                if hash2(x as i64, y as i64, 0x7a11) % 8 == 0 {
+                let alpha = reveal_alpha(c, t - k as f32 * 0.035) * a;
+                if alpha < 0.01 {
                     continue;
                 }
-                if kf > 0.55 && hash2(x as i64, y as i64, 0x7a12) % 3 == 0 {
+                if y < 1 || y > max_y {
                     continue;
                 }
-                let trail_glyph = if kf < 0.45 {
-                    glyph
-                } else if kf < 0.78 {
-                    if f.charset == Charset::Unicode {
-                        '▓'
-                    } else {
-                        '+'
-                    }
-                } else if f.charset == Charset::Unicode {
-                    '░'
-                } else {
-                    ':'
-                };
-                let col = f.theme.c(2).lerp(f.theme.hot(), (1.0 - c.row_frac) * 0.35);
-                canvas.set(x, y, trail_glyph, col.scale(fade * 1.9));
+                let ch = if k == 1 { glyph[0] } else { glyph[1] };
+                let col = f.theme.c(2).lerp(RED, 0.18 + 0.20 * kf);
+                canvas.set(c.x, y, ch, col.scale(alpha * 2.1));
+                if k == 1 && alpha > 0.12 {
+                    canvas.add_light(c.x, y, CYAN, alpha * 0.16, '.');
+                }
             }
         }
     }
 
     fn draw_wordmark(&self, canvas: &mut Canvas, f: &Frame, max_y: isize) {
-        let t = f.t as f32;
-        let glyph = if f.charset == Charset::Unicode {
-            '█'
-        } else {
-            '#'
+        let Some(layout) = self.layout else {
+            return;
         };
-        let chars = TEXT.chars().count().max(1) as f32;
+        let t = f.t as f32;
+        let offset = drop_offset(t, layout.drop_rows);
+        let unicode = f.charset == Charset::Unicode;
         for c in &self.mask {
-            if c.y > max_y || c.y < 1 {
+            let alpha = reveal_alpha(c, t);
+            if alpha < 0.012 {
                 continue;
             }
-            let delay = (c.col as f32 / chars) * 0.75
-                + c.row_frac * 0.30
-                + hash01(c.x as i64, c.y as i64, 0x1234) * 0.20;
-            let reveal = 0.15 + delay;
-            let (ch, col) = if t < reveal {
-                let frame = (t * 18.0) as i64;
-                let idx =
-                    hash2(c.x as i64, c.y as i64, 0x900d_u64 ^ frame as u64) as usize % NOISE.len();
-                (
-                    NOISE[idx] as char,
-                    f.theme
-                        .c(2)
-                        .scale(0.40 + 0.18 * (t * 12.0 + c.x as f32).sin().abs()),
-                )
-            } else {
-                let shimmer = 0.86 + 0.14 * (t * 2.1 - c.x as f32 * 0.12 + c.y as f32 * 0.25).sin();
-                let breath = 0.92 + 0.08 * (t * 1.4 + c.col as f32 * 0.2).sin();
-                (
-                    glyph,
-                    f.theme
-                        .c(3)
-                        .lerp(f.theme.hot(), (1.0 - c.row_frac) * 0.65)
-                        .scale(shimmer * breath),
-                )
-            };
-            canvas.set(c.x, c.y, ch, col);
-            if (c.x + c.y) % 4 == 0 {
-                canvas.add_light(c.x + 1, c.y, col, 0.10, '.');
-            }
-        }
-    }
-
-    fn draw_beams(&self, canvas: &mut Canvas, f: &Frame, layout: Layout, max_y: isize) {
-        let t = f.t as f32;
-        let w = self.w as isize;
-        let left = layout.left - 3;
-        let right = layout.left + layout.text_w as isize + 3;
-        let top = (layout.top - 2).max(1);
-        let bottom = (layout.top + layout.box_h() as isize + 4).min(max_y);
-        if bottom < top {
-            return;
-        }
-        let glyph = if f.charset == Charset::Unicode {
-            '█'
-        } else {
-            '#'
-        };
-
-        // Horizontal sweep: top to bottom, with a tail above the head.
-        let phase = (t / 3.2 + self.h_phase).rem_euclid(1.0);
-        let hy = top as f32 + phase * (bottom - top).max(1) as f32;
-        let hcol = f.theme.c(3);
-        for i in 0..5 {
-            let y = hy.round() as isize - i;
+            let y = c.y + offset;
             if y < 1 || y > max_y {
                 continue;
             }
-            let alpha = if i == 0 {
-                1.10
+            let ch = if alpha < 0.30 {
+                if unicode {
+                    '░'
+                } else {
+                    ':'
+                }
+            } else if alpha < 0.68 {
+                if unicode {
+                    '▓'
+                } else {
+                    '+'
+                }
+            } else if unicode {
+                '█'
             } else {
-                0.48 * (1.0 - i as f32 / 5.0)
+                '#'
             };
-            for x in left..=right {
-                if x < 0 || x >= w {
-                    continue;
-                }
-                let hit = self.grid[y as usize * self.w + x as usize];
-                if hit {
-                    canvas.add_light(x, y, hcol, alpha, glyph);
-                } else if alpha > 0.2 {
-                    let (mark, amount) = if i == 0 {
-                        ('-', 0.55)
-                    } else {
-                        ('.', alpha * 0.30)
-                    };
-                    canvas.add_light(x, y, hcol, amount, mark);
-                }
+            let base = f.theme.hot().lerp(f.theme.c(2), 0.18 + c.row_frac * 0.38);
+            // Chromatic fringe: cyan to the left, red to the right.  With a
+            // one-cell inter-letter gap it would merge the glyphs, so it is
+            // only used when the layout leaves room.
+            if alpha > 0.35 && layout.line1.gap_x >= 2 {
+                canvas.set(c.x + 1, y, ch, RED.scale(alpha * 0.16));
+                canvas.set(c.x - 1, y, ch, CYAN.scale(alpha * 0.14));
             }
-        }
-        let gy = hy.round() as isize + 1;
-        if gy >= 1 && gy <= max_y {
-            for x in left..=right {
-                if x >= 0 && x < w {
-                    canvas.add_light(x, gy, hcol, 0.12, '.');
-                }
-            }
-        }
-
-        // Vertical sweep: left to right, tail behind the head.
-        let phase = (t / 5.1 + self.v_phase).rem_euclid(1.0);
-        let vx = left as f32 + phase * (right - left).max(1) as f32;
-        let vcol = f.theme.hot();
-        for i in 0..4 {
-            let x = vx.round() as isize - i;
-            if x < 0 || x >= w {
-                continue;
-            }
-            let alpha = if i == 0 {
-                1.05
-            } else {
-                0.42 * (1.0 - i as f32 / 4.0)
-            };
-            for y in top..=bottom {
-                let hit = self.grid[y as usize * self.w + x as usize];
-                if hit {
-                    canvas.add_light(x, y, vcol, alpha, glyph);
-                } else if alpha > 0.18 {
-                    let (mark, amount) = if i == 0 {
-                        ('|', 0.50)
-                    } else {
-                        (':', alpha * 0.28)
-                    };
-                    canvas.add_light(x, y, vcol, amount, mark);
-                }
-            }
-        }
-
-        // Bright cross-point where the two sweeps meet.
-        let ix = vx.round() as isize;
-        let iy = hy.round() as isize;
-        if ix >= left && ix <= right && iy >= top && iy <= bottom {
-            canvas.add_light(ix, iy, Rgb::WHITE, 1.4, '+');
-            for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
-                canvas.add_light(ix + dx, iy + dy, f.theme.c(2), 0.25, '.');
+            let shimmer = 0.88 + 0.12 * (t * 2.1 - c.x as f32 * 0.12 + c.y as f32 * 0.2).sin();
+            canvas.set(c.x, y, ch, base.scale(alpha * shimmer));
+            if alpha > 0.8 && (c.x + c.y) % 7 == 0 {
+                canvas.add_light(c.x, y, f.theme.c(2), 0.07, ch);
             }
         }
     }
 
-    fn draw_glitch(&self, canvas: &mut Canvas, f: &Frame, layout: Layout, max_y: isize) {
+    fn draw_beams(&self, canvas: &mut Canvas, f: &Frame, max_y: isize) {
+        let Some(layout) = self.layout else {
+            return;
+        };
         let t = f.t as f32;
-        if (t + self.g_phase).rem_euclid(11.0) >= 0.14 {
+        let beam = self.beam_state(t);
+        if beam.horizontal_alpha <= 0.01 && beam.vertical_alpha <= 0.01 {
             return;
         }
-        let box_h = layout.box_h().max(1) as u64;
-        let row = hash2((t * 20.0) as i64, 0, 0x91) as u64 % box_h;
-        let slice = layout.top + row as isize;
-        let dx = if hash2((t * 30.0) as i64, 1, 0x92) & 1 == 0 {
-            3
+        let offset = drop_offset(t, layout.drop_rows);
+        let top = (layout.line1.top + offset) as f32;
+        let center = (layout.line1.top + offset + layout.line1.box_h() as isize / 2) as f32;
+        let bottom = (layout.line2.top + layout.line2.box_h() as isize + offset) as f32;
+        let left = layout.line1.left.min(layout.line2.left) as f32;
+        let right = (layout.line1.left + layout.line1.width as isize)
+            .max(layout.line2.left + layout.line2.width as isize) as f32;
+        let frac = beam.horizontal_t.clamp(0.0, 1.0);
+        let h_y = if frac < 0.5 {
+            top - 2.0 + (center - (top - 2.0)) * (frac / 0.5)
         } else {
-            -3
+            center + (bottom + 2.0 - center) * ((frac - 0.5) / 0.5)
         };
-        let red = Rgb::hex(0xff3b5c);
-        let cyan = Rgb::hex(0x22d3ee);
-        let glyph = if f.charset == Charset::Unicode {
-            '█'
-        } else {
-            '#'
-        };
-        for c in &self.mask {
-            if c.y != slice && c.y != slice + 1 {
-                continue;
-            }
-            if c.y < 1 || c.y > max_y {
-                continue;
-            }
-            canvas.blend(c.x + dx, c.y, glyph, red, 0.55);
-            canvas.blend(c.x - dx, c.y, glyph, cyan, 0.45);
+        let v_x = left - 2.0 + (right - left + 4.0) * beam.vertical_t;
+        let unicode = f.charset == Charset::Unicode;
+        let hbar = if unicode { '─' } else { '=' };
+        let vbar = if unicode { '│' } else { '|' };
+        if beam.horizontal_alpha > 0.01 {
+            self.draw_horizontal_beam(
+                canvas,
+                h_y,
+                beam.horizontal_alpha,
+                left,
+                right,
+                offset,
+                max_y,
+                hbar,
+            );
         }
-        for x in layout.left..layout.left + layout.text_w as isize {
-            if x < 0 || x >= self.w as isize {
-                continue;
+        if beam.vertical_alpha > 0.01 {
+            self.draw_vertical_beam(
+                canvas,
+                v_x,
+                beam.vertical_alpha,
+                top,
+                bottom,
+                offset,
+                max_y,
+                vbar,
+            );
+        }
+        // The crossing point of the two beams is the brightest cell.
+        if beam.horizontal_alpha > 0.2 && beam.vertical_alpha > 0.2 {
+            let x = v_x.round() as isize;
+            let y = h_y.round() as isize;
+            if y >= 1 && y <= max_y {
+                canvas.add_light(x, y, Rgb::WHITE, 2.2, '*');
+                for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
+                    canvas.add_light(x + dx, y + dy, Rgb::WHITE, 0.5, '+');
+                }
             }
-            if hash2(x as i64, slice as i64, 0x93) % 3 == 0 {
-                canvas.blend(
-                    x,
-                    slice,
-                    if f.charset == Charset::Unicode {
-                        '▒'
-                    } else {
-                        '='
-                    },
-                    f.theme.hot(),
-                    0.30,
-                );
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn draw_horizontal_beam(
+        &self,
+        canvas: &mut Canvas,
+        y: f32,
+        alpha: f32,
+        left: f32,
+        right: f32,
+        offset: isize,
+        max_y: isize,
+        bar: char,
+    ) {
+        let y = y.round() as isize;
+        if y < 1 || y > max_y {
+            return;
+        }
+        let x0 = (left as isize - 2).max(0);
+        let x1 = (right as isize + 2).min(self.w as isize - 1);
+        for x in x0..=x1.max(x0) {
+            let hit = self.cell_at(x, y, offset);
+            let a = alpha * if hit { 1.0 } else { 0.82 };
+            canvas.add_light(x, y, Rgb::WHITE, 1.30 * a, bar);
+            if hit {
+                canvas.add_light(x, y, Rgb::WHITE, 0.8 * a, bar);
+            }
+            if y > 1 {
+                canvas.add_light(x, y - 1, CYAN, 0.40 * a, '.');
+            }
+            if y > 2 {
+                canvas.add_light(x, y - 2, CYAN, 0.12 * a, '.');
+            }
+            if y < max_y {
+                canvas.add_light(x, y + 1, RED, 0.34 * a, '.');
+            }
+            if y + 2 <= max_y {
+                canvas.add_light(x, y + 2, RED, 0.10 * a, '.');
+            }
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn draw_vertical_beam(
+        &self,
+        canvas: &mut Canvas,
+        x: f32,
+        alpha: f32,
+        top: f32,
+        bottom: f32,
+        offset: isize,
+        max_y: isize,
+        bar: char,
+    ) {
+        let x = x.round() as isize;
+        if x < 0 || x >= self.w as isize {
+            return;
+        }
+        let y0 = ((top as isize - 2).max(1)).min(max_y);
+        let y1 = ((bottom as isize + 2).min(max_y)).max(y0);
+        for y in y0..=y1 {
+            let hit = self.cell_at(x, y, offset);
+            let a = alpha * if hit { 1.0 } else { 0.82 };
+            canvas.add_light(x, y, Rgb::WHITE, 1.15 * a, bar);
+            if hit {
+                canvas.add_light(x, y, Rgb::WHITE, 0.7 * a, bar);
+            }
+            if x > 0 {
+                canvas.add_light(x - 1, y, CYAN, 0.40 * a, '.');
+            }
+            if x > 1 {
+                canvas.add_light(x - 2, y, CYAN, 0.12 * a, '.');
+            }
+            if x + 1 < self.w as isize {
+                canvas.add_light(x + 1, y, RED, 0.34 * a, '.');
+            }
+            if x + 2 < self.w as isize {
+                canvas.add_light(x + 2, y, RED, 0.10 * a, '.');
             }
         }
     }
@@ -636,111 +821,40 @@ impl Scene for DshScene {
         self.rebuild();
     }
 
-    fn update(&mut self, f: &Frame) {
-        let dt = f.dt.clamp(0.0, 0.1);
-        let trail = f.tune.trail.clamp(0.0, 3.0);
-        if trail > 0.01 {
-            self.spawn_clock += dt;
-            let interval = 0.16 / trail.max(0.1);
-            while self.spawn_clock >= interval {
-                self.spawn_clock -= interval;
-                if self.drips.len() >= 70 {
-                    break;
-                }
-                let Some(layout) = self.layout else {
-                    break;
-                };
-                if self.mask.is_empty() {
-                    break;
-                }
-                let cell = self.mask[self.rng.below(self.mask.len())];
-                let y = cell.y as f32 + layout.box_h() as f32 * 0.9;
-                if y >= self.h as f32 - 2.0 {
-                    continue;
-                }
-                let life = self.rng.range(1.4, 3.0);
-                let drip = Drip {
-                    x: cell.x as f32 + self.rng.range(-0.4, 0.4),
-                    y,
-                    vy: self.rng.range(8.0, 24.0),
-                    sway: self.rng.range(0.4, 1.8),
-                    phase: self.rng.range(0.0, TAU),
-                    life,
-                    max_life: life,
-                };
-                self.drips.push(drip);
-            }
-        }
-        let t = f.t as f32;
-        let bottom = self.h as f32 - 2.0;
-        for d in &mut self.drips {
-            d.y += d.vy * dt;
-            d.x += (t * 2.0 + d.phase).sin() * d.sway * dt;
-            d.life -= dt;
-        }
-        self.drips.retain(|d| d.life > 0.0 && d.y < bottom);
-    }
+    fn update(&mut self, _f: &Frame) {}
 
     fn draw(&mut self, canvas: &mut Canvas, f: &Frame) {
         let max_y = self.h as isize - 3;
         if max_y < 1 {
             return;
         }
-        let t = f.t as f32;
-        let theme = f.theme;
-
-        // Sparse twinkling starfield, kept out of the wordmark box so the
-        // letter gaps stay readable.
-        let text_box = self
-            .layout
-            .map(|l| (l.left, l.top, l.text_w as isize, l.box_h() as isize));
-        for y in 1..=max_y {
-            for x in 0..self.w as isize {
-                if let Some((bx, by, bw, bh)) = text_box {
-                    if x >= bx && x < bx + bw && y >= by && y < by + bh {
-                        continue;
-                    }
-                }
-                let hsh = hash2(x as i64, y as i64, 0x51ee);
-                if hsh % 113 != 0 {
-                    continue;
-                }
-                let tw = 0.5 + 0.5 * (t * 1.3 + (hsh % 100) as f32 * 0.1).sin().abs();
-                let ch = if hsh & 7 == 0 { '+' } else { '.' };
-                canvas.set(x, y, ch, theme.c(2).scale(0.16 * tw));
-            }
-        }
-
-        let Some(layout) = self.layout else {
+        self.draw_background(canvas, f, max_y);
+        if self.layout.is_none() {
             self.draw_compact(canvas, f);
             return;
-        };
-
-        self.draw_trail(canvas, f, layout, max_y);
-        self.draw_wordmark(canvas, f, max_y);
-
-        for d in &self.drips {
-            let y = d.y.round() as isize;
-            if y < 1 || y > max_y {
-                continue;
-            }
-            let fade = (d.life / d.max_life.max(0.01)).clamp(0.0, 1.0);
-            let ch = if f.charset == Charset::Unicode {
-                '│'
-            } else {
-                '|'
-            };
-            canvas.set(
-                d.x.round() as isize,
-                y,
-                ch,
-                theme.c(2).scale(0.25 + 0.7 * fade),
-            );
         }
-
-        self.draw_beams(canvas, f, layout, max_y);
-        self.draw_glitch(canvas, f, layout, max_y);
+        self.draw_ghosts(canvas, f, max_y);
+        self.draw_wordmark(canvas, f, max_y);
+        self.draw_beams(canvas, f, max_y);
     }
+}
+
+fn drop_offset(t: f32, rows: isize) -> isize {
+    if t < T_DROP {
+        0
+    } else {
+        (((t - T_DROP) / DROP_STEP).floor() as isize).clamp(0, rows)
+    }
+}
+
+fn reveal_alpha(c: &MaskCell, t: f32) -> f32 {
+    let delay = c.letter as f32 * 0.13 + c.row_frac * 0.10;
+    smoothstep((t - delay) / 0.38)
+}
+
+fn smoothstep(x: f32) -> f32 {
+    let t = x.clamp(0.0, 1.0);
+    t * t * (3.0 - 2.0 * t)
 }
 
 #[cfg(test)]
@@ -749,19 +863,33 @@ mod tests {
 
     #[test]
     fn layout_fits_common_terminal_sizes() {
-        for &(w, h) in &[(160, 48), (120, 36), (100, 30), (80, 24), (64, 24)] {
+        for &(w, h) in &[
+            (200, 50),
+            (160, 48),
+            (120, 36),
+            (100, 30),
+            (80, 24),
+            (60, 20),
+        ] {
             let layout = DshScene::choose_layout(w, h).expect("layout");
-            assert!(layout.left >= 0, "{w}x{h}");
+            for line in [layout.line1, layout.line2] {
+                assert!(line.left >= 0, "{w}x{h}");
+                assert!(line.left + line.width as isize <= w as isize, "{w}x{h}");
+                assert!(
+                    line.top + line.box_h() as isize <= h as isize - 3,
+                    "{w}x{h}"
+                );
+            }
             assert!(
-                layout.left + layout.text_w as isize <= w as isize,
-                "{w}x{h}"
+                layout.line2.left > layout.line1.left + 2,
+                "second line is not staggered at {w}x{h}"
             );
-            assert!(
-                layout.top + layout.box_h() as isize <= h as isize - 3,
-                "{w}x{h}"
-            );
+            let fill = layout.line1.width as f32 / w as f32;
+            assert!(fill >= 0.72, "{w}x{h}: only {:.0}% wide", fill * 100.0);
+            assert!(layout.line1.box_h() >= 5);
         }
         assert!(DshScene::choose_layout(40, 12).is_none());
+        assert!(DshScene::choose_layout(59, 16).is_none());
     }
 
     #[test]
@@ -774,7 +902,13 @@ mod tests {
             assert!(cell.x >= 0 && cell.x < 120);
             assert!(cell.y >= 1 && cell.y <= 33);
         }
-        assert!(layout.text_w > 60);
+        assert!(layout.line1.width >= 90);
+        assert!(layout.line2.left > layout.line1.left);
+        assert_eq!(drop_offset(0.0, 4), 0);
+        assert_eq!(drop_offset(T_DROP + DROP_STEP * 1.1, 4), 1);
+        assert_eq!(drop_offset(T_DROP + DROP_STEP * 3.1, 4), 3);
+        assert!(reveal_alpha(&scene.mask[0], 0.2) > 0.0);
+        assert_eq!(reveal_alpha(&scene.mask[0], 0.0), 0.0);
     }
 
     #[test]
@@ -782,7 +916,7 @@ mod tests {
         let mut scene = DshScene::new(7);
         scene.resize(80, 24);
         let mut canvas = Canvas::new(80, 24);
-        for step in 0..20 {
+        for step in 0..300 {
             let frame = Frame {
                 t: step as f64 / 30.0,
                 dt: 1.0 / 30.0,

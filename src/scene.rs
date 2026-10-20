@@ -366,6 +366,10 @@ pub struct Tune {
     pub ghost: bool,
     pub plain: bool,
     pub gallery: bool,
+    /// launch: rocket size multiplier.
+    pub rocket_scale: f32,
+    /// launch: camera shake strength (0 turns it off).
+    pub shake: f32,
 }
 
 impl Default for Tune {
@@ -389,6 +393,8 @@ impl Default for Tune {
             ghost: false,
             plain: false,
             gallery: false,
+            rocket_scale: 1.0,
+            shake: 1.0,
         }
     }
 }

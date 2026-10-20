@@ -222,8 +222,23 @@ const DSH_TUNING: &[Tuning] = &[Tuning {
     flag: "--trail",
     value: "<f>",
     default: "1.0",
-    desc: "afterimage strength (0 = off)",
+    desc: "drop-ghost strength (0 = off)",
 }];
+
+const LAUNCH_TUNING: &[Tuning] = &[
+    Tuning {
+        flag: "--rocket-scale",
+        value: "<f>",
+        default: "1.0",
+        desc: "rocket size multiplier (0.55-1.6)",
+    },
+    Tuning {
+        flag: "--shake",
+        value: "<f>",
+        default: "1.0",
+        desc: "camera shake strength (0 = off)",
+    },
+];
 
 impl EffectId {
     /// One short line for the overview grid and `--list`.
@@ -255,14 +270,14 @@ impl EffectId {
             EffectId::Ballet => "Ice-ballet duet looping through 13 sections",
             EffectId::DemonEye => "Giant bloodshot eye that blinks and darts its gaze",
             EffectId::Life => "A 0-100 life timeline of family, love and generations",
-            EffectId::Dsh => "Giant DEEPSEEK HARNESS wordmark with afterimage and scan beams",
+            EffectId::Dsh => "Two-line DEEPSEEK HARNESS: reveal, drop, looping cross beam",
             EffectId::Vibe => "Claude Code transcript typing this scene's own Rust source",
             EffectId::Tunnel => "First-person warp tunnel with a rolling camera and star streaks",
             EffectId::Helix => "Rotating DNA double helix with A/T/C/G base pairs",
             EffectId::Lights => "Aurora curtains over a moonlit mountain lake",
             EffectId::Volcano => "Night eruption with lava fountains, ash and lightning",
             EffectId::Tesseract => "Rotating 4D hypercube drawn as a depth-shaded wireframe",
-            EffectId::Launch => "Rocket launch from pad to orbit, with plume and booster",
+            EffectId::Launch => "Big two-stage rocket: ignition, max-Q, separation, Earth limb",
             EffectId::Plasma => "Classic demoscene plasma with a shifting palette",
         }
     }
@@ -296,14 +311,14 @@ impl EffectId {
             EffectId::Ballet => "A 39-scene-second duet looping through 13 sections: glide, crossover, arabesque, promenade, overhead lift, pair spin, death spiral, sissonne, Ina Bauer and finale. Joints use two-bone IK; the default tempo is 2x, about 19.5 seconds per loop.",
             EffectId::DemonEye => "One huge bloodshot eye fills the screen; it blinks every 8-15 seconds and darts its gaze 1-2 times between blinks. --eye-motion dart|still.",
             EffectId::Life => "A 0-100 age timeline with glowing life lines; family, love and generations enter and leave on schedule. The bright beam grows with age; a supernova finale closes ME's timeline. --life-cycle sets the round length.",
-            EffectId::Dsh => "A hand-drawn 3x5/4x5/5x7 wordmark decodes in from random glyphs, drags a swaying afterimage downward and is crossed by horizontal and vertical light beams. A short VHS slice glitch fires about every 11 seconds. ASCII by default; --unicode uses solid blocks, and --trail sets the afterimage strength.",
+            EffectId::Dsh => "A giant two-line DEEPSEEK HARNESS lockup with the second line indented: DEEPSEEK on top, HARNESS below, about 85-90% of the width and over half the screen height. The intro reveals the letters one by one and drops the lockup in stuttered one-row steps, leaving a ghost stack below HARNESS. After that the wordmark never leaves the screen: a seven-second loop floats a horizontal beam down the lockup, joins it with a vertical beam at the centre to form a bright cross, then sweeps the vertical beam left to right while the horizontal one fades. No fireworks or particle burst. ASCII by default; --unicode uses solid blocks, and --trail sets the drop-ghost strength.",
             EffectId::Vibe => "A Claude Code-style transcript reads src/scenes/vibe.rs (or an embedded copy), types it with a small Rust syntax highlighter and loops through six windows per turn; only the lines up to the typing head are visible, and each loop starts from a clean transcript. ASCII by default; --unicode swaps in the Claude Code prompt, tool and spinner glyphs.",
             EffectId::Tunnel => "Sixteen depth-spaced rings expand toward the viewer while ten radial spokes rotate and projected stars streak past. Pure ASCII: +, *, # and @ carry the perspective.",
             EffectId::Helix => "Two sine strands wrap around a vertical axis; A/T/C/G base pairs join them, depth comes from each strand's cosine, and the whole helix rotates in place. Pure ASCII.",
             EffectId::Lights => "Three noisy aurora curtains drift over a starry sky, snow-capped ridges and a moonlit lake reflection. ASCII only: the vertical glyphs and stars are the effect.",
             EffectId::Volcano => "A jagged mountain silhouette, a glowing crater, ballistic lava fountains, two lava streams, drifting ash and periodic lightning. ASCII by default; --unicode uses solid blocks for the mountain.",
             EffectId::Tesseract => "Sixteen vertices and thirty-two edges rotate in four dimensions, project to three and then two, and draw as a depth-shaded ASCII wireframe. Pure ASCII.",
-            EffectId::Launch => "A twenty-two second launch loop: countdown on the pad, ignition smoke, ascent with a flame plume, booster separation and an Earth-limb view. Pure ASCII.",
+            EffectId::Launch => "A twenty-four second launch film: blue-hour pad, ignition flash, a full-height two-stage rocket with twin boosters, layered exhaust and world-space smoke, max-Q, MECO and booster separation, a second-stage climb, then an Earth-limb sunrise. The camera follows and shakes; --rocket-scale and --shake tune the framing. Pure ASCII.",
             EffectId::Plasma => "Four interfering sine fields drive a glyph ramp and a slowly cycling palette, with a subtle scanline. ASCII by default; --unicode uses a compact block ramp.",
         }
     }
@@ -438,6 +453,7 @@ impl EffectId {
             EffectId::Dragon => DRAGON_TUNING,
             EffectId::TomJerry => TOMJERRY_TUNING,
             EffectId::Dsh => DSH_TUNING,
+            EffectId::Launch => LAUNCH_TUNING,
             _ => &[],
         }
     }
@@ -449,13 +465,13 @@ impl EffectId {
             EffectId::Ballet => 12.0,
             EffectId::MonaLisa => 2.0,
             EffectId::Vibe => 10.0,
-            EffectId::Dsh => 6.0,
+            EffectId::Dsh => 5.6,
             EffectId::Tunnel => 6.0,
             EffectId::Helix => 6.0,
             EffectId::Lights => 8.0,
             EffectId::Volcano => 8.0,
             EffectId::Tesseract => 6.0,
-            EffectId::Launch => 12.0,
+            EffectId::Launch => 8.0,
             EffectId::Plasma => 5.0,
             EffectId::Fireworks => 6.0,
             EffectId::Storm => 6.0,

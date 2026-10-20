@@ -622,6 +622,8 @@ fn curated_options(style: &HelpStyle) -> Vec<String> {
                 "--ghost",
                 "--gallery",
                 "--plain",
+                "--rocket-scale",
+                "--shake",
                 "--jump",
             ],
         ),
@@ -922,6 +924,8 @@ fn tuning_example(flag: &str) -> &'static str {
         "--life-cycle" => "60",
         "--eye-motion" => "still",
         "--trail" => "1.5",
+        "--rocket-scale" => "1.3",
+        "--shake" => "0",
         _ => "",
     }
 }
@@ -1235,7 +1239,7 @@ const TUNING: &[OptRow] = &[
     OptRow {
         flags: "--trail",
         arg: "<f>",
-        desc: "DeepSeek Harness afterimage strength (0 = off)",
+        desc: "DeepSeek Harness drop-ghost strength (0 = off)",
         default: Some("1.0"),
     },
     OptRow {
@@ -1303,6 +1307,18 @@ const TUNING: &[OptRow] = &[
         arg: "",
         desc: "dragon: plain starfield (no mountains/cloud sea)",
         default: None,
+    },
+    OptRow {
+        flags: "--rocket-scale",
+        arg: "<f>",
+        desc: "launch: rocket size multiplier",
+        default: Some("1.0"),
+    },
+    OptRow {
+        flags: "--shake",
+        arg: "<f>",
+        desc: "launch: camera shake strength",
+        default: Some("1.0"),
     },
     OptRow {
         flags: "--jump",
