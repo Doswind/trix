@@ -6,18 +6,18 @@ screenshot and a short GIF; lead with those.
 
 ## One-liners
 
-- **English**: 26 animated ASCII/Unicode effects for your terminal, in one ~1.1 MB Rust binary. No dependencies, ~2 ms startup, `trix --help` is a live showcase.
-- **中文**：26 个终端 ASCII/Unicode 动态特效，装进一个约 1.1 MB 的 Rust 单文件；零依赖、约 2 ms 启动，连 `--help` 本身都是特效界面。
+- **English**: 35 animated ASCII/Unicode effects for your terminal, in one ~1.1 MB Rust binary. No dependencies, ~2 ms startup, `trix --help` is a live showcase.
+- **中文**：35 个终端 ASCII/Unicode 动态特效，装进一个约 1.1 MB 的 Rust 单文件；零依赖、约 2 ms 启动，连 `--help` 本身都是特效界面。
 
 ## Show HN
 
 **Title**
 
-> Show HN: Trix – 26 ASCII effects in a 1.1 MB Rust binary
+> Show HN: Trix – 35 ASCII effects in a 1.1 MB Rust binary
 
 **Body**
 
-> I built a terminal effects engine with 26 scenes: code rain, fire, a coiling
+> I built a terminal effects engine with 35 scenes: code rain, fire, a coiling
 > dragon, the Matrix, a black hole, fireworks, the solar system, Mona Lisa, an
 > ice-ballet duet, and more. It is a single ~1.1 MB Rust binary with no runtime
 > dependencies, about 2 ms startup and a diff renderer that only repaints
@@ -43,7 +43,7 @@ screenshot and a short GIF; lead with those.
 
 **Title**
 
-> Trix: 26 animated ASCII/Unicode effects for the terminal, no dependencies
+> Trix: 35 animated ASCII/Unicode effects for the terminal, no dependencies
 
 **Body**
 
@@ -62,7 +62,7 @@ screenshot and a short GIF; lead with those.
 
 **Title**
 
-> trix-effects: 26 ASCII/Unicode effects for your terminal (single binary, no deps)
+> trix-effects: 35 ASCII/Unicode effects for your terminal (single binary, no deps)
 
 **Body**
 
@@ -76,7 +76,7 @@ screenshot and a short GIF; lead with those.
 
 **Title**
 
-> [OC] trix-effects – 26 terminal effects (code rain, dragon, Mona Lisa)
+> [OC] trix-effects – 35 terminal effects (code rain, dragon, Mona Lisa)
 
 **Body**
 
@@ -90,7 +90,7 @@ screenshot and a short GIF; lead with those.
 
 **Title**
 
-> trix-effects: 26 ASCII effects in a dependency-free Rust binary
+> trix-effects: 35 ASCII effects in a dependency-free Rust binary
 
 **Tags**: `rust`, `show`, `visualization`
 
@@ -98,7 +98,7 @@ screenshot and a short GIF; lead with those.
 
 Submit the repo link with a one-paragraph description:
 
-> trix-effects is a 26-effect ASCII/Unicode terminal engine in Rust. One ~1.1 MB
+> trix-effects is a 35-effect ASCII/Unicode terminal engine in Rust. One ~1.1 MB
 > binary, `libc` as the only dependency, a diff renderer, eight themes, and a
 > metadata-driven help system that renders a real preview of each effect.
 > https://github.com/Doswind/trix-effects
@@ -109,12 +109,12 @@ Submit the repo link with a one-paragraph description:
 
 **标题**
 
-> 分享创造：用 Rust 写了 26 个终端 ASCII 特效，单文件约 1.1MB，无依赖
+> 分享创造：用 Rust 写了 35 个终端 ASCII 特效，单文件约 1.1MB，无依赖
 
 **正文**
 
 > 做了一个终端特效引擎 trix-effects：代码雨、火焰、巨龙、黑客帝国、黑洞、烟花、
-> 太阳系、蒙娜丽莎、冰上芭蕾、生命的轨迹等 26 个场景。
+> 太阳系、蒙娜丽莎、冰上芭蕾、生命的轨迹等 35 个场景。
 >
 > - Rust 单线程，唯一依赖 `libc`，发布二进制约 1.1MB
 > - 默认 ASCII，`--unicode` 显式开启
@@ -135,18 +135,18 @@ Submit the repo link with a one-paragraph description:
 
 **导语**
 
-> 26 个终端 ASCII/Unicode 动态特效，一个约 1.1MB 的 Rust 单文件。默认 ASCII，
+> 35 个终端 ASCII/Unicode 动态特效，一个约 1.1MB 的 Rust 单文件。默认 ASCII，
 > 不依赖任何运行时，连 `--help` 都是一张会动的界面。
 
 ### 知乎
 
 **标题**
 
-> 如何用 Rust 写一个 26 种特效的终端动画引擎？
+> 如何用 Rust 写一个 35 种特效的终端动画引擎？
 
 **回答开头**
 
-> 最近把 trix-effects 整理到了 0.9.1：26 个场景、8 套主题、单线程、只依赖 libc，
+> 最近把 trix-effects 整理到了 0.11.0：35 个场景、8 套主题、单线程、只依赖 libc，
 > 发布二进制约 1.1MB。比较有意思的是帮助系统——`trix --help` 会渲染真实 HUD
 > 画面，`trix --help rain` 直接用场景本身生成预览。仓库：
 > https://github.com/Doswind/trix-effects
@@ -154,7 +154,7 @@ Submit the repo link with a one-paragraph description:
 ### Bilibili / 小红书 / 即刻
 
 - 30–45 秒录屏：`trix --help` → `trix rain` → `trix dragon` → `trix monalisa` → `trix life`
-- 标题：`26 个终端特效，装进 1.1MB 的 Rust 单文件`
+- 标题：`35 个终端特效，装进 1.1MB 的 Rust 单文件`
 - 文案关键词：终端、ASCII、代码雨、Rust、程序员、命令行、复古未来
 
 ## Awesome lists
@@ -162,7 +162,7 @@ Submit the repo link with a one-paragraph description:
 Suggested entry (adjust to each list's format):
 
 ```markdown
-- [trix-effects](https://github.com/Doswind/trix-effects) - 26 animated ASCII/Unicode
+- [trix-effects](https://github.com/Doswind/trix-effects) - 35 animated ASCII/Unicode
   effects for the terminal in one fast, dependency-free Rust binary.
 ```
 
@@ -171,7 +171,7 @@ Targets: `awesome-rust`, `awesome-cli-apps`, `awesome-terminal`,
 
 ## Launch checklist
 
-- [ ] `v0.9.1` release is green and the three archives + `SHA256SUMS` exist.
+- [ ] the next release is green and the three archives + `SHA256SUMS` exist.
 - [ ] README first screen has the overview image, one-liner and install command.
 - [ ] `docs/social-preview.png` uploaded in repository settings.
 - [ ] Topics and description set.

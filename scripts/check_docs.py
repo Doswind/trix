@@ -19,7 +19,7 @@ PRIMARY_FLAGS = [
     "--no-fade", "--fps", "--speed", "--chase-speed", "--theme", "--charset",
     "--unicode", "--ascii", "--color", "--no-color", "--no-hud", "--no-alt",
     "--density", "--spin", "--twinkle", "--meteors", "--beam-speed",
-    "--beam-motion", "--beam-jump", "--seed-count", "--seed-speed", "--street",
+    "--beam-motion", "--beam-jump", "--trail", "--seed-count", "--seed-speed", "--street",
     "--tornado-count", "--tornado-speed", "--life-cycle", "--eye-motion",
     "--eye-still", "--ghost", "--gallery", "--plain", "--jump", "--no-jump",
     "--snapshot", "--frames", "--size", "--bench", "--seed", "--duration",
@@ -49,8 +49,8 @@ def effect_rows() -> list[tuple[str, str, str]]:
         parts = re.split(r"\s{2,}", line.strip())
         if len(parts) >= 3 and re.fullmatch(r"[a-z]+", parts[0]):
             rows.append((parts[0], parts[1], parts[2]))
-    if len(rows) != 26:
-        raise SystemExit(f"expected 26 effects in --list, got {len(rows)}")
+    if len(rows) != 35:
+        raise SystemExit(f"expected 35 effects in --list, got {len(rows)}")
     return rows
 
 

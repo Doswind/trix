@@ -6,7 +6,7 @@
 
 | 模式 | 顶栏 | 底栏 | 场景文字 | 适用 |
 | --- | --- | --- | --- | --- |
-| Full | 有 | 有 | 仅图内安全区 | 其余 23 个特效 |
+| Full | 有 | 有 | 仅图内安全区 | 其余 32 个特效 |
 | Ambient | 无 | 有 | 无 | `rain`、`fire`、`monalisa` |
 | Clean | 无 | 无 | 保留（只隐藏 HUD） | 交互时加 `--no-hud` |
 
@@ -19,7 +19,7 @@ row 0     Code Rain  // rain                    1.00x | neon | ascii
 row 1     ┌──────────── 场景安全区 ────────────────────────────┐
  ...      │  画面 + 图内拟真标签（ECG/Matrix/Mario/Life 等）  │
 row h-3   │                                                   │
-row h-2   │  playlist 03/26  Code Rain  next 8s                │
+row h-2   │  playlist 03/35  Code Rain  next 8s                │
 row h-1   └  q quit | space pause | n/p next | t theme | h help   i info
 ```
 
@@ -67,7 +67,7 @@ row h-1   └  q quit | space pause | n/p next | t theme | h help   i info
 | 重开 | `r` | — | 新种子 |
 | 直接切换 | `1-9 0 [ ]` + 字母 | 大小写均可 | 映射见 README |
 
-快捷键不区分大小写；不提供 `,`/`.` 和 PageUp/PageDown 别名。
+快捷键不区分大小写；不提供 `,`/`.` 和 PageUp/PageDown 别名。`tunnel`、`helix`、`lights`、`volcano`、`tesseract`、`launch`、`plasma` 没有单键快捷键，用 `trix <effect>` 或 `n` / `p` 进入。
 
 ## 5. 输入解析
 
@@ -111,6 +111,7 @@ macOS `Cmd` 组合键被 Terminal.app/iTerm2 截获，TUI 收不到，只能在�
 | monalisa | `--ghost`、`--gallery` |
 | dragon | `--plain` |
 | tomjerry | `--jump` |
+| dsh | `--trail` |
 
 公共参数：`--theme`、`--charset`、`--fps`、`--speed`、`--color`；播放列表模式下追加 `--playlist`、`--switch`、`--transition`、`--transition-secs`；设置 `--duration` 时也会显示。
 
@@ -124,7 +125,7 @@ macOS `Cmd` 组合键被 Terminal.app/iTerm2 截获，TUI 收不到，只能在�
 
 ## 8. 命令行帮助
 
-- `trix --help`：总览（字标、真实 HUD 预览、26 个特效网格、分组参数、主题色带、快捷键、示例）。
+- `trix --help`：总览（字标、真实 HUD 预览、35 个特效网格、分组参数、主题色带、快捷键、示例）。
 - `trix --help <effect>`：单特效详情 + 用真实场景渲染的预览 + 该特效专属参数；`trix <effect> --help` 等价。
 - `trix --help all`：完整参数手册；`trix --list`：TTY 下彩色目录，管道下纯文本。
 - `trix --completions bash|zsh|fish`：从同一份特效/参数元数据生成 shell 补全。
@@ -138,5 +139,5 @@ macOS `Cmd` 组合键被 Terminal.app/iTerm2 截获，TUI 收不到，只能在�
 - `cargo test`
 - `cargo clippy --all-targets`
 - `python3 scripts/check_docs.py`
-- 26 个特效 × 80×24 / 120×36 / 200×60 × ASCII/Unicode 的 `--snapshot` 冒烟
+- 35 个特效 × 80×24 / 120×36 / 200×60 × ASCII/Unicode 的 `--snapshot` 冒烟
 - 真实终端：macOS Terminal.app / iTerm2，Linux xterm / VTE / tmux；重点检查分片方向键、Shift+方向键、Option+q、鼠标/粘贴上报、`--no-hud` 与面板。

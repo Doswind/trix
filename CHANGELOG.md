@@ -2,6 +2,26 @@
 
 **English** | [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.11.0 — unreleased (2026-10-19)
+
+- Added seven generative scenes:
+  - `tunnel` **Warp Tunnel** (星际隧道): sixteen depth-spaced rings expand toward the viewer, ten radial spokes rotate and projected stars streak past. Pure ASCII.
+  - `helix` **DNA Helix** (DNA 双螺旋): two sine strands with A/T/C/G base pairs and cosine-depth shading. Pure ASCII.
+  - `lights` **Aurora** (极光): three wavy aurora ribbons with hanging curtains over a starry sky, a moon, snow-capped ridges and a lake reflection. Pure ASCII.
+  - `volcano` **Volcano** (火山爆发): a jagged cone, glowing crater, ballistic lava fountains, lava streams, an ash plume and periodic lightning. ASCII by default; `--unicode` uses solid blocks for the mountain.
+  - `tesseract` **Tesseract** (四维超立方): a sixteen-vertex, thirty-two-edge 4D hypercube projected to a depth-shaded ASCII wireframe. Pure ASCII.
+  - `launch` **Rocket Launch** (火箭发射): a 22-second pad-to-orbit loop with ignition smoke, plume, booster separation, a cloud deck and an Earth limb. Pure ASCII.
+  - `plasma` **Plasma** (等离子): nine drifting metaballs, sine texture and a cycling palette. ASCII by default; `--unicode` uses a compact block ramp.
+- The effect registry now has **35 effects**. Shortcuts are now optional in the metadata: the seven new scenes have no single-key shortcut and are entered with `trix <effect>` or `n` / `p`; all existing shortcuts are unchanged.
+- `scripts/check_docs.py` now checks 35 effects. README / README.zh-CN, the HUD document, the help screenshots, the overview and the social preview were updated; tests grew to 217.
+
+## 0.10.0 — 2026-10-19
+
+- Added `dsh` **DeepSeek Harness** (shortcut `u`): a giant DEEPSEEK HARNESS wordmark built from a hand-drawn 3×5 / 4×5 / 5×7 font, sized to roughly 60% of the width and 30% of the height. It decodes in from random glyphs, drags a swaying afterimage about one glyph-height downward, and is crossed by looping horizontal and vertical beams; a short VHS slice glitch fires about every 11 seconds. `--trail <0-3>` controls the afterimage (default 1.0). ASCII by default; `--unicode` uses solid blocks. Default theme `ice`.
+- Added `vibe` **Vibe Coding** (shortcut `w`): a single-column Claude Code transcript that reads `src/scenes/vibe.rs` from the working tree (falling back to a compile-time copy when installed), types the source with a hand-written Rust syntax highlighter, and loops through six 10-line windows per turn; only the lines up to the typing head are visible, and each loop clears the transcript before starting again. It includes prompt / assistant / tool / result lines, `+` diff-style code, a rotating spinner with token count, an input box and the bypass-permissions footer. ASCII by default (`>`, `*`, `L`, `>>`); `--unicode` uses `❯ ◉ └ ✻ ▶▶`. Default theme `gold`.
+- Added `--trail <f>` to the CLI, `i` panel, `--help all` and both READMEs. The effect registry now has 28 effects, both new scenes are dual-charset, and `scripts/check_docs.py` checks 28 effects plus `--trail`.
+- New documentation assets: `docs/dsh-ascii.png` and `docs/vibe-ascii.png` (main previews), plus Unicode previews and GIFs.
+
 ## 0.9.1 — 2026-10-19
 
 - **Renamed to `trix-effects`**: the package, crate and repository are now `trix-effects`; the command stays `trix`, and the binary version prints `trix-effects 0.9.1`. Release assets are `trix-effects-<version>-...`. This supersedes the short-lived `trix-tui` name from 0.9.0.

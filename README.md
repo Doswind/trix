@@ -2,7 +2,7 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-> **26 animated ASCII / Unicode effects for your terminal, in one fast, dependency-free Rust binary.** Code rain, fire, a coiling dragon, the Matrix, a black hole, fireworks, the solar system, Mona Lisa, and 18 more — in ASCII by default, with Unicode as an opt-in.
+> **35 animated ASCII / Unicode effects for your terminal, in one fast, dependency-free Rust binary.** Code rain, fire, a coiling dragon, the Matrix, a black hole, fireworks, the solar system, Mona Lisa, a giant DeepSeek Harness wordmark, a self-typing Claude Code session, and 25 more — in ASCII by default, with Unicode as an opt-in.
 
 ![release](https://github.com/Doswind/trix-effects/actions/workflows/release.yml/badge.svg)
 ![CI](https://github.com/Doswind/trix-effects/actions/workflows/ci.yml/badge.svg)
@@ -12,7 +12,7 @@
 
 ![trix-effects overview](docs/overview-ascii.png)
 
-**26 effects · 8 themes · zero dependencies · ~2 ms startup · ~1.1 MB binary · macOS / Linux / WSL**
+**35 effects · 8 themes · zero dependencies · ~2 ms startup · ~1.1 MB binary · macOS / Linux / WSL**
 
 [Install](#install) · [Quick start](#quick-start) · [Help](#help-that-looks-like-the-product) · [Effects](#effects) · [ASCII / Unicode](#ascii--unicode-editions) · [Keys](#runtime-keys) · [Themes](#themes) · [Performance](#performance) · [FAQ](#compatibility-and-faq)
 
@@ -40,7 +40,7 @@ Requires Rust 1.70+ when building from source.
 ## Quick start
 
 ```bash
-trix                              # cycle all 26 effects
+trix                              # cycle all 35 effects
 trix rain                         # Code Rain
 trix dragon --theme gold          # golden dragon
 trix blackhole --spin 0.25        # slower black hole
@@ -70,6 +70,12 @@ trix tornado --tornado-count 5 --tornado-speed 1.6
 trix ballet --speed 1.3            # faster ice ballet
 trix demoneye --eye-still          # pin the eyeball, keep blinking
 trix life --life-cycle 60          # 0–100 in one minute
+trix dsh                           # DEEPSEEK HARNESS wordmark
+trix dsh --trail 0                 # no afterimage, beams only
+trix vibe --unicode                # Claude Code glyphs, self-typing source
+trix tunnel                        # warp tunnel
+trix plasma                        # plasma field
+trix launch                        # pad to orbit
 trix tomjerry --jump               # enable jumping
 ```
 
@@ -124,8 +130,17 @@ Every effect name is given in English and Chinese; `trix --list` uses the same n
 | `ballet` | Ice Ballet | 冰上芭蕾 |
 | `demoneye` | Demon Eye | 恶魔之眼 |
 | `life` | Threads of Life | 生命的轨迹 |
+| `dsh` | DeepSeek Harness | 深度求索 |
+| `vibe` | Vibe Coding | 氛围编程 |
+| `tunnel` | Warp Tunnel | 星际隧道 |
+| `helix` | DNA Helix | DNA 双螺旋 |
+| `lights` | Aurora | 极光 |
+| `volcano` | Volcano | 火山爆发 |
+| `tesseract` | Tesseract | 四维超立方 |
+| `launch` | Rocket Launch | 火箭发射 |
+| `plasma` | Plasma | 等离子 |
 
-> **Screenshots use the default ASCII glyphs.** Unicode variants are shown only in the [ASCII / Unicode](#ascii--unicode-editions) section. All previews are rendered from the current code at 120×36 (Mona Lisa at 120×60), truecolor.
+> **Screenshots use the default ASCII glyphs.** Unicode variants are shown only in the [ASCII / Unicode](#ascii--unicode-editions) section. All previews are rendered from the current code at 120×36 (Mona Lisa at 120×60; DeepSeek Harness at 160×48), truecolor.
 
 | Code Rain `rain` | Blazing Fire `fire` | Coiling Dragon `dragon` |
 | --- | --- | --- |
@@ -159,12 +174,28 @@ Every effect name is given in English and Chinese; `trix --list` uses the same n
 | --- | --- | --- |
 | ![Thunderstorm](docs/storm-ascii.png) | ![Mona Lisa](docs/monalisa-ascii.png) | ![Ice Ballet](docs/ballet-ascii.png) |
 
-| Demon Eye `demoneye` | Threads of Life `life` |
+| Demon Eye `demoneye` | Threads of Life `life` | DeepSeek Harness `dsh` |
 | --- | --- | --- |
-| ![Demon Eye](docs/demoneye-ascii.png) | ![Threads of Life](docs/life-ascii.png) |
+| ![Demon Eye](docs/demoneye-ascii.png) | ![Threads of Life](docs/life-ascii.png) | ![DeepSeek Harness](docs/dsh-ascii.png) |
+
+| Vibe Coding `vibe` |
+| --- |
+| ![Vibe Coding](docs/vibe-ascii.png) |
+
+| Warp Tunnel `tunnel` | DNA Helix `helix` | Aurora `lights` |
+| --- | --- | --- |
+| ![Warp Tunnel](docs/tunnel-ascii.png) | ![DNA Helix](docs/helix-ascii.png) | ![Aurora](docs/lights-ascii.png) |
+
+| Volcano `volcano` | Tesseract `tesseract` | Rocket Launch `launch` |
+| --- | --- | --- |
+| ![Volcano](docs/volcano-ascii.png) | ![Tesseract](docs/tesseract-ascii.png) | ![Rocket Launch](docs/launch-ascii.png) |
+
+| Plasma `plasma` |
+| --- |
+| ![Plasma](docs/plasma-ascii.png) |
 
 <details>
-<summary><b>Full effect notes (26)</b></summary>
+<summary><b>Full effect notes (35)</b></summary>
 
 | Effect | Description |
 | --- | --- |
@@ -194,6 +225,15 @@ Every effect name is given in English and Chinese; `trix --list` uses the same n
 | Ice Ballet (冰上芭蕾) `ballet` | An ice-ballet duet: a 39-scene-second choreography loops through 13 sections; the default 2x tempo makes one loop about 19.5 seconds (glide, crossover, arabesque, promenade, **overhead lift**, pair spin, death spiral, sissonne, Ina Bauer, final pose); joints use two-bone IK, clasped hands align automatically, limbs have soft edges and lag behind the torso; the routine covers most of the screen, three rows of spectators behind the boards sway, raise their hands and fire flashbulbs, and skate marks and reflections stay on the ice; `--speed` |
 | Demon Eye (恶魔之眼) `demoneye` | One huge bloodshot eye fills the screen: it blinks every 8–15 seconds, singly or doubly (about 7:3); between blinks the eyeball darts only 1–2 times (darts at least 5 seconds apart), reaching the target in about 0.1 s and always returning to center within 0.45–0.85 s; the vertical pupil scales, eyelids press in, blood vessels and a blink shockwave; `--eye-motion dart\|still` (default `dart`), `--eye-still` pins the eyeball dead center |
 | Threads of Life (生命的轨迹) `life` | A 0–100 age timeline with glowing life lines on both sides; every human uses `@` with a colored uppercase abbreviation on the same row and **the relative's own age** (friends who are not family carry no age); the bright beam grows with age (late in life it can cover most of the lifetime), fading from dark dots / dashes at the tail up to `=` at the head, with a `****@` comet tail; the first ~22%–42% of life (at most about 22 years) stays as sparse dim dots; when a track ends its row can be reused by someone later (school-age `PAL/UNI` +1 row → GF/WIFE, `DOG` −1 row → KID2, and the cat / parents' rows are reclaimed by later friends); `DOG` stays at −1 next to me for life; when `PAL/UNI/WORK/FRIEND` coexist they **share one row**: during the school years it sits on the other side at +1, and while a minor KID exists the whole group retreats to the nearest free row outside KID/CAT (usually +4; only rows actually used by children/pets are yielded, no longer fixed −5/−7), and all KIDs move back inside once grown; `ME 0 / WIFE +1`; `KID1 +2`, `KID2 −1` (reusing the row next to me that DOG gave up), `KID3 −2`; before adulthood `KID3 −2 / KID2 −1 / ME 0 / WIFE +1 / KID1 +2` is **contiguous with no empty rows**, and `GRAND1/GRAND2` always hug their parent's row (moving with them as they drift); `CAT +3` is born with the first child, just below KID1; `DAD/MOM +3/+4` start yielding to `+5/+6` two years before the child is born, and `BRO +5→+7` follows; GPA/GMA/DAD/MOM get suitable random starting ages when I am 0 (58–70 / 56–68 / 25–33 / 23–31), BRO 0–4, ME 0; KID/GRAND/CAT/DOG count from their own birth, GF/WIFE are within ±2 years of my age; every row is fixed at one terminal row (it does not scale with terminal height, and tall terminals never produce empty rows from rounding); when `ME` ends, a roughly 6-second **supernova finale** plays (the flashback and stardust slow down while the comet keeps its speed: white core, life flashback, shockwave, stardust, brightened comet and a permanent halo at the top; the flashback beam that reaches ME's stop line stays three columns wide and never disappears); the death point and the top star keep `@` + name + final age and appear/disappear in sync once per second; all the dead rise to the top in death order, one row apart, and their end labels fade in 0.5 s after the meteor arrives; humans blink as `*`, cats and dogs as `+`; GF approaches for 2 years, then stays 1–2 years before becoming WIFE; WIFE lives to 75–90 and dies after I become a star; AGE has no leading zeros; `--life-cycle` sets the length of one round |
+| DeepSeek Harness (深度求索) `dsh` | A giant **DEEPSEEK HARNESS** wordmark (about 60% of the width and 30% of the height) built from a hand-drawn 3×5 / 4×5 / 5×7 font: it **decodes in from random glyphs**, drags a **swaying afterimage** roughly one glyph-height downward, and is crossed by looping **horizontal and vertical light beams**; a short **VHS slice glitch** fires about every 11 seconds; `--trail <f>` sets the afterimage strength (0 turns it off); **ASCII by default**, `--unicode` uses solid blocks ([GIF](docs/dsh.gif)) |
+| Vibe Coding (氛围编程) `vibe` | A single-column **Claude Code transcript** that reads `src/scenes/vibe.rs` (or an embedded copy), types the source with a hand-written **Rust syntax highlighter**, and loops through six short windows per turn; each loop starts from a clean transcript; it shows the prompt, assistant/tool lines, `+` diff-style code, a rotating spinner with token count, the input box and the bypass-permissions footer; **ASCII by default** (`>`, `*`, `L`, `>>`), `--unicode` switches to Claude Code-style `❯ ◉ └ ✻ ▶▶` glyphs ([GIF](docs/vibe.gif)) |
+| Warp Tunnel (星际隧道) `tunnel` | Sixteen depth-spaced rings expand toward the viewer while ten radial spokes rotate and projected stars streak past. **Pure ASCII**: `+`, `*`, `#` and `@` carry the perspective. |
+| DNA Helix (DNA 双螺旋) `helix` | Two sine strands wrap around a vertical axis; A/T/C/G base pairs join them, depth comes from each strand's cosine, and the whole helix rotates in place. **Pure ASCII.** |
+| Aurora (极光) `lights` | Three wavy aurora ribbons with short hanging curtains drift over a starry sky, snow-capped ridges, a moon and a rippling lake reflection. **Pure ASCII.** |
+| Volcano (火山爆发) `volcano` | A jagged cone, a glowing crater, ballistic lava fountains, two lava streams, a drifting ash plume and periodic lightning. **ASCII by default**; `--unicode` uses solid blocks for the mountain. |
+| Tesseract (四维超立方) `tesseract` | Sixteen vertices and thirty-two edges rotate in four dimensions, project to three and then two, and draw as a depth-shaded ASCII wireframe. **Pure ASCII.** |
+| Rocket Launch (火箭发射) `launch` | A 22-second loop: pad and gantry, ignition smoke, ascent with a flame plume, booster separation, a low cloud deck and an Earth-limb view. **Pure ASCII.** |
+| Plasma (等离子) `plasma` | Nine drifting metaballs add into a soft scalar field, textured with sine detail and rendered through a cycling palette. **ASCII by default**; `--unicode` uses a compact block ramp. |
 
 </details>
 
@@ -205,7 +245,7 @@ Light Beams has two motion modes:
 
 ## ASCII / Unicode editions
 
-**Every dual-form effect starts in ASCII.** Add `--unicode` (or `--charset unicode`) to opt in; `--ascii` forces ASCII again. The dual-form effects are `matrix`, `mario`, `ecg`, `dandelion`, `fish`, `landscape`, `shanghai`, `tiananmen`, `traffic`, `tornado`, `storm`, `monalisa`, `ballet`, `demoneye` and `life`.
+**Every dual-form effect starts in ASCII.** Add `--unicode` (or `--charset unicode`) to opt in; `--ascii` forces ASCII again. The dual-form effects are `matrix`, `mario`, `ecg`, `dandelion`, `fish`, `landscape`, `shanghai`, `tiananmen`, `traffic`, `tornado`, `storm`, `monalisa`, `ballet`, `demoneye`, `life`, `dsh`, `vibe`, `volcano` and `plasma`.
 
 `mario` / `ecg` in both glyph sets:
 
@@ -220,6 +260,13 @@ Light Beams has two motion modes:
 | --- | --- |
 | ![shanghai ascii](docs/shanghai-ascii.png) | ![shanghai unicode](docs/shanghai-unicode.png) |
 | ![traffic ascii](docs/traffic-ascii.png) | ![traffic unicode](docs/traffic-unicode.png) |
+
+`dsh` / `vibe` in both glyph sets:
+
+| ASCII (default) | Unicode (`--unicode`) |
+| --- | --- |
+| ![dsh ascii](docs/dsh-ascii.png) | ![dsh unicode](docs/dsh-unicode.png) |
+| ![vibe ascii](docs/vibe-ascii.png) | ![vibe unicode](docs/vibe-unicode.png) |
 
 Vertical street:
 
@@ -238,7 +285,7 @@ trix ecg --unicode      # Unicode ECG monitor
 
 ## Features
 
-- **26 switchable effects**: command-line arguments, runtime hot-switching and themes.
+- **35 switchable effects**: command-line arguments, runtime hot-switching and themes.
 - **Help as a first-class surface**: styled overview, per-effect dossier with a real scene preview, styled catalog and “did you mean?” errors.
 - **ASCII first**: dual-form effects start in ASCII; opt into Unicode explicitly with `--unicode`.
 - **Low resource use**: single-threaded, no async, no event-loop framework; 30 FPS by default; `libc` is the only dependency.
@@ -251,7 +298,7 @@ trix ecg --unicode      # Unicode ECG monitor
 
 ## Run with no arguments: automatic playback
 
-Running `trix` without an effect name loops through all 26 effects:
+Running `trix` without an effect name loops through all 35 effects:
 
 ```bash
 trix                                   # cycle by default, 12 s per effect
@@ -286,6 +333,7 @@ trix <effect> [options]
       --meteors <n>       black hole / galaxy meteors      [default: 3]
       --beam-speed <f>    beams horizontal speed           [default: 1.0]
       --beam-motion <m>   straight | jump                  [default: straight]
+      --trail <f>         dsh: afterimage strength          [default: 1.0]
       --seed-count <n>    dandelion drifting seeds         [default: 90]
       --seed-speed <f>    dandelion seed drift speed       [default: 1.0]
       --street <dir>      horizontal | vertical            [default: horizontal]
@@ -340,6 +388,7 @@ See [docs/hud-and-keys.md](docs/hud-and-keys.md) for the full HUD contract.
 | `f` / `l` / `b` / `j` | Aquarium / Landscape / Oriental Pearl / Tiananmen |
 | `c` / `z` / `k` | Traffic Flow / Tornado / Thunderstorm |
 | `o` / `v` / `g` / `y` | Mona Lisa / Ice Ballet / Demon Eye / Threads of Life |
+| `u` / `w` | DeepSeek Harness / Vibe Coding |
 | `t` | Cycle themes |
 | `+` / `-` | Faster / slower (0.1×–8×) |
 | `r` | Restart the current effect with a new seed |
@@ -348,17 +397,19 @@ See [docs/hud-and-keys.md](docs/hud-and-keys.md) for the full HUD contract.
 
 Shortcuts are case-insensitive, so Shift and Caps Lock work. The parser accepts CSI and SS3 cursor keys, ignores modifiers on arrows, and treats Alt/Option chords and mouse/paste reports as non-shortcuts.
 
+The seven newest scenes (`tunnel`, `helix`, `lights`, `volcano`, `tesseract`, `launch`, `plasma`) have **no single-key shortcut**; use `trix <effect>` or cycle with `n` / `p`.
+
 ## Themes
 
 | Theme | Style | Default for |
 | --- | --- | --- |
-| `neon` | Neon cyan / violet | rain, beams, tomjerry, shanghai, traffic |
+| `neon` | Neon cyan / violet | rain, beams, tomjerry, shanghai, traffic, tunnel |
 | `matrix` | Matrix green | matrix, ecg |
-| `ember` | Realistic fire (red → orange → yellow → white) | fire, demoneye |
-| `aurora` | Emerald dragon / aurora gold | dragon, fish, landscape, ballet, life |
-| `ice` | Holographic ice blue | map, solar, galaxy, tornado, storm |
-| `plasma` | Magenta / high energy | blackhole, fireworks |
-| `gold` | Imperial gold | buddha, mario, dandelion, tiananmen, monalisa |
+| `ember` | Realistic fire (red → orange → yellow → white) | fire, demoneye, volcano, launch |
+| `aurora` | Emerald dragon / aurora gold | dragon, fish, landscape, ballet, life, helix, lights |
+| `ice` | Holographic ice blue | map, solar, galaxy, tornado, storm, dsh, tesseract |
+| `plasma` | Magenta / high energy | blackhole, fireworks, plasma |
+| `gold` | Imperial gold | buddha, mario, dandelion, tiananmen, monalisa, vibe |
 | `chrome` | Silver-gray monochrome | manual selection |
 
 `fire` derives its flame colors from five theme anchors; `--theme ice` gives a “cold flame”, and `--theme ember` is the default fire.
@@ -396,7 +447,7 @@ Environment: Apple Silicon (ARM64), macOS, Rust 1.96.1, `--release` (LTO + `code
 | demoneye | 0.273 ms | 0.398 ms | 15.4 KiB/frame |
 | life | 0.158 ms | 0.209 ms | 5.6 KiB/frame |
 
-Real PTY, truecolor, 120×36, 30 FPS, 5 seconds (CPU = child `utime+stime / 5s`, including PTY writes but not the terminal's own drawing). The sample below covers the 22 effects measured in that run; `monalisa`, `ballet`, `demoneye` and `life` were added later and are not in this table:
+Real PTY, truecolor, 120×36, 30 FPS, 5 seconds (CPU = child `utime+stime / 5s`, including PTY writes but not the terminal's own drawing). The sample below covers the 22 effects measured in that run; `monalisa`, `ballet`, `demoneye`, `life`, `dsh`, `vibe`, `tunnel`, `helix`, `lights`, `volcano`, `tesseract`, `launch` and `plasma` were added later and are not in this table:
 
 | Effect | CPU (one core) | RSS | 5 s output |
 | --- | ---: | ---: | ---: |
@@ -468,6 +519,8 @@ scripts/bench.sh
 - **Heartbeat Monitor**: ECG grid, P-QRS-T waveform, scan line, HR/SpO2/SYS-DIA; ASCII waveform by default, `--unicode` switches to Unicode box drawing / solid waveform.
 - **Dandelion**: 3 clumps × 2 stems / 6 flower heads; left and right roots bend toward the center; flower heads ×1.5.
 - **Oriental Pearl**: Bund night view + Oriental Pearl + Huangpu River reflections; two random boats on the river — hull type (junk / barge / ferry), size, hull palette, channel depth and drift direction are all random; distant boats sit low on the water while near boats are large and press against the frame, with decks / portholes / lit cabin windows / smoking funnels / mast lights / bow lanterns / wakes and water reflections; 1–2 meteors cross the night sky every 3–5 seconds (about 18% of intervals are skipped), with a white-hot head and an ice-blue or warm-gold fading tail, flying into the skyline or fading out and being recycled.
+- **DeepSeek Harness**: a hand-drawn 3×5 / 4×5 / 5×7 font is rasterised into a per-cell mask; the wordmark decodes in from random glyphs, the afterimage is drawn as several downward-offset copies with a growing sine sway and hash dropout, and horizontal / vertical beams use co-prime periods and additive `add_light` highlights. A short VHS slice glitch overlays red/cyan shifted copies. `--trail` scales the afterimage.
+- **Vibe Coding**: reads `src/scenes/vibe.rs` (falling back to a compile-time copy), normalises it to ASCII, skips the test module and builds six 10-line windows per turn. A hand-written Rust tokenizer colours comments, strings, numbers, keywords, types, macros and function names; the transcript is a typed queue that only reveals lines up to the typing head (the area below stays blank) and clears before the next loop, with a Claude Code-style spinner, token count and composer.
 - **Offline map data**: `tools/gen_land.py` downloads Natural Earth and rasterizes it into `src/data/land_720x360.bin`; runtime never touches the network.
 
 ## Recording and documentation tools
@@ -488,11 +541,13 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-There are currently **199** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
+There are currently **217** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
 
 ## Versions and rollback
 
-- **Current version: 0.9.1** (`trix --version`), tag **`v0.9.1`**.
+- **Current unreleased version: 0.11.0** (`trix --version`); no tag or GitHub Release yet.
+- **0.11.0** adds seven generative scenes: `tunnel`, `helix`, `lights`, `volcano`, `tesseract`, `launch` and `plasma`.
+- **0.10.0** adds `dsh` (DeepSeek Harness) and `vibe` (Vibe Coding), plus the `--trail` knob.
 - **0.9.1** renames the package/repository to `trix-effects` (command stays `trix`), hardens `install.sh`, adds cache-safe ASCII previews and contributor/launch docs.
 - **0.9.0** was the short-lived `trix-tui` name; it added the styled help system, removed the `fairy` entry (source retained), and made `life` part of the 26-effect set.
 - Previous: tag **`v0.9.0`** (`trix-tui`); **`v0.8.0`** (Mona Lisa / Ice Ballet / Demon Eye; 26 effects including `fairy`); **`v0.7.0`** (aquarium / landscape / Oriental Pearl / Tiananmen / traffic / fairy / tornado / thunderstorm, playlists); **`v0.6.0`** (Mario / ECG / dandelion, blue-green code rain); **`v0.5.1`** (automated release pipeline).

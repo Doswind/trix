@@ -2,6 +2,26 @@
 
 [English](CHANGELOG.md) | **简体中文**
 
+## 0.11.0 — 未发布（2026-10-19）
+
+- 新增七个生成式场景：
+  - `tunnel` **星际隧道 / Warp Tunnel**：16 圈按深度排布的环向观察者扩张，10 条径向辐条旋转，投影星点向外拖出短线。纯 ASCII。
+  - `helix` **DNA 双螺旋 / DNA Helix**：两条正弦主链 + A/T/C/G 碱基对，余弦深度明暗。纯 ASCII。
+  - `lights` **极光 / Aurora**：三条波浪极光带与短垂帘，星空、月亮、雪顶山脊与湖面倒影。纯 ASCII。
+  - `volcano` **火山爆发 / Volcano**：锯齿火山锥、发光火山口、抛物线熔岩喷泉、熔岩流、火山灰柱与周期性闪电。默认 ASCII；`--unicode` 用实心块画山体。
+  - `tesseract` **四维超立方 / Tesseract**：16 顶点、32 棱的 4D 超立方投影成带深度明暗的 ASCII 线框。纯 ASCII。
+  - `launch` **火箭发射 / Rocket Launch**：22 秒发射台→轨道循环，点火烟雾、尾焰、助推器分离、云层与地球弧线。纯 ASCII。
+  - `plasma` **等离子 / Plasma**：9 个漂移 metaball + 正弦细节 + 循环调色板。默认 ASCII；`--unicode` 用紧凑块字符 ramp。
+- 特效注册表扩展到 **35 个**。快捷键元数据改为可选：七个新场景没有单键快捷键，用 `trix <effect>` 或 `n` / `p` 进入；现有快捷键全部不变。
+- `scripts/check_docs.py` 现在检查 35 个特效；两版 README、HUD 文档、help 截图、overview 与社交预览已同步；测试增至 217。
+
+## 0.10.0 — 2026-10-19
+
+- 新增 `dsh` **深度求索 / DeepSeek Harness**（快捷键 `u`）：手写 3×5 / 4×5 / 5×7 字模拼出巨型 DEEPSEEK HARNESS 字标，约占 60% 屏宽、30% 屏高；从随机字符解码入场，向下拖出左右摆动的残影（长度约等于字高），横向与纵向光束循环扫过；约每 11 秒一次短暂的 VHS 横切片故障。`--trail <0-3>` 控制残影强度（默认 1.0）。默认 ASCII，`--unicode` 用实心块。默认主题 `ice`。
+- 新增 `vibe` **氛围编程 / Vibe Coding**（快捷键 `w`）：单栏 Claude Code 转录，读取工作区里的 `src/scenes/vibe.rs`（安装后回退到编译期内置副本），用手写 Rust 语法高亮逐字打出源码，每轮循环 6 个 10 行窗口；只显示到当前打字位置（下方保持空白），每轮重新开始前先清空转录；包含 prompt / assistant / tool / result 行、`+` diff 风格代码、带 token 数的旋转 spinner、输入框和 bypass 权限 footer。默认 ASCII（`>`、`*`、`L`、`>>`），`--unicode` 使用 `❯ ◉ └ ✻ ▶▶`。默认主题 `gold`。
+- CLI、`i` 面板、`--help all` 和两版 README 新增 `--trail <f>`。特效注册表扩展到 28 个，两个新场景都支持双字符集，`scripts/check_docs.py` 检查 28 个特效和 `--trail`。
+- 新增文档素材：`docs/dsh-ascii.png`、`docs/vibe-ascii.png`（主预览），以及 Unicode 预览和 GIF。
+
 ## 0.9.1 — 2026-10-19
 
 - **更名为 `trix-effects`**：包名、crate 和仓库改为 `trix-effects`，命令仍是 `trix`，`trix --version` 输出 `trix-effects 0.9.1`。Release 资产命名为 `trix-effects-<version>-...`，取代 0.9.0 短暂使用的 `trix-tui`。
