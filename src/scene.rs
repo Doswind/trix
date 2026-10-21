@@ -319,7 +319,7 @@ impl EffectId {
             EffectId::Helix => "aurora",
             EffectId::Lights => "aurora",
             EffectId::Volcano => "ember",
-            EffectId::Tesseract => "ice",
+            EffectId::Tesseract => "neon",
             EffectId::Launch => "ember",
             EffectId::Plasma => "plasma",
         })

@@ -276,7 +276,9 @@ impl EffectId {
             EffectId::Helix => "Rotating DNA double helix with A/T/C/G base pairs",
             EffectId::Lights => "Aurora curtains over a moonlit mountain lake",
             EffectId::Volcano => "Night eruption with lava fountains, ash and lightning",
-            EffectId::Tesseract => "Rotating 4D hypercube drawn as a depth-shaded wireframe",
+            EffectId::Tesseract => {
+                "Neon 4D hypercube in a starfield with orbit rings and edge pulses"
+            }
             EffectId::Launch => "Big two-stage rocket: ignition, max-Q, separation, Earth limb",
             EffectId::Plasma => "Classic demoscene plasma with a shifting palette",
         }
@@ -317,7 +319,7 @@ impl EffectId {
             EffectId::Helix => "Two sine strands wrap around a vertical axis; A/T/C/G base pairs join them, depth comes from each strand's cosine, and the whole helix rotates in place. Pure ASCII.",
             EffectId::Lights => "Three noisy aurora curtains drift over a starry sky, snow-capped ridges and a moonlit lake reflection. ASCII only: the vertical glyphs and stars are the effect.",
             EffectId::Volcano => "A jagged mountain silhouette, a glowing crater, ballistic lava fountains, two lava streams, drifting ash and periodic lightning. ASCII by default; --unicode uses solid blocks for the mountain.",
-            EffectId::Tesseract => "Sixteen vertices and thirty-two edges rotate in four dimensions, project to three and then two, and draw as a depth-shaded ASCII wireframe. Pure ASCII.",
+            EffectId::Tesseract => "Sixteen vertices and thirty-two edges rotate in four dimensions and draw as a depth-sorted wireframe: the outer cube is cyan, the inner cube violet, the eight connectors gold and the vertices white. A ghost hypercube, perspective starfield, coloured dust, three orbit rings and travelling edge pulses fill the space. ASCII by default; --unicode uses box-drawing edges and solid vertices.",
             EffectId::Launch => "A twenty-four second launch film: blue-hour pad, ignition flash, a full-height two-stage rocket with twin boosters, layered exhaust and world-space smoke, max-Q, MECO and booster separation, a second-stage climb, then an Earth-limb sunrise. The camera follows and shakes; --rocket-scale and --shake tune the framing. Pure ASCII.",
             EffectId::Plasma => "Four interfering sine fields drive a glyph ramp and a slowly cycling palette, with a subtle scanline. ASCII by default; --unicode uses a compact block ramp.",
         }
@@ -432,6 +434,7 @@ impl EffectId {
             | EffectId::Dsh
             | EffectId::Vibe
             | EffectId::Volcano
+            | EffectId::Tesseract
             | EffectId::Plasma => CharsetSupport::Dual,
             _ => CharsetSupport::Ascii,
         }
@@ -556,6 +559,7 @@ mod tests {
                 "dsh",
                 "vibe",
                 "volcano",
+                "tesseract",
                 "plasma"
             ]
         );

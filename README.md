@@ -231,7 +231,7 @@ Every effect name is given in English and Chinese; `trix --list` uses the same n
 | DNA Helix (DNA 双螺旋) `helix` | Two sine strands wrap around a vertical axis; A/T/C/G base pairs join them, depth comes from each strand's cosine, and the whole helix rotates in place. **Pure ASCII.** |
 | Aurora (极光) `lights` | Three wavy aurora ribbons with short hanging curtains drift over a starry sky, snow-capped ridges, a moon and a rippling lake reflection. **Pure ASCII.** |
 | Volcano (火山爆发) `volcano` | A jagged cone, a glowing crater, ballistic lava fountains, two lava streams, a drifting ash plume and periodic lightning. **ASCII by default**; `--unicode` uses solid blocks for the mountain. |
-| Tesseract (四维超立方) `tesseract` | Sixteen vertices and thirty-two edges rotate in four dimensions, project to three and then two, and draw as a depth-shaded ASCII wireframe. **Pure ASCII.** |
+| Tesseract (四维超立方) `tesseract` | Sixteen vertices and thirty-two edges rotate in four dimensions and draw as a depth-sorted wireframe: the outer cube is cyan, the inner cube violet, the eight connectors gold and the vertices white. A ghost hypercube, perspective starfield, coloured dust, three orbit rings and travelling edge pulses fill the space. **ASCII by default**; `--unicode` uses box-drawing edges and solid vertices. |
 | Rocket Launch (火箭发射) `launch` | A 24-second launch film: a larger two-stage rocket with twin boosters, blue-hour pad, ignition fireball, layered exhaust and world-space smoke, a following camera with shake, max-Q clouds, MECO / stage separation, a second-stage climb and an Earth-limb sunrise; `--rocket-scale` and `--shake`. **Pure ASCII.** |
 | Plasma (等离子) `plasma` | Nine drifting metaballs add into a soft scalar field, textured with sine detail and rendered through a cycling palette. **ASCII by default**; `--unicode` uses a compact block ramp. |
 
@@ -245,7 +245,7 @@ Light Beams has two motion modes:
 
 ## ASCII / Unicode editions
 
-**Every dual-form effect starts in ASCII.** Add `--unicode` (or `--charset unicode`) to opt in; `--ascii` forces ASCII again. The dual-form effects are `matrix`, `mario`, `ecg`, `dandelion`, `fish`, `landscape`, `shanghai`, `tiananmen`, `traffic`, `tornado`, `storm`, `monalisa`, `ballet`, `demoneye`, `life`, `dsh`, `vibe`, `volcano` and `plasma`.
+**Every dual-form effect starts in ASCII.** Add `--unicode` (or `--charset unicode`) to opt in; `--ascii` forces ASCII again. The dual-form effects are `matrix`, `mario`, `ecg`, `dandelion`, `fish`, `landscape`, `shanghai`, `tiananmen`, `traffic`, `tornado`, `storm`, `monalisa`, `ballet`, `demoneye`, `life`, `dsh`, `vibe`, `volcano`, `tesseract` and `plasma`.
 
 `mario` / `ecg` in both glyph sets:
 
@@ -261,12 +261,13 @@ Light Beams has two motion modes:
 | ![shanghai ascii](docs/shanghai-ascii.png) | ![shanghai unicode](docs/shanghai-unicode.png) |
 | ![traffic ascii](docs/traffic-ascii.png) | ![traffic unicode](docs/traffic-unicode.png) |
 
-`dsh` / `vibe` in both glyph sets:
+`dsh` / `vibe` / `tesseract` in both glyph sets:
 
 | ASCII (default) | Unicode (`--unicode`) |
 | --- | --- |
 | ![dsh ascii](docs/dsh-ascii.png) | ![dsh unicode](docs/dsh-unicode.png) |
 | ![vibe ascii](docs/vibe-ascii.png) | ![vibe unicode](docs/vibe-unicode.png) |
+| ![tesseract ascii](docs/tesseract-ascii.png) | ![tesseract unicode](docs/tesseract-unicode.png) |
 
 Vertical street:
 
@@ -405,11 +406,11 @@ The seven newest scenes (`tunnel`, `helix`, `lights`, `volcano`, `tesseract`, `l
 
 | Theme | Style | Default for |
 | --- | --- | --- |
-| `neon` | Neon cyan / violet | rain, beams, tomjerry, shanghai, traffic, tunnel |
+| `neon` | Neon cyan / violet | rain, beams, tomjerry, shanghai, traffic, tunnel, tesseract |
 | `matrix` | Matrix green | matrix, ecg |
 | `ember` | Realistic fire (red → orange → yellow → white) | fire, demoneye, volcano, launch |
 | `aurora` | Emerald dragon / aurora gold | dragon, fish, landscape, ballet, life, helix, lights |
-| `ice` | Holographic ice blue | map, solar, galaxy, tornado, storm, dsh, tesseract |
+| `ice` | Holographic ice blue | map, solar, galaxy, tornado, storm, dsh |
 | `plasma` | Magenta / high energy | blackhole, fireworks, plasma |
 | `gold` | Imperial gold | buddha, mario, dandelion, tiananmen, monalisa, vibe |
 | `chrome` | Silver-gray monochrome | manual selection |
@@ -544,7 +545,7 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-There are currently **223** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
+There are currently **224** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
 
 ## Versions and rollback
 

@@ -231,7 +231,7 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | DNA 双螺旋 (DNA Helix) `helix` | 两条正弦主链绕垂直轴缠绕，A/T/C/G 碱基对连接两链，亮度由每条链的余弦深度决定，整体原地旋转。**纯 ASCII。** |
 | 极光 (Aurora) `lights` | 三条波浪状极光带和短垂帘在星空、雪顶山脊、月亮与湖面倒影上方缓慢流动。**纯 ASCII。** |
 | 火山爆发 (Volcano) `volcano` | 锯齿状火山锥、发光火山口、抛物线熔岩喷泉、两道熔岩流、漂移火山灰柱和周期性闪电。**默认 ASCII**；`--unicode` 用实心块画山体。 |
-| 四维超立方 (Tesseract) `tesseract` | 16 个顶点、32 条棱在四维中旋转，经 4D→3D→2D 投影后画成带深度明暗的 ASCII 线框。**纯 ASCII。** |
+| 四维超立方 (Tesseract) `tesseract` | 16 个顶点、32 条棱在四维中旋转，画成带深度排序的线框：外立方青、内立方紫、8 条连接线金、顶点白。幽灵超立方、透视星轨、彩色尘埃、三圈轨道和沿线光脉冲填满空间。**默认 ASCII**；`--unicode` 用框线字符和实心顶点。 |
 | 火箭发射 (Rocket Launch) `launch` | 24 秒发射大片：更大的两级火箭与双助推器、蓝调发射台、点火火球、多层尾焰与世界坐标烟雾、跟随镜头与震动、Max-Q 云层、MECO / 级间分离、二级爬升和地球弧线日出；`--rocket-scale`、`--shake`。**纯 ASCII。** |
 | 等离子 (Plasma) `plasma` | 9 个漂移的 metaball 叠加成柔和标量场，再叠正弦细节和循环调色板。**默认 ASCII**；`--unicode` 用紧凑块字符 ramp。 |
 
@@ -245,7 +245,7 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 
 ## ASCII / Unicode 双版本
 
-**所有双字形特效默认 ASCII 启动。** 加 `--unicode`（或 `--charset unicode`）显式开启；`--ascii` 再强制回 ASCII。双字形特效包括 `matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`shanghai`、`tiananmen`、`traffic`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`life`、`dsh`、`vibe`、`volcano`、`plasma`。
+**所有双字形特效默认 ASCII 启动。** 加 `--unicode`（或 `--charset unicode`）显式开启；`--ascii` 再强制回 ASCII。双字形特效包括 `matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`shanghai`、`tiananmen`、`traffic`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`life`、`dsh`、`vibe`、`volcano`、`tesseract`、`plasma`。
 
 `mario` / `ecg` 两版对比：
 
@@ -261,12 +261,13 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | ![shanghai ascii](docs/shanghai-ascii.png) | ![shanghai unicode](docs/shanghai-unicode.png) |
 | ![traffic ascii](docs/traffic-ascii.png) | ![traffic unicode](docs/traffic-unicode.png) |
 
-`dsh` / `vibe` 两版对比：
+`dsh` / `vibe` / `tesseract` 两版对比：
 
 | ASCII（默认） | Unicode（`--unicode`） |
 | --- | --- |
 | ![dsh ascii](docs/dsh-ascii.png) | ![dsh unicode](docs/dsh-unicode.png) |
 | ![vibe ascii](docs/vibe-ascii.png) | ![vibe unicode](docs/vibe-unicode.png) |
+| ![tesseract ascii](docs/tesseract-ascii.png) | ![tesseract unicode](docs/tesseract-unicode.png) |
 
 纵向车流：
 
@@ -405,11 +406,11 @@ trix <effect> [options]
 
 | 主题 | 风格 | 默认用于 |
 | --- | --- | --- |
-| `neon` | 霓虹青 / 紫 | rain、beams、tomjerry、shanghai、traffic、tunnel |
+| `neon` | 霓虹青 / 紫 | rain、beams、tomjerry、shanghai、traffic、tunnel、tesseract |
 | `matrix` | 矩阵绿 | matrix、ecg |
 | `ember` | 真实火焰（红→橙→黄→白） | fire、demoneye、volcano、launch |
 | `aurora` | 翡翠龙 / 极光金 | dragon、fish、landscape、ballet、life、helix、lights |
-| `ice` | 全息冰蓝 | map、solar、galaxy、tornado、storm、dsh、tesseract |
+| `ice` | 全息冰蓝 | map、solar、galaxy、tornado、storm、dsh |
 | `plasma` | 品红 / 高能 | blackhole、fireworks、plasma |
 | `gold` | 帝王金 | buddha、mario、dandelion、tiananmen、monalisa、vibe |
 | `chrome` | 银灰单色 | 手动选择 |
@@ -544,7 +545,7 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-当前 **223** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
+当前 **224** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
 
 ## 版本与回退
 
