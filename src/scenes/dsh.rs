@@ -7,12 +7,12 @@
 //! The intro reveals the letters one by one, then drops the lockup in stuttered
 //! steps; when it lands it makes one quick two-row hop back up before settling,
 //! leaving a faint ghost stack under HARNESS.  After that the wordmark stays on
-//! screen forever while a diagonal band of light runs from its upper-left
-//! corner to its lower-right corner: letters brighten to white as the band
-//! reaches them and fall back to ice blue behind it, with no pause between
-//! passes.  A small star twinkles at the whale's tail tip and repeats the
-//! double-blink flare from the interstellar vanishing star.  ASCII is the
-//! default; `--unicode` swaps the fill for solid blocks.
+//! screen forever while a narrow diagonal band of light runs from its
+//! upper-left corner to its lower-right corner: only the letters under the
+//! band brighten to white, with soft edges, and they fall back to ice blue
+//! behind it before the next pass.  A small star twinkles at the whale's tail
+//! tip and repeats the double-blink flare from the interstellar vanishing
+//! star.  ASCII is the default; `--unicode` swaps the fill for solid blocks.
 
 #![allow(clippy::needless_range_loop)]
 
@@ -23,9 +23,15 @@ use crate::rng::hash2;
 use crate::scene::{Frame, Scene};
 
 /// One diagonal light pass from the lockup's upper-left corner to its
-/// lower-right corner.  The wave is periodic, so the next pass starts the
-/// moment the previous one leaves the screen.
+/// lower-right corner.  The pulse starts and ends just outside the lockup so
+/// it enters and leaves the frame instead of splitting at the wrap point.
 const SWEEP_PERIOD: f32 = 3.8;
+/// Width of the bright pulse as a fraction of the lockup diagonal.  At 0.10
+/// the hot core is about one letter wide and the soft half-max span reaches
+/// two to three letters.
+const SWEEP_SIGMA: f32 = 0.10;
+/// How far outside the lockup diagonal the pulse starts and ends.
+const SWEEP_MARGIN: f32 = 0.15;
 
 /// A small star twinkles at the whale's tail tip.  On terminals too narrow for
 /// the whale it falls back to the K's top-right corner and starts earlier.
@@ -1018,11 +1024,16 @@ fn sweep_u(layout: Layout, offset: isize, x: isize, y: isize) -> f32 {
     ((x as f32 - left) + 2.0 * (y as f32 - top)) / span
 }
 
-/// Brightness of the diagonal light band at normalised position `u`.
+/// Brightness of the narrow diagonal light pulse at normalised position `u`.
+///
+/// The pulse crosses the whole diagonal once per period, starting and ending
+/// just outside the lockup so the wrap happens while it is invisible.  A
+/// gaussian profile keeps the leading and trailing edges soft.
 fn sweep_glow(u: f32, t: f32) -> f32 {
-    let phase = (t / SWEEP_PERIOD).rem_euclid(1.0);
-    let wave = 0.5 + 0.5 * ((u - phase) * std::f32::consts::TAU).cos();
-    wave.powf(2.6)
+    let cycle = (t / SWEEP_PERIOD).rem_euclid(1.0);
+    let phase = -SWEEP_MARGIN + (1.0 + 2.0 * SWEEP_MARGIN) * cycle;
+    let d = u - phase;
+    (-(d / SWEEP_SIGMA).powi(2)).exp()
 }
 
 #[cfg(test)]
@@ -1278,37 +1289,47 @@ mod tests {
     }
 
     #[test]
-    fn diagonal_light_band_moves_from_upper_left_to_lower_right() {
-        // The crest of the band sits at u = t / SWEEP_PERIOD.  Sampling the
-        // whole diagonal at four points in the cycle shows it walking from
-        // the upper-left corner to the lower-right corner.
-        for k in [0.0, 0.25, 0.5, 0.75] {
-            let t = SWEEP_PERIOD * k;
-            let mut best_u = 0.0;
-            let mut best = -1.0;
-            for i in 0..=1000 {
-                let u = i as f32 / 1000.0;
-                let glow = sweep_glow(u, t);
-                if glow > best {
-                    best = glow;
-                    best_u = u;
-                }
-            }
-            assert!(
-                (best_u - k).abs() < 0.01,
-                "the crest should be at {k} after {k} of a period, got {best_u}"
-            );
-        }
+    fn narrow_light_pulse_moves_from_upper_left_to_lower_right() {
+        // At half a period the pulse is centred on the diagonal; a quarter
+        // period later it has moved towards the lower-right corner.
+        let peak = |t: f32| {
+            (0..=1000)
+                .map(|i| i as f32 / 1000.0)
+                .max_by(|a, b| {
+                    sweep_glow(*a, t)
+                        .partial_cmp(&sweep_glow(*b, t))
+                        .expect("finite glow")
+                })
+                .expect("sample")
+        };
+        let quarter = peak(0.25 * SWEEP_PERIOD);
+        let middle = peak(0.5 * SWEEP_PERIOD);
+        let three_quarters = peak(0.75 * SWEEP_PERIOD);
+        assert!(
+            quarter < middle && middle < three_quarters,
+            "the pulse should walk down-right: {quarter} < {middle} < {three_quarters}"
+        );
+        assert!((middle - 0.5).abs() < 0.01);
 
-        // The loop is seamless: one period later the same gradient returns.
-        for i in 0..10 {
+        // It is a small patch of light, not a broad wash: 0.2 of the diagonal
+        // away from the crest is already dark.
+        let mid = 0.5 * SWEEP_PERIOD;
+        assert!(sweep_glow(0.5, mid) > 0.99);
+        assert!(sweep_glow(0.3, mid) < 0.05);
+        assert!(sweep_glow(0.7, mid) < 0.05);
+
+        // It starts and ends outside the lockup, so the wrap is a clean gap
+        // rather than two half-pulses at opposite corners.
+        assert!(sweep_glow(0.5, 0.0) < 0.05);
+        assert!(sweep_glow(0.5, 0.999 * SWEEP_PERIOD) < 0.05);
+
+        // One period later the same pulse returns.
+        for i in 0..=10 {
             let u = i as f32 / 10.0;
             let a = sweep_glow(u, 7.3);
             let b = sweep_glow(u, 7.3 + SWEEP_PERIOD);
-            assert!((a - b).abs() < 1e-4, "sweep does not wrap at u={u}");
+            assert!((a - b).abs() < 1e-4, "pulse does not wrap at u={u}");
         }
-        // The far side of the cycle is a genuine trough, not a second crest.
-        assert!(sweep_glow(0.5, 0.0) < 0.05);
     }
 
     #[test]
@@ -1322,6 +1343,7 @@ mod tests {
         let mut min = 1.0f32;
         let mut max = 0.0f32;
         let mut lit = 0;
+        let mut bright = 0;
         for c in &scene.mask {
             let y = c.y + offset;
             if !(1..=45).contains(&y) {
@@ -1331,8 +1353,12 @@ mod tests {
             if cell.ch == ' ' {
                 continue;
             }
-            min = min.min(cell.fg.luminance());
-            max = max.max(cell.fg.luminance());
+            let lum = cell.fg.luminance();
+            min = min.min(lum);
+            max = max.max(lum);
+            if lum > 0.90 {
+                bright += 1;
+            }
             lit += 1;
         }
         assert!(lit > 500);
@@ -1348,6 +1374,10 @@ mod tests {
             max - min > 0.20,
             "the diagonal gradient is too flat: {min:.2}..{max:.2}"
         );
+        assert!(
+            bright * 4 < lit,
+            "the pulse covers too much of the wordmark: {bright}/{lit} bright cells"
+        );
 
         // The bright cells should be the ones furthest along the diagonal at
         // this phase, and they should move further down-right a moment later.
@@ -1362,7 +1392,7 @@ mod tests {
                     continue;
                 }
                 let cell = canvas.cells[y as usize * 160 + c.x as usize];
-                if cell.fg.luminance() > 0.90 {
+                if cell.fg.luminance() > 0.82 {
                     sum += (c.x + 2 * c.y) as f32;
                     n += 1.0;
                 }
@@ -1374,7 +1404,7 @@ mod tests {
             }
         };
         let earlier = mean_projection(&mut scene, 10.0);
-        let later = mean_projection(&mut scene, 10.0 + SWEEP_PERIOD * 0.25);
+        let later = mean_projection(&mut scene, 10.0 + SWEEP_PERIOD * 0.16);
         assert!(
             later > earlier,
             "the bright band should move down-right: {earlier} -> {later}"
