@@ -50,8 +50,8 @@ def effect_rows() -> list[tuple[str, str, str]]:
         parts = re.split(r"\s{2,}", line.strip())
         if len(parts) >= 3 and re.fullmatch(r"[a-z]+", parts[0]):
             rows.append((parts[0], parts[1], parts[2]))
-    if len(rows) != 35:
-        raise SystemExit(f"expected 35 effects in --list, got {len(rows)}")
+    if len(rows) != 32:
+        raise SystemExit(f"expected 32 effects in --list, got {len(rows)}")
     return rows
 
 

@@ -272,15 +272,8 @@ impl EffectId {
             EffectId::Life => "A 0-100 life timeline of family, love and generations",
             EffectId::Dsh => "Two-line DEEPSEEK HARNESS: reveal, drop, looping cross beam",
             EffectId::Vibe => "Claude Code transcript typing this scene's own Rust source",
-            EffectId::Tunnel => "First-person warp tunnel with a rolling camera and star streaks",
-            EffectId::Helix => {
-                "3D DNA helix with base-pair colours, scan beam and replication fork"
-            }
             EffectId::Lights => "Aurora curtains over a moonlit mountain lake",
             EffectId::Volcano => "Night eruption with lava fountains, ash and lightning",
-            EffectId::Tesseract => {
-                "Neon 4D hypercube in a starfield with orbit rings and edge pulses"
-            }
             EffectId::Launch => "Big two-stage rocket: ignition, max-Q, separation, Earth limb",
             EffectId::Plasma => "Classic demoscene plasma with a shifting palette",
         }
@@ -317,11 +310,8 @@ impl EffectId {
             EffectId::Life => "A 0-100 age timeline with glowing life lines; family, love and generations enter and leave on schedule. The bright beam grows with age; a supernova finale closes ME's timeline. --life-cycle sets the round length.",
             EffectId::Dsh => "A giant two-line DEEPSEEK HARNESS lockup with the second line indented: DEEPSEEK on top, HARNESS below, about 85-90% of the width and over half the screen height. The intro reveals the letters one by one and drops the lockup in stuttered one-row steps, leaving a ghost stack below HARNESS. After that the wordmark never leaves the screen: a seven-second loop floats a horizontal beam down the lockup, joins it with a vertical beam at the centre to form a bright cross, then sweeps the vertical beam left to right while the horizontal one fades. No fireworks or particle burst. ASCII by default; --unicode uses solid blocks, and --trail sets the drop-ghost strength.",
             EffectId::Vibe => "A Claude Code-style transcript reads src/scenes/vibe.rs (or an embedded copy), types it with a small Rust syntax highlighter and loops through six windows per turn; only the lines up to the typing head are visible, and each loop starts from a clean transcript. ASCII by default; --unicode swaps in the Claude Code prompt, tool and spinner glyphs.",
-            EffectId::Tunnel => "Sixteen depth-spaced rings expand toward the viewer while ten radial spokes rotate and projected stars streak past. Pure ASCII: +, *, # and @ carry the perspective.",
-            EffectId::Helix => "Two real 3D strands rotate under a perspective camera; A/T/C/G rungs, phosphate nodes and hydrogen bonds are depth-sorted so the front strand occludes the back. A scan beam sweeps down and highlights base pairs, the top periodically unzips into a replication fork, and coloured dust plus a wireframe containment cylinder sit on a deep teal gradient. ASCII by default; --unicode uses box-drawing backbones and solid phosphate nodes.",
             EffectId::Lights => "Three noisy aurora curtains drift over a starry sky, snow-capped ridges and a moonlit lake reflection. ASCII only: the vertical glyphs and stars are the effect.",
             EffectId::Volcano => "A jagged mountain silhouette, a glowing crater, ballistic lava fountains, two lava streams, drifting ash and periodic lightning. ASCII by default; --unicode uses solid blocks for the mountain.",
-            EffectId::Tesseract => "Sixteen vertices and thirty-two edges rotate in four dimensions and draw as a depth-sorted wireframe: the outer cube is cyan, the inner cube violet, the eight connectors gold and the vertices white. A ghost hypercube, perspective starfield, coloured dust, three orbit rings and travelling edge pulses fill the space. ASCII by default; --unicode uses box-drawing edges and solid vertices.",
             EffectId::Launch => "A twenty-four second launch film: blue-hour pad, ignition flash, a full-height two-stage rocket with twin boosters, layered exhaust and world-space smoke, max-Q, MECO and booster separation, a second-stage climb, then an Earth-limb sunrise. The camera follows and shakes; --rocket-scale and --shake tune the framing. Pure ASCII.",
             EffectId::Plasma => "Four interfering sine fields drive a glyph ramp and a slowly cycling palette, with a subtle scanline. ASCII by default; --unicode uses a compact block ramp.",
         }
@@ -352,9 +342,6 @@ impl EffectId {
             | EffectId::Tiananmen
             | EffectId::Dsh
             | EffectId::Vibe
-            | EffectId::Tunnel
-            | EffectId::Helix
-            | EffectId::Tesseract
             | EffectId::Launch => Category::SciFi,
             EffectId::Buddha
             | EffectId::TomJerry
@@ -398,13 +385,7 @@ impl EffectId {
             EffectId::Life => Some('y'),
             EffectId::Dsh => Some('u'),
             EffectId::Vibe => Some('w'),
-            EffectId::Tunnel
-            | EffectId::Helix
-            | EffectId::Lights
-            | EffectId::Volcano
-            | EffectId::Tesseract
-            | EffectId::Launch
-            | EffectId::Plasma => None,
+            EffectId::Lights | EffectId::Volcano | EffectId::Launch | EffectId::Plasma => None,
         }
     }
 
@@ -435,9 +416,7 @@ impl EffectId {
             | EffectId::Traffic
             | EffectId::Dsh
             | EffectId::Vibe
-            | EffectId::Helix
             | EffectId::Volcano
-            | EffectId::Tesseract
             | EffectId::Plasma => CharsetSupport::Dual,
             _ => CharsetSupport::Ascii,
         }
@@ -472,11 +451,8 @@ impl EffectId {
             EffectId::MonaLisa => 2.0,
             EffectId::Vibe => 10.0,
             EffectId::Dsh => 5.6,
-            EffectId::Tunnel => 6.0,
-            EffectId::Helix => 6.0,
             EffectId::Lights => 8.0,
             EffectId::Volcano => 8.0,
-            EffectId::Tesseract => 6.0,
             EffectId::Launch => 8.0,
             EffectId::Plasma => 5.0,
             EffectId::Fireworks => 6.0,
@@ -561,9 +537,7 @@ mod tests {
                 "life",
                 "dsh",
                 "vibe",
-                "helix",
                 "volcano",
-                "tesseract",
                 "plasma"
             ]
         );

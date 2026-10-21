@@ -724,7 +724,7 @@ fn keys_block(style: &HelpStyle) -> Vec<String> {
     for line in wrap(details, style.width.saturating_sub(6)) {
         out.push(format!("    {}", dim(&line, style)));
     }
-    let note = "tunnel / helix / lights / volcano / tesseract / launch / plasma: no single-key shortcut, use trix <effect>";
+    let note = "lights / volcano / launch / plasma: no single-key shortcut, use trix <effect>";
     for line in wrap(note, style.width.saturating_sub(6)) {
         out.push(format!("    {}", dim(&line, style)));
     }

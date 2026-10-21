@@ -4,11 +4,10 @@ use crate::canvas::Canvas;
 use crate::cli::Charset;
 use crate::scenes::{
     BalletScene, BeamsScene, BlackHoleScene, BuddhaScene, DandelionScene, DemonEyeScene,
-    DragonScene, DshScene, EcgScene, FireScene, FireworksScene, FishScene, GalaxyScene, HelixScene,
+    DragonScene, DshScene, EcgScene, FireScene, FireworksScene, FishScene, GalaxyScene,
     LandscapeScene, LaunchScene, LifeScene, LightsScene, MapScene, MarioScene, MatrixScene,
-    MonaLisaScene, PlasmaScene, RainScene, ShanghaiScene, SolarScene, StormScene, TesseractScene,
-    TiananmenScene, TomJerryScene, TornadoScene, TrafficScene, TunnelScene, VibeScene,
-    VolcanoScene,
+    MonaLisaScene, PlasmaScene, RainScene, ShanghaiScene, SolarScene, StormScene, TiananmenScene,
+    TomJerryScene, TornadoScene, TrafficScene, VibeScene, VolcanoScene,
 };
 use crate::theme::{self, Theme};
 
@@ -42,17 +41,14 @@ pub enum EffectId {
     Life,
     Dsh,
     Vibe,
-    Tunnel,
-    Helix,
     Lights,
     Volcano,
-    Tesseract,
     Launch,
     Plasma,
 }
 
 impl EffectId {
-    pub const ALL: [EffectId; 35] = [
+    pub const ALL: [EffectId; 32] = [
         EffectId::Rain,
         EffectId::Fire,
         EffectId::Dragon,
@@ -81,11 +77,8 @@ impl EffectId {
         EffectId::Life,
         EffectId::Dsh,
         EffectId::Vibe,
-        EffectId::Tunnel,
-        EffectId::Helix,
         EffectId::Lights,
         EffectId::Volcano,
-        EffectId::Tesseract,
         EffectId::Launch,
         EffectId::Plasma,
     ];
@@ -120,11 +113,8 @@ impl EffectId {
             EffectId::Life => "life",
             EffectId::Dsh => "dsh",
             EffectId::Vibe => "vibe",
-            EffectId::Tunnel => "tunnel",
-            EffectId::Helix => "helix",
             EffectId::Lights => "lights",
             EffectId::Volcano => "volcano",
-            EffectId::Tesseract => "tesseract",
             EffectId::Launch => "launch",
             EffectId::Plasma => "plasma",
         }
@@ -160,11 +150,8 @@ impl EffectId {
             EffectId::Life => "Threads of Life",
             EffectId::Dsh => "DeepSeek Harness",
             EffectId::Vibe => "Vibe Coding",
-            EffectId::Tunnel => "Warp Tunnel",
-            EffectId::Helix => "DNA Helix",
             EffectId::Lights => "Aurora",
             EffectId::Volcano => "Volcano",
-            EffectId::Tesseract => "Tesseract",
             EffectId::Launch => "Rocket Launch",
             EffectId::Plasma => "Plasma",
         }
@@ -200,11 +187,8 @@ impl EffectId {
             EffectId::Life => "生命的轨迹",
             EffectId::Dsh => "深度求索",
             EffectId::Vibe => "氛围编程",
-            EffectId::Tunnel => "星际隧道",
-            EffectId::Helix => "DNA 双螺旋",
             EffectId::Lights => "极光",
             EffectId::Volcano => "火山爆发",
-            EffectId::Tesseract => "四维超立方",
             EffectId::Launch => "火箭发射",
             EffectId::Plasma => "等离子",
         }
@@ -258,11 +242,8 @@ impl EffectId {
             "vibe" | "vibecoding" | "claude" | "claudecode" | "coding" | "agent" => {
                 Some(EffectId::Vibe)
             }
-            "tunnel" | "warp" | "wormhole" | "hyperspace" => Some(EffectId::Tunnel),
-            "helix" | "dna" | "doublehelix" | "genome" => Some(EffectId::Helix),
             "lights" | "aurora" | "borealis" | "northernlights" => Some(EffectId::Lights),
             "volcano" | "eruption" | "lava" => Some(EffectId::Volcano),
-            "tesseract" | "hypercube" | "4d" | "fourthdimension" => Some(EffectId::Tesseract),
             "launch" | "rocket" | "liftoff" | "spacex" => Some(EffectId::Launch),
             "plasma" | "demoscene" | "sines" => Some(EffectId::Plasma),
             _ => None,
@@ -315,11 +296,8 @@ impl EffectId {
             EffectId::Life => "aurora",
             EffectId::Dsh => "ice",
             EffectId::Vibe => "gold",
-            EffectId::Tunnel => "neon",
-            EffectId::Helix => "aurora",
             EffectId::Lights => "aurora",
             EffectId::Volcano => "ember",
-            EffectId::Tesseract => "neon",
             EffectId::Launch => "ember",
             EffectId::Plasma => "plasma",
         })
@@ -460,11 +438,8 @@ pub fn build(id: EffectId, seed: u64) -> Box<dyn Scene> {
         EffectId::Life => Box::new(LifeScene::new(seed)),
         EffectId::Dsh => Box::new(DshScene::new(seed)),
         EffectId::Vibe => Box::new(VibeScene::new(seed)),
-        EffectId::Tunnel => Box::new(TunnelScene::new(seed)),
-        EffectId::Helix => Box::new(HelixScene::new(seed)),
         EffectId::Lights => Box::new(LightsScene::new(seed)),
         EffectId::Volcano => Box::new(VolcanoScene::new(seed)),
-        EffectId::Tesseract => Box::new(TesseractScene::new(seed)),
         EffectId::Launch => Box::new(LaunchScene::new(seed)),
         EffectId::Plasma => Box::new(PlasmaScene::new(seed)),
     }

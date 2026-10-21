@@ -2,7 +2,7 @@
 
 [English](README.md) | **简体中文**
 
-> **终端里的 35 个 ASCII / Unicode 动态特效，装进一个快速、零依赖的 Rust 单文件。** 代码雨、火焰、巨龙、黑客帝国、黑洞、烟花、太阳系、蒙娜丽莎，再加巨型 DeepSeek Harness 字标和自动打字的 Claude Code 会话——默认 ASCII，Unicode 显式开启。
+> **终端里的 32 个 ASCII / Unicode 动态特效，装进一个快速、零依赖的 Rust 单文件。** 代码雨、火焰、巨龙、黑客帝国、黑洞、烟花、太阳系、蒙娜丽莎，再加巨型 DeepSeek Harness 字标和自动打字的 Claude Code 会话——默认 ASCII，Unicode 显式开启。
 
 ![release](https://github.com/Doswind/trix-effects/actions/workflows/release.yml/badge.svg)
 ![CI](https://github.com/Doswind/trix-effects/actions/workflows/ci.yml/badge.svg)
@@ -12,7 +12,7 @@
 
 ![trix-effects 总览](docs/overview-ascii.png)
 
-**35 个特效 · 8 套主题 · 零依赖 · 启动约 2 ms · 二进制约 1.1 MB · macOS / Linux / WSL**
+**32 个特效 · 8 套主题 · 零依赖 · 启动约 2 ms · 二进制约 1.1 MB · macOS / Linux / WSL**
 
 [安装](#安装) · [快速开始](#快速开始) · [帮助](#像产品一样的帮助) · [特效](#特效) · [ASCII / Unicode](#ascii--unicode-双版本) · [快捷键](#运行时快捷键) · [主题](#主题) · [性能](#性能) · [常见问题](#兼容性与常见问题)
 
@@ -40,7 +40,7 @@ cargo install --path . --locked
 ## 快速开始
 
 ```bash
-trix                              # 循环播放全部 35 个特效
+trix                              # 循环播放全部 32 个特效
 trix rain                         # 代码雨
 trix dragon --theme gold          # 金色巨龙
 trix blackhole --spin 0.25        # 更慢的黑洞
@@ -73,7 +73,6 @@ trix life --life-cycle 60          # 1 分钟走完 0～100 岁
 trix dsh                           # DEEPSEEK HARNESS 字标
 trix dsh --trail 0                 # 关闭丢帧残影，只留光束
 trix vibe --unicode                # Claude Code 符号，自读源码
-trix tunnel                        # 星际隧道
 trix plasma                        # 等离子场
 trix launch                        # 从发射台到轨道
 trix tomjerry --jump               # 开启跳跃
@@ -132,11 +131,8 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | `life` | 生命的轨迹 | Threads of Life |
 | `dsh` | 深度求索 | DeepSeek Harness |
 | `vibe` | 氛围编程 | Vibe Coding |
-| `tunnel` | 星际隧道 | Warp Tunnel |
-| `helix` | DNA 双螺旋 | DNA Helix |
 | `lights` | 极光 | Aurora |
 | `volcano` | 火山爆发 | Volcano |
-| `tesseract` | 四维超立方 | Tesseract |
 | `launch` | 火箭发射 | Rocket Launch |
 | `plasma` | 等离子 | Plasma |
 
@@ -182,20 +178,16 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | --- |
 | ![氛围编程](docs/vibe-ascii.png) |
 
-| 星际隧道 `tunnel` | DNA 双螺旋 `helix` | 极光 `lights` |
-| --- | --- | --- |
-| ![星际隧道](docs/tunnel-ascii.png) | ![DNA 双螺旋](docs/helix-ascii.png) | ![极光](docs/lights-ascii.png) |
+| 极光 `lights` | 火山爆发 `volcano` |
+| --- | --- |
+| ![极光](docs/lights-ascii.png) | ![火山爆发](docs/volcano-ascii.png) |
 
-| 火山爆发 `volcano` | 四维超立方 `tesseract` | 火箭发射 `launch` |
-| --- | --- | --- |
-| ![火山爆发](docs/volcano-ascii.png) | ![四维超立方](docs/tesseract-ascii.png) | ![火箭发射](docs/launch-ascii.png) |
-
-| 等离子 `plasma` |
-| --- |
-| ![等离子](docs/plasma-ascii.png) |
+| 火箭发射 `launch` | 等离子 `plasma` |
+| --- | --- |
+| ![火箭发射](docs/launch-ascii.png) | ![等离子](docs/plasma-ascii.png) |
 
 <details>
-<summary><b>完整特效说明（35 个）</b></summary>
+<summary><b>完整特效说明（32 个）</b></summary>
 
 | 特效 | 说明 |
 | --- | --- |
@@ -227,11 +219,8 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | 生命的轨迹 (Threads of Life) `life` | 0～100 岁时间轴与左右生命线；人类统一 `@` 符号 + 同排彩色大写简写 + **家属本人年龄**（非亲属朋友不带年龄）；亮光束随年龄增长（年长后可覆盖大部分生命），由尾部的暗点/短划线渐亮到 `=`，头部为 `****@` 彗尾；生命最初约 22%～42%（最多约 22 年）保留为稀疏暗淡的点；每条轨迹结束后其行位可被后来者复用（学龄 `PAL/UNI` 的 +1 行 → GF/WIFE，`DOG` 的 -1 行 → KID2，猫/父母的行位也会被后来的朋友接回）；`DOG` 终身在 -1 紧挨我；`PAL/UNI/WORK/FRIEND` 同时出现时**共用同一行**：学龄期在 +1 另一侧，有未成年 KID 时整组退到 KID/CAT 外侧最近的空行（通常为 +4；只让出孩子/宠物实际占用的行，不再固定 -5/-7），所有 KID 成年后回到内侧；`ME 0 / WIFE +1`；`KID1 +2`、`KID2 -1`（复用 DOG 让出的紧邻行）、`KID3 -2`；成年前 `KID3 -2 / KID2 -1 / ME 0 / WIFE +1 / KID1 +2` **连续无空行**，`GRAND1/GRAND2` 始终紧贴父辈一行（父辈成年漂移后随之移动）；`CAT +3` 与第一个孩子同时出生，紧贴 KID1 下方；`DAD/MOM +3/+4` 在孩子出生前两年开始让位到 `+5/+6`，`BRO +5→+7` 紧随让位；GPA/GMA/DAD/MOM 在我 0 岁时随机得到合适起始年龄（58～70 / 56～68 / 25～33 / 23～31），BRO 0～4，ME 0；KID/GRAND/CAT/DOG 从各自出生起算，GF/WIFE 与我同龄上下 2 岁；所有行固定为 1 个终端行（不随终端高度缩放，高终端也不会因取整出现空行）；`ME` 结束时触发约 6 秒的**超新星终章**（回闪与星屑放慢、彗星保持原速；白光核心、一生回闪、冲击波、星屑、加亮彗星与顶部永久光晕；回闪扫描光柱到达 ME 的停止线后以三列宽永久保留，不再消失）；死亡点与顶部星标保留 `@` + 名称 + 最终年龄，并以每秒 1 次同步显现/消失；所有死亡角色升到顶部按死亡顺序隔行排列，终点标签在流星抵达后 0.5 秒淡入；人类 `*`、猫狗 `+` 闪烁；GF 用 2 年靠近、再停留 1～2 年变 WIFE；WIFE 75～90 岁、晚于我化星；AGE 无前导零；`--life-cycle` 控制一轮秒数 |
 | 深度求索 (DeepSeek Harness) `dsh` | 巨型**两行**字标：上行 `DEEPSEEK`，下行 `HARNESS` 并明显右缩进，约占 **85–90% 屏宽、超过一半屏高**。入场时字母**逐个由隐到现**，整块字标以**阶梯式每次下落 1 行**的方式丢帧，并在 HARNESS 下方留下残影；之后字标**不再消失**：7 秒一轮的**十字光束**循环——横向光束沿字标向下浮过，在中央与纵向光束汇成明亮十字，随后纵向光束从左向右扫过，横向光束淡出；没有烟花/粒子爆发。`--trail <f>` 调残影强度；**默认 ASCII**，`--unicode` 用实心块（[GIF](docs/dsh.gif)） |
 | 氛围编程 (Vibe Coding) `vibe` | 单栏 **Claude Code 转录**：读取 `src/scenes/vibe.rs`（找不到时用编译期内置副本），用**手写 Rust 语法高亮**逐字打出源码，每轮循环 6 个短窗口；每轮重新开始时先清空转录，再打新内容；包含 prompt、assistant/tool 行、`+` diff 风格代码、旋转 spinner 与 token 数、输入框和 bypass 权限 footer；**默认 ASCII**（`>`、`*`、`L`、`>>`），`--unicode` 切换为 Claude Code 风格的 `❯ ◉ └ ✻ ▶▶`（[GIF](docs/vibe.gif)） |
-| 星际隧道 (Warp Tunnel) `tunnel` | 16 圈按深度排布的环向观察者扩张，10 条径向辐条缓慢旋转，投影星点向外拖出短线。**纯 ASCII**：`+`、`*`、`#`、`@` 撑起整个透视。 |
-| DNA 双螺旋 (DNA Helix) `helix` | 两条真 3D 主链在透视相机下旋转；A/T/C/G 碱基对、磷酸节点和氢键按深度排序，前链会遮挡后链。扫描光带从上往下扫过并高亮碱基，顶部周期性解链成复制叉；彩色尘埃和线框约束圆柱位于深青色渐变空间中。**默认 ASCII**；`--unicode` 用框线主链和实心节点。 |
 | 极光 (Aurora) `lights` | 三条波浪状极光带和短垂帘在星空、雪顶山脊、月亮与湖面倒影上方缓慢流动。**纯 ASCII。** |
 | 火山爆发 (Volcano) `volcano` | 锯齿状火山锥、发光火山口、抛物线熔岩喷泉、两道熔岩流、漂移火山灰柱和周期性闪电。**默认 ASCII**；`--unicode` 用实心块画山体。 |
-| 四维超立方 (Tesseract) `tesseract` | 16 个顶点、32 条棱在四维中旋转，画成带深度排序的线框：外立方青、内立方紫、8 条连接线金、顶点白。幽灵超立方、透视星轨、彩色尘埃、三圈轨道和沿线光脉冲填满空间。**默认 ASCII**；`--unicode` 用框线字符和实心顶点。 |
 | 火箭发射 (Rocket Launch) `launch` | 24 秒发射大片：更大的两级火箭与双助推器、蓝调发射台、点火火球、多层尾焰与世界坐标烟雾、跟随镜头与震动、Max-Q 云层、MECO / 级间分离、二级爬升和地球弧线日出；`--rocket-scale`、`--shake`。**纯 ASCII。** |
 | 等离子 (Plasma) `plasma` | 9 个漂移的 metaball 叠加成柔和标量场，再叠正弦细节和循环调色板。**默认 ASCII**；`--unicode` 用紧凑块字符 ramp。 |
 
@@ -245,7 +234,7 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 
 ## ASCII / Unicode 双版本
 
-**所有双字形特效默认 ASCII 启动。** 加 `--unicode`（或 `--charset unicode`）显式开启；`--ascii` 再强制回 ASCII。双字形特效包括 `matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`shanghai`、`tiananmen`、`traffic`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`life`、`dsh`、`vibe`、`helix`、`volcano`、`tesseract`、`plasma`。
+**所有双字形特效默认 ASCII 启动。** 加 `--unicode`（或 `--charset unicode`）显式开启；`--ascii` 再强制回 ASCII。双字形特效包括 `matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`shanghai`、`tiananmen`、`traffic`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`life`、`dsh`、`vibe`、`volcano`、`plasma`。
 
 `mario` / `ecg` 两版对比：
 
@@ -261,14 +250,12 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | ![shanghai ascii](docs/shanghai-ascii.png) | ![shanghai unicode](docs/shanghai-unicode.png) |
 | ![traffic ascii](docs/traffic-ascii.png) | ![traffic unicode](docs/traffic-unicode.png) |
 
-`dsh` / `vibe` / `helix` / `tesseract` 两版对比：
+`dsh` / `vibe` 两版对比：
 
 | ASCII（默认） | Unicode（`--unicode`） |
 | --- | --- |
 | ![dsh ascii](docs/dsh-ascii.png) | ![dsh unicode](docs/dsh-unicode.png) |
 | ![vibe ascii](docs/vibe-ascii.png) | ![vibe unicode](docs/vibe-unicode.png) |
-| ![helix ascii](docs/helix-ascii.png) | ![helix unicode](docs/helix-unicode.png) |
-| ![tesseract ascii](docs/tesseract-ascii.png) | ![tesseract unicode](docs/tesseract-unicode.png) |
 
 纵向车流：
 
@@ -287,7 +274,7 @@ trix ecg --unicode      # Unicode 心电
 
 ## 特性
 
-- **35 个可切换特效**：命令行参数、运行时热切换、主题。
+- **32 个可切换特效**：命令行参数、运行时热切换、主题。
 - **帮助本身也是界面**：风格化总览、单特效详情 + 真实预览、风格化目录、拼写建议。
 - **ASCII 优先**：双字形特效默认 ASCII，`--unicode` 显式开启。
 - **低资源**：单线程、无异步运行时、无事件循环框架；默认 30 FPS；唯一依赖是 `libc`。
@@ -300,7 +287,7 @@ trix ecg --unicode      # Unicode 心电
 
 ## 直接运行：自动循环播放
 
-不带特效名直接运行 `trix`，会循环播放全部 35 个特效：
+不带特效名直接运行 `trix`，会循环播放全部 32 个特效：
 
 ```bash
 trix                                   # 默认顺序，每个 12 秒
@@ -401,16 +388,16 @@ trix <effect> [options]
 
 快捷键不区分大小写；支持 CSI/SS3 方向键，忽略方向键修饰；Alt/Option 组合和鼠标/粘贴上报不会误触发。
 
-七个新场景（`tunnel`、`helix`、`lights`、`volcano`、`tesseract`、`launch`、`plasma`）**没有单键快捷键**；用 `trix <effect>` 或 `n` / `p` 循环进入。
+四个新场景（`lights`、`volcano`、`launch`、`plasma`）**没有单键快捷键**；用 `trix <effect>` 或 `n` / `p` 循环进入。
 
 ## 主题
 
 | 主题 | 风格 | 默认用于 |
 | --- | --- | --- |
-| `neon` | 霓虹青 / 紫 | rain、beams、tomjerry、shanghai、traffic、tunnel、tesseract |
+| `neon` | 霓虹青 / 紫 | rain、beams、tomjerry、shanghai、traffic |
 | `matrix` | 矩阵绿 | matrix、ecg |
 | `ember` | 真实火焰（红→橙→黄→白） | fire、demoneye、volcano、launch |
-| `aurora` | 翡翠龙 / 极光金 | dragon、fish、landscape、ballet、life、helix、lights |
+| `aurora` | 翡翠龙 / 极光金 | dragon、fish、landscape、ballet、life、lights |
 | `ice` | 全息冰蓝 | map、solar、galaxy、tornado、storm、dsh |
 | `plasma` | 品红 / 高能 | blackhole、fireworks、plasma |
 | `gold` | 帝王金 | buddha、mario、dandelion、tiananmen、monalisa、vibe |
@@ -451,7 +438,7 @@ trix <effect> [options]
 | demoneye | 0.273 ms | 0.398 ms | 15.4 KiB/帧 |
 | life | 0.158 ms | 0.209 ms | 5.6 KiB/帧 |
 
-真实 PTY，truecolor，120×36，30 FPS，5 秒（CPU = 子进程 `utime+stime / 5s`，包含 PTY 写入，不含终端自身绘制）。下表是那一轮测到的 22 个特效；`monalisa`、`ballet`、`demoneye`、`life`、`dsh`、`vibe`、`tunnel`、`helix`、`lights`、`volcano`、`tesseract`、`launch`、`plasma` 是后来加入的，未包含在这轮数据里：
+真实 PTY，truecolor，120×36，30 FPS，5 秒（CPU = 子进程 `utime+stime / 5s`，包含 PTY 写入，不含终端自身绘制）。下表是那一轮测到的 22 个特效；`monalisa`、`ballet`、`demoneye`、`life`、`dsh`、`vibe`、`lights`、`volcano`、`launch`、`plasma` 是后来加入的，未包含在这轮数据里：
 
 | 特效 | CPU（单核） | RSS | 5 秒输出 |
 | --- | ---: | ---: | ---: |
@@ -546,12 +533,12 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-当前 **225** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
+当前 **220** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
 
 ## 版本与回退
 
 - **当前未发布版本：0.11.0**（`trix --version`），尚未打 tag 或创建 GitHub Release。
-- **0.11.0**：新增七个生成式场景：`tunnel`、`helix`、`lights`、`volcano`、`tesseract`、`launch`、`plasma`。
+- **0.11.0**：新增四个生成式场景：`lights`、`volcano`、`launch`、`plasma`。
 - **0.10.0**：新增 `dsh`（深度求索 / DeepSeek Harness）与 `vibe`（氛围编程 / Vibe Coding），以及 `--trail` 参数。
 - **0.9.1**：包名/仓库改为 `trix-effects`（命令仍是 `trix`），加固 `install.sh`，新增缓存安全的 ASCII 预览和贡献/发布文档。
 - **0.9.0** 是短暂使用的 `trix-tui` 名字；新增风格化帮助系统，`fairy` 入口移除（源码保留），`life` 进入 26 个特效。
