@@ -6,7 +6,7 @@
 
 - Added seven generative scenes:
   - `tunnel` **Warp Tunnel** (星际隧道): sixteen depth-spaced rings expand toward the viewer, ten radial spokes rotate and projected stars streak past. Pure ASCII.
-  - `helix` **DNA Helix** (DNA 双螺旋): two sine strands with A/T/C/G base pairs and cosine-depth shading. Pure ASCII.
+  - `helix` **DNA Helix** (DNA 双螺旋): real 3D strands with a perspective camera, depth-sorted A/T/C/G rungs, phosphate nodes and hydrogen bonds; a scan beam sweeps down, the top periodically unzips into a replication fork, and coloured dust plus a wireframe containment cylinder sit on a deep teal gradient. ASCII by default; `--unicode` uses box-drawing backbones and solid nodes.
   - `lights` **Aurora** (极光): three wavy aurora ribbons with hanging curtains over a starry sky, a moon, snow-capped ridges and a lake reflection. Pure ASCII.
   - `volcano` **Volcano** (火山爆发): a jagged cone, glowing crater, ballistic lava fountains, lava streams, an ash plume and periodic lightning. ASCII by default; `--unicode` uses solid blocks for the mountain.
   - `tesseract` **Tesseract** (四维超立方): a sixteen-vertex, thirty-two-edge 4D hypercube with a neon palette — cyan outer cube, violet inner cube, gold connectors and white vertices — plus a ghost hypercube, gradient space, starfield, coloured dust, orbit rings and travelling edge pulses. ASCII by default; `--unicode` uses box-drawing edges and solid vertices.
@@ -14,7 +14,7 @@
   - `plasma` **Plasma** (等离子): nine drifting metaballs, sine texture and a cycling palette. ASCII by default; `--unicode` uses a compact block ramp.
   - `dsh` **DeepSeek Harness** (深度求索) was rebuilt: the wordmark is now two staggered lines (`DEEPSEEK` / indented `HARNESS`) laid out from 6×9 and 8×11 display faces with horizontal pixel doubling, filling about 85–90% of the width and over half the screen height. The intro reveals letters one by one and drops the lockup in quantised one-row steps, leaving a ghost stack below HARNESS; the wordmark then stays on screen forever. A seven-second cross-beam loop floats a horizontal beam down the lockup, joins it with a vertical beam at the centre, then sweeps the vertical beam left to right. No fireworks or particle burst; `--trail` still scales the ghosts. ASCII by default; `--unicode` uses solid blocks. New `docs/dsh-ascii.png`, `docs/dsh-unicode.png` and `docs/dsh.gif`.
 - The effect registry now has **35 effects**. Shortcuts are now optional in the metadata: the seven new scenes have no single-key shortcut and are entered with `trix <effect>` or `n` / `p`; all existing shortcuts are unchanged.
-- `scripts/check_docs.py` now checks 35 effects. README / README.zh-CN, the HUD document, the help screenshots, the overview and the social preview were updated; tests grew to 224.
+- `scripts/check_docs.py` now checks 35 effects. README / README.zh-CN, the HUD document, the help screenshots, the overview and the social preview were updated; tests grew to 225.
 
 ## 0.10.0 — 2026-10-19
 

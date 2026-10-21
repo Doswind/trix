@@ -6,7 +6,7 @@
 
 - 新增七个生成式场景：
   - `tunnel` **星际隧道 / Warp Tunnel**：16 圈按深度排布的环向观察者扩张，10 条径向辐条旋转，投影星点向外拖出短线。纯 ASCII。
-  - `helix` **DNA 双螺旋 / DNA Helix**：两条正弦主链 + A/T/C/G 碱基对，余弦深度明暗。纯 ASCII。
+  - `helix` **DNA 双螺旋 / DNA Helix**：真 3D 主链 + 透视相机，A/T/C/G 碱基对、磷酸节点和氢键按深度排序；扫描光带从上往下扫过，顶部周期性解链成复制叉；彩色尘埃和线框约束圆柱位于深青色渐变空间中。默认 ASCII；`--unicode` 用框线主链和实心节点。
   - `lights` **极光 / Aurora**：三条波浪极光带与短垂帘，星空、月亮、雪顶山脊与湖面倒影。纯 ASCII。
   - `volcano` **火山爆发 / Volcano**：锯齿火山锥、发光火山口、抛物线熔岩喷泉、熔岩流、火山灰柱与周期性闪电。默认 ASCII；`--unicode` 用实心块画山体。
   - `tesseract` **四维超立方 / Tesseract**：16 顶点、32 棱的 4D 超立方，青色外立方、紫色内立方、金色连接线、白色顶点；再加幽灵超立方、渐变深空、星轨、彩色尘埃、轨道环和沿线光脉冲。默认 ASCII；`--unicode` 用框线字符和实心顶点。
@@ -14,7 +14,7 @@
   - `plasma` **等离子 / Plasma**：9 个漂移 metaball + 正弦细节 + 循环调色板。默认 ASCII；`--unicode` 用紧凑块字符 ramp。
   - `dsh` **深度求索 / DeepSeek Harness** 重构：字标改为两行错位排版（`DEEPSEEK` / 右缩进 `HARNESS`），由 6×9 与 8×11 显示字模横向放大 2 倍生成，约占 85–90% 屏宽、超过一半屏高。入场字母逐个出现，整块字标按每次 1 行阶梯式丢帧并在 HARNESS 下方留下残影；之后字标**永久保留**。7 秒一轮的十字光束循环：横向光束向下浮过、在中央与纵向光束汇成十字，再让纵向光束从左向右扫过。没有烟花/粒子爆发；`--trail` 仍控制残影强度。默认 ASCII；`--unicode` 用实心块。新增 `docs/dsh-ascii.png`、`docs/dsh-unicode.png` 与 `docs/dsh.gif`。
 - 特效注册表扩展到 **35 个**。快捷键元数据改为可选：七个新场景没有单键快捷键，用 `trix <effect>` 或 `n` / `p` 进入；现有快捷键全部不变。
-- `scripts/check_docs.py` 现在检查 35 个特效；两版 README、HUD 文档、help 截图、overview 与社交预览已同步；测试增至 224。
+- `scripts/check_docs.py` 现在检查 35 个特效；两版 README、HUD 文档、help 截图、overview 与社交预览已同步；测试增至 225。
 
 ## 0.10.0 — 2026-10-19
 

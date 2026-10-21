@@ -273,7 +273,9 @@ impl EffectId {
             EffectId::Dsh => "Two-line DEEPSEEK HARNESS: reveal, drop, looping cross beam",
             EffectId::Vibe => "Claude Code transcript typing this scene's own Rust source",
             EffectId::Tunnel => "First-person warp tunnel with a rolling camera and star streaks",
-            EffectId::Helix => "Rotating DNA double helix with A/T/C/G base pairs",
+            EffectId::Helix => {
+                "3D DNA helix with base-pair colours, scan beam and replication fork"
+            }
             EffectId::Lights => "Aurora curtains over a moonlit mountain lake",
             EffectId::Volcano => "Night eruption with lava fountains, ash and lightning",
             EffectId::Tesseract => {
@@ -316,7 +318,7 @@ impl EffectId {
             EffectId::Dsh => "A giant two-line DEEPSEEK HARNESS lockup with the second line indented: DEEPSEEK on top, HARNESS below, about 85-90% of the width and over half the screen height. The intro reveals the letters one by one and drops the lockup in stuttered one-row steps, leaving a ghost stack below HARNESS. After that the wordmark never leaves the screen: a seven-second loop floats a horizontal beam down the lockup, joins it with a vertical beam at the centre to form a bright cross, then sweeps the vertical beam left to right while the horizontal one fades. No fireworks or particle burst. ASCII by default; --unicode uses solid blocks, and --trail sets the drop-ghost strength.",
             EffectId::Vibe => "A Claude Code-style transcript reads src/scenes/vibe.rs (or an embedded copy), types it with a small Rust syntax highlighter and loops through six windows per turn; only the lines up to the typing head are visible, and each loop starts from a clean transcript. ASCII by default; --unicode swaps in the Claude Code prompt, tool and spinner glyphs.",
             EffectId::Tunnel => "Sixteen depth-spaced rings expand toward the viewer while ten radial spokes rotate and projected stars streak past. Pure ASCII: +, *, # and @ carry the perspective.",
-            EffectId::Helix => "Two sine strands wrap around a vertical axis; A/T/C/G base pairs join them, depth comes from each strand's cosine, and the whole helix rotates in place. Pure ASCII.",
+            EffectId::Helix => "Two real 3D strands rotate under a perspective camera; A/T/C/G rungs, phosphate nodes and hydrogen bonds are depth-sorted so the front strand occludes the back. A scan beam sweeps down and highlights base pairs, the top periodically unzips into a replication fork, and coloured dust plus a wireframe containment cylinder sit on a deep teal gradient. ASCII by default; --unicode uses box-drawing backbones and solid phosphate nodes.",
             EffectId::Lights => "Three noisy aurora curtains drift over a starry sky, snow-capped ridges and a moonlit lake reflection. ASCII only: the vertical glyphs and stars are the effect.",
             EffectId::Volcano => "A jagged mountain silhouette, a glowing crater, ballistic lava fountains, two lava streams, drifting ash and periodic lightning. ASCII by default; --unicode uses solid blocks for the mountain.",
             EffectId::Tesseract => "Sixteen vertices and thirty-two edges rotate in four dimensions and draw as a depth-sorted wireframe: the outer cube is cyan, the inner cube violet, the eight connectors gold and the vertices white. A ghost hypercube, perspective starfield, coloured dust, three orbit rings and travelling edge pulses fill the space. ASCII by default; --unicode uses box-drawing edges and solid vertices.",
@@ -433,6 +435,7 @@ impl EffectId {
             | EffectId::Traffic
             | EffectId::Dsh
             | EffectId::Vibe
+            | EffectId::Helix
             | EffectId::Volcano
             | EffectId::Tesseract
             | EffectId::Plasma => CharsetSupport::Dual,
@@ -558,6 +561,7 @@ mod tests {
                 "life",
                 "dsh",
                 "vibe",
+                "helix",
                 "volcano",
                 "tesseract",
                 "plasma"

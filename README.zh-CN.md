@@ -228,7 +228,7 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | 深度求索 (DeepSeek Harness) `dsh` | 巨型**两行**字标：上行 `DEEPSEEK`，下行 `HARNESS` 并明显右缩进，约占 **85–90% 屏宽、超过一半屏高**。入场时字母**逐个由隐到现**，整块字标以**阶梯式每次下落 1 行**的方式丢帧，并在 HARNESS 下方留下残影；之后字标**不再消失**：7 秒一轮的**十字光束**循环——横向光束沿字标向下浮过，在中央与纵向光束汇成明亮十字，随后纵向光束从左向右扫过，横向光束淡出；没有烟花/粒子爆发。`--trail <f>` 调残影强度；**默认 ASCII**，`--unicode` 用实心块（[GIF](docs/dsh.gif)） |
 | 氛围编程 (Vibe Coding) `vibe` | 单栏 **Claude Code 转录**：读取 `src/scenes/vibe.rs`（找不到时用编译期内置副本），用**手写 Rust 语法高亮**逐字打出源码，每轮循环 6 个短窗口；每轮重新开始时先清空转录，再打新内容；包含 prompt、assistant/tool 行、`+` diff 风格代码、旋转 spinner 与 token 数、输入框和 bypass 权限 footer；**默认 ASCII**（`>`、`*`、`L`、`>>`），`--unicode` 切换为 Claude Code 风格的 `❯ ◉ └ ✻ ▶▶`（[GIF](docs/vibe.gif)） |
 | 星际隧道 (Warp Tunnel) `tunnel` | 16 圈按深度排布的环向观察者扩张，10 条径向辐条缓慢旋转，投影星点向外拖出短线。**纯 ASCII**：`+`、`*`、`#`、`@` 撑起整个透视。 |
-| DNA 双螺旋 (DNA Helix) `helix` | 两条正弦主链绕垂直轴缠绕，A/T/C/G 碱基对连接两链，亮度由每条链的余弦深度决定，整体原地旋转。**纯 ASCII。** |
+| DNA 双螺旋 (DNA Helix) `helix` | 两条真 3D 主链在透视相机下旋转；A/T/C/G 碱基对、磷酸节点和氢键按深度排序，前链会遮挡后链。扫描光带从上往下扫过并高亮碱基，顶部周期性解链成复制叉；彩色尘埃和线框约束圆柱位于深青色渐变空间中。**默认 ASCII**；`--unicode` 用框线主链和实心节点。 |
 | 极光 (Aurora) `lights` | 三条波浪状极光带和短垂帘在星空、雪顶山脊、月亮与湖面倒影上方缓慢流动。**纯 ASCII。** |
 | 火山爆发 (Volcano) `volcano` | 锯齿状火山锥、发光火山口、抛物线熔岩喷泉、两道熔岩流、漂移火山灰柱和周期性闪电。**默认 ASCII**；`--unicode` 用实心块画山体。 |
 | 四维超立方 (Tesseract) `tesseract` | 16 个顶点、32 条棱在四维中旋转，画成带深度排序的线框：外立方青、内立方紫、8 条连接线金、顶点白。幽灵超立方、透视星轨、彩色尘埃、三圈轨道和沿线光脉冲填满空间。**默认 ASCII**；`--unicode` 用框线字符和实心顶点。 |
@@ -245,7 +245,7 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 
 ## ASCII / Unicode 双版本
 
-**所有双字形特效默认 ASCII 启动。** 加 `--unicode`（或 `--charset unicode`）显式开启；`--ascii` 再强制回 ASCII。双字形特效包括 `matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`shanghai`、`tiananmen`、`traffic`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`life`、`dsh`、`vibe`、`volcano`、`tesseract`、`plasma`。
+**所有双字形特效默认 ASCII 启动。** 加 `--unicode`（或 `--charset unicode`）显式开启；`--ascii` 再强制回 ASCII。双字形特效包括 `matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`shanghai`、`tiananmen`、`traffic`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`life`、`dsh`、`vibe`、`helix`、`volcano`、`tesseract`、`plasma`。
 
 `mario` / `ecg` 两版对比：
 
@@ -261,12 +261,13 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | ![shanghai ascii](docs/shanghai-ascii.png) | ![shanghai unicode](docs/shanghai-unicode.png) |
 | ![traffic ascii](docs/traffic-ascii.png) | ![traffic unicode](docs/traffic-unicode.png) |
 
-`dsh` / `vibe` / `tesseract` 两版对比：
+`dsh` / `vibe` / `helix` / `tesseract` 两版对比：
 
 | ASCII（默认） | Unicode（`--unicode`） |
 | --- | --- |
 | ![dsh ascii](docs/dsh-ascii.png) | ![dsh unicode](docs/dsh-unicode.png) |
 | ![vibe ascii](docs/vibe-ascii.png) | ![vibe unicode](docs/vibe-unicode.png) |
+| ![helix ascii](docs/helix-ascii.png) | ![helix unicode](docs/helix-unicode.png) |
 | ![tesseract ascii](docs/tesseract-ascii.png) | ![tesseract unicode](docs/tesseract-unicode.png) |
 
 纵向车流：
@@ -545,7 +546,7 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-当前 **224** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
+当前 **225** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
 
 ## 版本与回退
 

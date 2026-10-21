@@ -228,7 +228,7 @@ Every effect name is given in English and Chinese; `trix --list` uses the same n
 | DeepSeek Harness (深度求索) `dsh` | A giant **two-line** wordmark: `DEEPSEEK` on top, `HARNESS` below with a clear indent, filling about **85–90% of the width and over half the screen height**. The intro **fades the letters in one by one**, then **drops the lockup in stuttered one-row steps** and leaves a ghost stack below HARNESS. After that the wordmark **never disappears**: a seven-second loop floats a **horizontal beam** down the lockup, joins it with a **vertical beam** at the centre to form a bright **cross**, then sweeps the vertical beam left to right; no fireworks or particle burst. `--trail <f>` sets the drop-ghost strength; **ASCII by default**, `--unicode` uses solid blocks ([GIF](docs/dsh.gif)) |
 | Vibe Coding (氛围编程) `vibe` | A single-column **Claude Code transcript** that reads `src/scenes/vibe.rs` (or an embedded copy), types the source with a hand-written **Rust syntax highlighter**, and loops through six short windows per turn; each loop starts from a clean transcript; it shows the prompt, assistant/tool lines, `+` diff-style code, a rotating spinner with token count, the input box and the bypass-permissions footer; **ASCII by default** (`>`, `*`, `L`, `>>`), `--unicode` switches to Claude Code-style `❯ ◉ └ ✻ ▶▶` glyphs ([GIF](docs/vibe.gif)) |
 | Warp Tunnel (星际隧道) `tunnel` | Sixteen depth-spaced rings expand toward the viewer while ten radial spokes rotate and projected stars streak past. **Pure ASCII**: `+`, `*`, `#` and `@` carry the perspective. |
-| DNA Helix (DNA 双螺旋) `helix` | Two sine strands wrap around a vertical axis; A/T/C/G base pairs join them, depth comes from each strand's cosine, and the whole helix rotates in place. **Pure ASCII.** |
+| DNA Helix (DNA 双螺旋) `helix` | Two real 3D strands rotate under a perspective camera; A/T/C/G rungs, phosphate nodes and hydrogen bonds are depth-sorted so the front strand occludes the back. A scan beam sweeps down and highlights base pairs, the top periodically unzips into a replication fork, and coloured dust plus a wireframe containment cylinder sit on a deep teal gradient. **ASCII by default**; `--unicode` uses box-drawing backbones and solid nodes. |
 | Aurora (极光) `lights` | Three wavy aurora ribbons with short hanging curtains drift over a starry sky, snow-capped ridges, a moon and a rippling lake reflection. **Pure ASCII.** |
 | Volcano (火山爆发) `volcano` | A jagged cone, a glowing crater, ballistic lava fountains, two lava streams, a drifting ash plume and periodic lightning. **ASCII by default**; `--unicode` uses solid blocks for the mountain. |
 | Tesseract (四维超立方) `tesseract` | Sixteen vertices and thirty-two edges rotate in four dimensions and draw as a depth-sorted wireframe: the outer cube is cyan, the inner cube violet, the eight connectors gold and the vertices white. A ghost hypercube, perspective starfield, coloured dust, three orbit rings and travelling edge pulses fill the space. **ASCII by default**; `--unicode` uses box-drawing edges and solid vertices. |
@@ -245,7 +245,7 @@ Light Beams has two motion modes:
 
 ## ASCII / Unicode editions
 
-**Every dual-form effect starts in ASCII.** Add `--unicode` (or `--charset unicode`) to opt in; `--ascii` forces ASCII again. The dual-form effects are `matrix`, `mario`, `ecg`, `dandelion`, `fish`, `landscape`, `shanghai`, `tiananmen`, `traffic`, `tornado`, `storm`, `monalisa`, `ballet`, `demoneye`, `life`, `dsh`, `vibe`, `volcano`, `tesseract` and `plasma`.
+**Every dual-form effect starts in ASCII.** Add `--unicode` (or `--charset unicode`) to opt in; `--ascii` forces ASCII again. The dual-form effects are `matrix`, `mario`, `ecg`, `dandelion`, `fish`, `landscape`, `shanghai`, `tiananmen`, `traffic`, `tornado`, `storm`, `monalisa`, `ballet`, `demoneye`, `life`, `dsh`, `vibe`, `helix`, `volcano`, `tesseract` and `plasma`.
 
 `mario` / `ecg` in both glyph sets:
 
@@ -261,12 +261,13 @@ Light Beams has two motion modes:
 | ![shanghai ascii](docs/shanghai-ascii.png) | ![shanghai unicode](docs/shanghai-unicode.png) |
 | ![traffic ascii](docs/traffic-ascii.png) | ![traffic unicode](docs/traffic-unicode.png) |
 
-`dsh` / `vibe` / `tesseract` in both glyph sets:
+`dsh` / `vibe` / `helix` / `tesseract` in both glyph sets:
 
 | ASCII (default) | Unicode (`--unicode`) |
 | --- | --- |
 | ![dsh ascii](docs/dsh-ascii.png) | ![dsh unicode](docs/dsh-unicode.png) |
 | ![vibe ascii](docs/vibe-ascii.png) | ![vibe unicode](docs/vibe-unicode.png) |
+| ![helix ascii](docs/helix-ascii.png) | ![helix unicode](docs/helix-unicode.png) |
 | ![tesseract ascii](docs/tesseract-ascii.png) | ![tesseract unicode](docs/tesseract-unicode.png) |
 
 Vertical street:
@@ -545,7 +546,7 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-There are currently **224** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
+There are currently **225** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
 
 ## Versions and rollback
 
