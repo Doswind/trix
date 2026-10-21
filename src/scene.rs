@@ -5,7 +5,7 @@ use crate::cli::Charset;
 use crate::scenes::{
     BalletScene, BeamsScene, BlackHoleScene, BuddhaScene, DandelionScene, DemonEyeScene,
     DragonScene, DshScene, EcgScene, FireScene, FireworksScene, FishScene, GalaxyScene,
-    LandscapeScene, LaunchScene, LifeScene, LightsScene, MapScene, MarioScene, MatrixScene,
+    InterstellarScene, LandscapeScene, LaunchScene, LifeScene, MapScene, MarioScene, MatrixScene,
     MonaLisaScene, PlasmaScene, RainScene, ShanghaiScene, SolarScene, StormScene, TiananmenScene,
     TomJerryScene, TornadoScene, TrafficScene, VibeScene, VolcanoScene,
 };
@@ -41,10 +41,10 @@ pub enum EffectId {
     Life,
     Dsh,
     Vibe,
-    Lights,
     Volcano,
     Launch,
     Plasma,
+    Interstellar,
 }
 
 impl EffectId {
@@ -77,10 +77,10 @@ impl EffectId {
         EffectId::Life,
         EffectId::Dsh,
         EffectId::Vibe,
-        EffectId::Lights,
         EffectId::Volcano,
         EffectId::Launch,
         EffectId::Plasma,
+        EffectId::Interstellar,
     ];
 
     pub fn key(self) -> &'static str {
@@ -113,10 +113,10 @@ impl EffectId {
             EffectId::Life => "life",
             EffectId::Dsh => "dsh",
             EffectId::Vibe => "vibe",
-            EffectId::Lights => "lights",
             EffectId::Volcano => "volcano",
             EffectId::Launch => "launch",
             EffectId::Plasma => "plasma",
+            EffectId::Interstellar => "interstellar",
         }
     }
 
@@ -150,10 +150,10 @@ impl EffectId {
             EffectId::Life => "Threads of Life",
             EffectId::Dsh => "DeepSeek Harness",
             EffectId::Vibe => "Vibe Coding",
-            EffectId::Lights => "Aurora",
             EffectId::Volcano => "Volcano",
             EffectId::Launch => "Rocket Launch",
             EffectId::Plasma => "Plasma",
+            EffectId::Interstellar => "Interstellar",
         }
     }
 
@@ -187,10 +187,10 @@ impl EffectId {
             EffectId::Life => "生命的轨迹",
             EffectId::Dsh => "深度求索",
             EffectId::Vibe => "氛围编程",
-            EffectId::Lights => "极光",
             EffectId::Volcano => "火山爆发",
             EffectId::Launch => "火箭发射",
             EffectId::Plasma => "等离子",
+            EffectId::Interstellar => "星际穿越",
         }
     }
 
@@ -242,10 +242,12 @@ impl EffectId {
             "vibe" | "vibecoding" | "claude" | "claudecode" | "coding" | "agent" => {
                 Some(EffectId::Vibe)
             }
-            "lights" | "aurora" | "borealis" | "northernlights" => Some(EffectId::Lights),
             "volcano" | "eruption" | "lava" => Some(EffectId::Volcano),
             "launch" | "rocket" | "liftoff" | "spacex" => Some(EffectId::Launch),
             "plasma" | "demoscene" | "sines" => Some(EffectId::Plasma),
+            "interstellar" | "endurance" | "dock" | "docking" | "station" | "rendezvous" => {
+                Some(EffectId::Interstellar)
+            }
             _ => None,
         }
     }
@@ -296,10 +298,10 @@ impl EffectId {
             EffectId::Life => "aurora",
             EffectId::Dsh => "ice",
             EffectId::Vibe => "gold",
-            EffectId::Lights => "aurora",
             EffectId::Volcano => "ember",
             EffectId::Launch => "ember",
             EffectId::Plasma => "plasma",
+            EffectId::Interstellar => "ice",
         })
         .unwrap_or(&theme::THEMES[0])
     }
@@ -438,10 +440,10 @@ pub fn build(id: EffectId, seed: u64) -> Box<dyn Scene> {
         EffectId::Life => Box::new(LifeScene::new(seed)),
         EffectId::Dsh => Box::new(DshScene::new(seed)),
         EffectId::Vibe => Box::new(VibeScene::new(seed)),
-        EffectId::Lights => Box::new(LightsScene::new(seed)),
         EffectId::Volcano => Box::new(VolcanoScene::new(seed)),
         EffectId::Launch => Box::new(LaunchScene::new(seed)),
         EffectId::Plasma => Box::new(PlasmaScene::new(seed)),
+        EffectId::Interstellar => Box::new(InterstellarScene::new(seed)),
     }
 }
 
@@ -465,6 +467,7 @@ mod tests {
         assert_eq!(EffectId::parse("deepseek-harness"), Some(EffectId::Dsh));
         assert_eq!(EffectId::parse("dsh"), Some(EffectId::Dsh));
         assert_eq!(EffectId::parse("vibe coding"), Some(EffectId::Vibe));
+        assert_eq!(EffectId::parse("endurance"), Some(EffectId::Interstellar));
         assert_eq!(EffectId::parse("nope"), None);
     }
 

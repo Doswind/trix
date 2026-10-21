@@ -31,6 +31,12 @@ const BOAT_TINTS: [Rgb; 4] = [
     Rgb::hex(0xc65a72),
 ];
 
+/// River glyph ramp, from a dim fleck to a bright crest.  The water keeps the
+/// Bund's fixed night palette and never samples `Frame::theme`, so selecting
+/// `--theme plasma` cannot repaint the river with the plasma colours.
+const WATER_ASCII: [char; 5] = ['.', ':', '~', '=', '*'];
+const WATER_UNICODE: [char; 5] = ['·', '≈', '≋', '░', '✦'];
+
 /// Hull / deck building blocks of a boat silhouette.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Part {
@@ -258,6 +264,37 @@ struct Boat {
     funnel: Option<(isize, isize)>,
 }
 
+/// A soft, drifting metaball in the river's normalized coordinate space.
+///
+/// The sum of all ripples is the same kind of scalar field the `plasma` scene
+/// uses: several Gaussians add together into smooth, colliding lobes.  Here
+/// they are stretched wide and shallow so the field reads as moving water
+/// rather than a lava lamp.
+struct Ripple {
+    x: f32,
+    y: f32,
+    vx: f32,
+    vy: f32,
+    /// Horizontal and vertical radii as fractions of the river band.
+    rx: f32,
+    ry: f32,
+    phase: f32,
+    /// Neon tint carried by this lobe (cyan / ice).
+    tint: Rgb,
+}
+
+/// A coloured light column mirrored on the river surface: the tower spheres
+/// and a few neon rooftops.
+struct Glow {
+    /// Centre as a fraction of the screen width.
+    x: f32,
+    color: Rgb,
+    /// Base width as a fraction of the screen width; it fans out with depth.
+    width: f32,
+    strength: f32,
+    phase: f32,
+}
+
 /// A shooting star: a straight, fading streak across the night sky.
 struct Meteor {
     x0: f32,
@@ -293,6 +330,8 @@ pub struct ShanghaiScene {
     buildings: Vec<(f32, f32, f32, Rgb)>,
     stars: Vec<(f32, f32, f32)>,
     boats: Vec<Boat>,
+    ripples: Vec<Ripple>,
+    glows: Vec<Glow>,
     meteors: Vec<Meteor>,
     next_meteor: f32,
 }
@@ -307,6 +346,8 @@ impl ShanghaiScene {
             buildings: Vec::new(),
             stars: Vec::new(),
             boats: Vec::new(),
+            ripples: Vec::new(),
+            glows: Vec::new(),
             meteors: Vec::new(),
             next_meteor: 1.0,
         }
@@ -335,8 +376,58 @@ impl ShanghaiScene {
             ));
         }
         self.build_boats();
+        self.build_water();
         self.meteors.clear();
         self.next_meteor = 1.0 + self.rng.range(0.0, 2.0);
+    }
+
+    /// Seed the plasma field and the mirrored light columns that tint it.
+    fn build_water(&mut self) {
+        self.ripples.clear();
+        let count = (self.w / 22).clamp(4, 7);
+        for _ in 0..count {
+            // The lobes themselves stay in the river's cyan / ice range; the
+            // pink and gold come only from the mirrored tower and rooftop
+            // lights layered on top, so the plasma palette never leaks in.
+            let tint = if self.rng.chance(0.22) { ICE } else { CYAN };
+            self.ripples.push(Ripple {
+                x: self.rng.range(0.0, 1.0),
+                y: self.rng.range(0.10, 0.90),
+                // The Huangpu drifts gently downstream (left), with a few
+                // eddies that barely move the other way.
+                vx: self.rng.range(-0.055, 0.020),
+                vy: self.rng.range(-0.012, 0.012),
+                rx: self.rng.range(0.035, 0.080),
+                ry: self.rng.range(0.12, 0.28),
+                phase: self.rng.range(0.0, TAU),
+                tint,
+            });
+        }
+
+        self.glows.clear();
+        // Three tower reflections, one for each sphere colour.
+        let tower = 0.62;
+        for (i, color) in [PINK, CYAN, GOLD].into_iter().enumerate() {
+            self.glows.push(Glow {
+                x: tower + (i as f32 - 1.0) * 0.026,
+                color,
+                width: 0.022 + i as f32 * 0.004,
+                strength: 0.95 - i as f32 * 0.12,
+                phase: self.rng.range(0.0, TAU),
+            });
+        }
+        // A few rooftop signs also spill into the river.
+        for (bx, _, bw, color) in &self.buildings {
+            if (*bx as i64) % 4 == 0 && self.rng.chance(0.55) {
+                self.glows.push(Glow {
+                    x: (bx + bw * 0.5) / self.w as f32,
+                    color: *color,
+                    width: 0.010 + self.rng.range(0.0, 0.020),
+                    strength: self.rng.range(0.30, 0.55),
+                    phase: self.rng.range(0.0, TAU),
+                });
+            }
+        }
     }
 
     /// Lay out the two boats: a small one far up the river, a big one close to
@@ -755,43 +846,133 @@ impl ShanghaiScene {
         }
     }
 
+    /// Sum of the drifting Gaussian lobes, plus the lobe colour they carry.
+    /// `x` runs across the river (0..1) and `v` from the far bank (0) to the
+    /// camera (1).
+    fn ripple_field(&self, x: f32, v: f32, t: f32) -> (f32, Rgb) {
+        let mut field = 0.0;
+        let (mut cr, mut cg, mut cb) = (0.0, 0.0, 0.0);
+        for r in &self.ripples {
+            // Slow breathing keeps the lobes from looking like fixed stamps.
+            let pulse = 1.0 + 0.12 * (t * 0.65 + r.phase).sin();
+            let dx = (x - r.x) / (r.rx * pulse);
+            let dy = (v - r.y) / (r.ry * pulse);
+            let w = (-0.5 * (dx * dx + dy * dy)).exp();
+            field += w;
+            cr += r.tint.r as f32 * w;
+            cg += r.tint.g as f32 * w;
+            cb += r.tint.b as f32 * w;
+        }
+        if field > 0.0001 {
+            let inv = 1.0 / field;
+            (
+                field,
+                Rgb::new((cr * inv) as u8, (cg * inv) as u8, (cb * inv) as u8),
+            )
+        } else {
+            (0.0, CYAN)
+        }
+    }
+
+    /// Weighted colour of the mirrored lights at a water cell.  Returns the
+    /// light amount (0..1) and the average colour of the contributing signs.
+    fn river_glow(&self, x: f32, v: f32, t: f32) -> (f32, Rgb) {
+        let fx = x * self.w as f32;
+        let mut total = 0.0;
+        let (mut cr, mut cg, mut cb) = (0.0, 0.0, 0.0);
+        for g in &self.glows {
+            // Reflections fan out and wobble more as they approach the camera.
+            let spread = 0.55 + v * 1.9;
+            let wobble = (v * 3.6 + t * 1.3 + g.phase).sin() * spread * 0.9;
+            let cx = g.x * self.w as f32 + wobble;
+            let width = (g.width * self.w as f32 * (0.7 + v * 1.8)).max(0.75);
+            let d = ((fx - cx) / width).abs();
+            if d >= 1.0 {
+                continue;
+            }
+            let fall = (1.0 - d * d).powi(2);
+            let flick = 0.68 + 0.32 * (t * 2.2 + g.phase + fx * 0.17).sin();
+            let w = fall * g.strength * flick * (1.0 - v * 0.28);
+            total += w;
+            cr += g.color.r as f32 * w;
+            cg += g.color.g as f32 * w;
+            cb += g.color.b as f32 * w;
+        }
+        if total > 0.0001 {
+            let inv = 1.0 / total;
+            (
+                total.min(1.0),
+                Rgb::new((cr * inv) as u8, (cg * inv) as u8, (cb * inv) as u8),
+            )
+        } else {
+            (0.0, CYAN)
+        }
+    }
+
     fn river(&self, canvas: &mut Canvas, unicode: bool, t: f32) {
         let base = (self.h as f32 * 0.72) as isize;
         let h = self.h as isize;
+        let wh = (h - base).max(1) as f32;
+        let wf = self.w.max(1) as f32;
+        let ramp = if unicode {
+            &WATER_UNICODE
+        } else {
+            &WATER_ASCII
+        };
         for y in base..h {
-            let v = (y - base) as f32 / (h - base).max(1) as f32;
-            let c = WATER.lerp(NIGHT, 0.15 + v * 0.6);
+            let v = (y - base) as f32 / wh;
+            let depth = WATER.lerp(NIGHT, 0.15 + v * 0.58);
             for x in 0..self.w as isize {
-                let wave = ((x as f32 * 0.12 + t * 1.8 + y as f32 * 0.5).sin()) > 0.80;
-                if wave {
-                    let tint = if x % 17 == 0 {
-                        GOLD
-                    } else if x % 11 == 0 {
-                        PINK
-                    } else {
-                        CYAN
-                    };
-                    canvas.set(x, y, if unicode { '≈' } else { '~' }, tint.scale(0.42));
-                } else if (x + y * 3) % 5 == 0 {
-                    canvas.set(x, y, if unicode { '·' } else { '.' }, c.scale(1.6));
-                }
-            }
-        }
-        // neon reflections under the tower and major buildings
-        for (i, col) in [PINK, CYAN, GOLD].iter().enumerate() {
-            let x0 = (self.w as f32 * (0.62 + i as f32 * 0.07)) as isize;
-            for y in base..h {
-                let w = ((y - base) as f32 * 0.2) as isize + 1;
-                for dx in -w..=w {
-                    if ((dx + y + i as isize * 3) as f32 + t * 2.0).sin() > 0.0 {
-                        canvas.set_if_blank(
-                            x0 + dx,
+                let fx = x as f32;
+                // The surface itself undulates: sampling the field along a
+                // shallow S-curve keeps the lobes from reading as flat rows.
+                let xn = (fx / wf + 0.038 * (v * 3.2 + t * 0.45).sin()).rem_euclid(1.0);
+                // A second, vertical displacement snakes the currents up and
+                // down the river as well as sideways.
+                let yn = v + 0.075 * (fx * 0.045 - t * 0.55).sin();
+                let (field, field_col) = self.ripple_field(xn, yn, t);
+                let (glow, glow_col) = self.river_glow(xn, v, t);
+                // The same metaball field as `plasma`, squashed into the river
+                // band.  The lobes are the body of the light; a two-dimensional
+                // sine product breaks their edges into moving ripples.
+                let lobes = 1.0 - (-field * 0.95).exp();
+                let texture = (fx * 0.31 + v * 8.0 + t * 2.0).sin()
+                    * (fx * 0.06 - v * 11.0 - t * 1.2).sin()
+                    * 0.05;
+                let light = (lobes * 1.35 + glow * 0.22 + texture - 0.34).clamp(0.0, 1.0);
+                if light < 0.055 {
+                    // Between the plasma currents the river stays calm: a few
+                    // dim crests and the usual fleck lattice.
+                    let calm = (fx * 0.14 + v * 5.5 + t * 1.55).sin() > 0.93;
+                    if calm {
+                        canvas.set(
+                            x,
                             y,
                             if unicode { '≈' } else { '~' },
-                            col.scale(0.22),
+                            depth.lerp(CYAN, 0.30).scale(0.36),
                         );
+                    } else if (x + y * 3) % 7 == 0 {
+                        canvas.set(x, y, if unicode { '·' } else { '.' }, depth.scale(1.55));
                     }
+                    continue;
                 }
+                let ch = ramp[((light * 4.999) as usize).min(4)];
+                // Lobe colour, warmed by any neon sign mirrored on top of it.
+                let tint = if glow > 0.03 {
+                    field_col.lerp(glow_col, (0.25 + glow * 0.75).min(0.85))
+                } else {
+                    field_col
+                };
+                let mut col = depth.lerp(tint, (0.22 + 0.72 * light).min(0.94));
+                if light > 0.58 {
+                    col = col.lerp(ICE, (light - 0.58) * 0.55);
+                }
+                canvas.set(
+                    x,
+                    y,
+                    ch,
+                    col.scale((0.30 + 1.05 * light) * (0.86 + 0.14 * v)),
+                );
             }
         }
     }
@@ -975,6 +1156,25 @@ impl Scene for ShanghaiScene {
                 boat.x = -half - 2.0;
             } else if boat.vx < 0.0 && boat.x + half < -2.0 {
                 boat.x = self.w as f32 + half + 2.0;
+            }
+        }
+        // Drift the plasma lobes through the river.  Wrapping well outside the
+        // band keeps the field from popping at the banks.
+        for r in self.ripples.iter_mut() {
+            r.x += r.vx * dt;
+            r.y += r.vy * dt;
+            r.phase += dt * 0.55;
+            if r.x < -0.25 {
+                r.x += 1.5;
+            } else if r.x > 1.25 {
+                r.x -= 1.5;
+            }
+            if r.y < 0.05 {
+                r.y = 0.05;
+                r.vy = r.vy.abs();
+            } else if r.y > 0.95 {
+                r.y = 0.95;
+                r.vy = -r.vy.abs();
             }
         }
         // One or two shooting stars every 3–5 seconds, sometimes none at all.
@@ -1263,6 +1463,71 @@ mod tests {
             }
         }
         panic!("no meteor was ever drawn");
+    }
+
+    #[test]
+    fn river_moves_like_a_plasma_field() {
+        let (w, h) = (100usize, 34usize);
+        let mut s = scene(w, h, 7);
+        let base = (h as f32 * 0.72) as isize;
+        let mut a = Canvas::new(w, h);
+        s.river(&mut a, false, 0.0);
+        for step in 1..=60 {
+            s.update(&frame(step as f64 / 30.0, w, h, Charset::Ascii));
+        }
+        let mut b = Canvas::new(w, h);
+        s.river(&mut b, false, 2.0);
+        let mut ink = 0;
+        let mut moved = 0;
+        for y in base..h as isize - 1 {
+            for x in 0..w as isize {
+                let ca = a.get(x, y).unwrap();
+                let cb = b.get(x, y).unwrap();
+                if ca.ch != ' ' {
+                    ink += 1;
+                }
+                if ca.ch != cb.ch || ca.fg != cb.fg {
+                    moved += 1;
+                }
+            }
+        }
+        let water = ((h as isize - base - 1).max(1) * w as isize) as usize;
+        assert!(ink > water / 10, "river too sparse: {ink}/{water}");
+        assert!(moved > water / 12, "river barely moved: {moved}/{water}");
+    }
+
+    #[test]
+    fn river_keeps_the_night_water_palette() {
+        let (w, h) = (120usize, 36usize);
+        let s = scene(w, h, 7);
+        let mut canvas = Canvas::new(w, h);
+        s.river(&mut canvas, false, 5.0);
+        for cell in &canvas.cells {
+            if cell.ch == ' ' {
+                continue;
+            }
+            let (r, g, b) = (cell.fg.r as i32, cell.fg.g as i32, cell.fg.b as i32);
+            // Cyan / pink / gold / ice are all blue- or red-led; a green-led
+            // cell would mean the plasma theme palette leaked into the river.
+            assert!(
+                !(g > r + 45 && g > b + 45),
+                "green plasma leak at {:?}",
+                cell.fg
+            );
+        }
+    }
+
+    #[test]
+    fn ripples_stay_inside_the_river_band() {
+        let mut s = scene(120, 36, 3);
+        for step in 0..(30 * 40) {
+            s.update(&frame(step as f64 / 30.0, 120, 36, Charset::Ascii));
+        }
+        assert!(s.ripples.len() >= 4);
+        for r in &s.ripples {
+            assert!((-0.3..=1.3).contains(&r.x), "ripple x drifted to {}", r.x);
+            assert!((0.05..=0.95).contains(&r.y), "ripple y drifted to {}", r.y);
+        }
     }
 
     #[test]

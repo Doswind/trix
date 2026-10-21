@@ -724,7 +724,8 @@ fn keys_block(style: &HelpStyle) -> Vec<String> {
     for line in wrap(details, style.width.saturating_sub(6)) {
         out.push(format!("    {}", dim(&line, style)));
     }
-    let note = "lights / volcano / launch / plasma: no single-key shortcut, use trix <effect>";
+    let note =
+        "volcano / launch / plasma / interstellar: no single-key shortcut, use trix <effect>";
     for line in wrap(note, style.width.saturating_sub(6)) {
         out.push(format!("    {}", dim(&line, style)));
     }
@@ -1488,7 +1489,7 @@ fn plain_list() -> String {
     s.push_str("EFFECTS\n");
     for e in EffectId::ALL {
         s.push_str(&format!(
-            "  {:<10} {:<28} {}\n",
+            "  {:<14} {:<28} {}\n",
             e.key(),
             e.title_en(),
             e.title_zh()

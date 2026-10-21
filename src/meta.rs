@@ -259,9 +259,9 @@ impl EffectId {
             EffectId::Mario => "Pure-glyph Super Mario 1-1 platformer",
             EffectId::Ecg => "Green ECG monitor with an irregular ~56 BPM heartbeat",
             EffectId::Dandelion => "Six dandelion heads, bending stems and drifting seeds",
-            EffectId::FishTank => "Full aquarium of sprite fish, bubbles and plants",
+            EffectId::FishTank => "Full aquarium of oval sprite fish, bubbles and plants",
             EffectId::Landscape => "Layered mountains, a calm lake, a boat and geese",
-            EffectId::Shanghai => "Shanghai Bund at night, boats and shooting stars",
+            EffectId::Shanghai => "Bund at night with plasma-lit Huangpu water, boats and meteors",
             EffectId::Tiananmen => "Tiananmen gate with twin eaves and two-stage radiance",
             EffectId::Traffic => "City street with side-view or top-down traffic",
             EffectId::Tornado => "Twisted funnels drifting left to right with debris",
@@ -270,12 +270,18 @@ impl EffectId {
             EffectId::Ballet => "Ice-ballet duet looping through 13 sections",
             EffectId::DemonEye => "Giant bloodshot eye that blinks and darts its gaze",
             EffectId::Life => "A 0-100 life timeline of family, love and generations",
-            EffectId::Dsh => "Two-line DEEPSEEK HARNESS: reveal, drop, looping cross beam",
+            EffectId::Dsh => {
+                "Centred DEEPSEEK HARNESS + whale mark: drop bounce, diagonal light sweep"
+            }
             EffectId::Vibe => "Claude Code transcript typing this scene's own Rust source",
-            EffectId::Lights => "Aurora curtains over a moonlit mountain lake",
-            EffectId::Volcano => "Night eruption with lava fountains, ash and lightning",
+            EffectId::Volcano => {
+                "Clear sky, then a steady half-screen canopy raining lava and rock"
+            }
             EffectId::Launch => "Big two-stage rocket: ignition, max-Q, separation, Earth limb",
             EffectId::Plasma => "Classic demoscene plasma with a shifting palette",
+            EffectId::Interstellar => {
+                "Eight cabins on spokes; a four-armed ship docks at the turning core in 20 s"
+            }
         }
     }
 
@@ -297,9 +303,9 @@ impl EffectId {
             EffectId::Mario => "A pure-glyph level with clouds, hills, bushes, a brick floor, question blocks, pipes, coins, Goombas and mushrooms. No terminal background color; ASCII by default, --unicode for solid-block sprites.",
             EffectId::Ecg => "A green ECG grid with a P-QRS-T waveform, sweep line and HR/SpO2/SYS-DIA readouts. ASCII by default; --unicode for box drawing and a solid waveform.",
             EffectId::Dandelion => "Three clumps x two stems, six flower heads; the left and right roots bend toward the center. --seed-count and --seed-speed tune the drift.",
-            EffectId::FishTank => "Five hand-drawn sprite fish plus 8-30 small fish, bubbles with random shades, and plants. ASCII by default; --unicode for blocks.",
+            EffectId::FishTank => "Five hand-drawn sprite fish with soft oval bodies, a dark back, a bright belly and one pointed snout, plus 8-30 small fish, bubbles with random shades, and plants. ASCII by default; --unicode for blocks.",
             EffectId::Landscape => "Layered distant mountains, a calm lake, a boat, white geese, jungle on both sides, animated water, mist and petals.",
-            EffectId::Shanghai => "The Bund at night with the Oriental Pearl Tower, neon high-rises and Huangpu reflections. Two random boats and 1-2 meteors every 3-5 seconds. ASCII by default.",
+            EffectId::Shanghai => "The Bund at night with the Oriental Pearl Tower, neon high-rises and a Huangpu river built from drifting plasma metaballs: cyan and ice currents merge and split, while pink and gold tower reflections ripple over them. Two random boats and 1-2 meteors every 3-5 seconds. ASCII by default.",
             EffectId::Tiananmen => "The gate fills about 92% of the width and 62% of the height: double golden eaves, red pillars, five archways, slogans and the portrait. Golden beams grow, then light up inside-out.",
             EffectId::Traffic => "Horizontal traffic is three-row side-view cars in real lanes with dashed dividers; vertical traffic is top-down cars. --street horizontal|vertical, --density controls flow.",
             EffectId::Tornado => "1-8 twisted funnels move left to right, pointed at the base and wider at the top, with debris drifting outward. --tornado-count and --tornado-speed.",
@@ -308,12 +314,12 @@ impl EffectId {
             EffectId::Ballet => "A 39-scene-second duet looping through 13 sections: glide, crossover, arabesque, promenade, overhead lift, pair spin, death spiral, sissonne, Ina Bauer and finale. Joints use two-bone IK; the default tempo is 2x, about 19.5 seconds per loop.",
             EffectId::DemonEye => "One huge bloodshot eye fills the screen; it blinks every 8-15 seconds and darts its gaze 1-2 times between blinks. --eye-motion dart|still.",
             EffectId::Life => "A 0-100 age timeline with glowing life lines; family, love and generations enter and leave on schedule. The bright beam grows with age; a supernova finale closes ME's timeline. --life-cycle sets the round length.",
-            EffectId::Dsh => "A giant two-line DEEPSEEK HARNESS lockup with the second line indented: DEEPSEEK on top, HARNESS below, about 85-90% of the width and over half the screen height. The intro reveals the letters one by one and drops the lockup in stuttered one-row steps, leaving a ghost stack below HARNESS. After that the wordmark never leaves the screen: a seven-second loop floats a horizontal beam down the lockup, joins it with a vertical beam at the centre to form a bright cross, then sweeps the vertical beam left to right while the horizontal one fades. No fireworks or particle burst. ASCII by default; --unicode uses solid blocks, and --trail sets the drop-ghost strength.",
+            EffectId::Dsh => "A giant two-line DEEPSEEK HARNESS lockup with a blue whale mark immediately to the right of the K. Both lines are centred; the layout protects clear letter gaps (never zero, at least two blank columns in the 3x face and up to three in the 2x face) and picks the largest face that still leaves the mark touching the K. The whale fades in after the landing bounce. The intro reveals the letters one by one and drops the lockup in stuttered one-row steps; when it lands it gives one quick two-row hop upward before settling, and a faint ghost stack stays at HARNESS's feet. After that the wordmark never leaves the screen: a diagonal band of light travels from the upper-left corner to the lower-right, lifting each glyph from ice blue to white as it arrives and letting it fall back behind the band. The sweep loops with no pause, and nothing is drawn between the letters — it is a pure font-brightness gradient rather than a beam. The whale's tail tip carries the little twinkling star, which replays the two-blink flare from the interstellar scene's vanishing star. No fireworks or particle burst. ASCII by default; --unicode uses solid blocks, and --trail sets the drop-ghost strength.",
             EffectId::Vibe => "A Claude Code-style transcript reads src/scenes/vibe.rs (or an embedded copy), types it with a small Rust syntax highlighter and loops through six windows per turn; only the lines up to the typing head are visible, and each loop starts from a clean transcript. ASCII by default; --unicode swaps in the Claude Code prompt, tool and spinner glyphs.",
-            EffectId::Lights => "Three noisy aurora curtains drift over a starry sky, snow-capped ridges and a moonlit lake reflection. ASCII only: the vertical glyphs and stars are the effect.",
-            EffectId::Volcano => "A jagged mountain silhouette, a glowing crater, ballistic lava fountains, two lava streams, drifting ash and periodic lightning. ASCII by default; --unicode uses solid blocks for the mountain.",
+            EffectId::Volcano => "The sky starts clear over a compact truncated cone. One continuous eruption builds a thick, churning canopy about half the screen wide; the dense middle keeps rolling as fresh ash is supplied and never shrinks, while the flanks stay thinner. Lava bombs and rock blocks rain out of the middle and explode on landing, a continuous fountain feeds the column, two curved lava rivers crawl down the cone, and volcanic lightning crawls through the ash. ASCII by default; --unicode uses solid blocks for the mountain and ash.",
             EffectId::Launch => "A twenty-four second launch film: blue-hour pad, ignition flash, a full-height two-stage rocket with twin boosters, layered exhaust and world-space smoke, max-Q, MECO and booster separation, a second-stage climb, then an Earth-limb sunrise. The camera follows and shakes; --rocket-scale and --shake tune the framing. Pure ASCII.",
             EffectId::Plasma => "Four interfering sine fields drive a glyph ramp and a slowly cycling palette, with a subtle scanline. ASCII by default; --unicode uses a compact block ramp.",
+            EffectId::Interstellar => "An eight-section ring station turns at the lower right, every thick cabin tied back to a central control room by a spoke. The control block turns with the ring: its hexagonal silhouette, windows, gold index and masts all rotate, and a three-arm docking claw hangs off the same frame. A compact four-armed ship enters at the upper left, spirals down the upper-left radial while its roll turns with the ring, and lines its long gold index arm up with the long gold docking arm. The two centres meet at twenty seconds. Contact throws sparks; the docked stack burns away toward a vanishing point, trailing a short, faint echo of the wheel, and collapses into one star that blinks twice. The empty sky then dips to black over half a second, recovers over another half second, and the station powers up again for the next pass.",
         }
     }
 
@@ -330,7 +336,6 @@ impl EffectId {
             | EffectId::Dandelion
             | EffectId::Landscape
             | EffectId::FishTank
-            | EffectId::Lights
             | EffectId::Volcano => Category::Nature,
             EffectId::Matrix
             | EffectId::BlackHole
@@ -342,7 +347,8 @@ impl EffectId {
             | EffectId::Tiananmen
             | EffectId::Dsh
             | EffectId::Vibe
-            | EffectId::Launch => Category::SciFi,
+            | EffectId::Launch
+            | EffectId::Interstellar => Category::SciFi,
             EffectId::Buddha
             | EffectId::TomJerry
             | EffectId::Mario
@@ -385,7 +391,9 @@ impl EffectId {
             EffectId::Life => Some('y'),
             EffectId::Dsh => Some('u'),
             EffectId::Vibe => Some('w'),
-            EffectId::Lights | EffectId::Volcano | EffectId::Launch | EffectId::Plasma => None,
+            EffectId::Volcano | EffectId::Launch | EffectId::Plasma | EffectId::Interstellar => {
+                None
+            }
         }
     }
 
@@ -417,7 +425,8 @@ impl EffectId {
             | EffectId::Dsh
             | EffectId::Vibe
             | EffectId::Volcano
-            | EffectId::Plasma => CharsetSupport::Dual,
+            | EffectId::Plasma
+            | EffectId::Interstellar => CharsetSupport::Dual,
             _ => CharsetSupport::Ascii,
         }
     }
@@ -451,10 +460,10 @@ impl EffectId {
             EffectId::MonaLisa => 2.0,
             EffectId::Vibe => 10.0,
             EffectId::Dsh => 5.6,
-            EffectId::Lights => 8.0,
             EffectId::Volcano => 8.0,
             EffectId::Launch => 8.0,
             EffectId::Plasma => 5.0,
+            EffectId::Interstellar => 20.3,
             EffectId::Fireworks => 6.0,
             EffectId::Storm => 6.0,
             EffectId::Shanghai => 6.0,
@@ -538,7 +547,8 @@ mod tests {
                 "dsh",
                 "vibe",
                 "volcano",
-                "plasma"
+                "plasma",
+                "interstellar"
             ]
         );
     }

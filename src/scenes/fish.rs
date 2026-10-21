@@ -1,12 +1,12 @@
 //! 水族馆 — a full-screen aquarium with a few big sprite fish and a shoal of
 //! small stick fish.
 //!
-//! The big fish are hand-drawn character sprites (tiny/small/medium/large) with
-//! a forked tail, a bright eye and a mouth; the little ones are the classic
-//! `<==o>` shapes.  Fish keep their heading on screen (they only change
-//! direction while off-screen, so no head or mouth ever spins around in view),
-//! rising bubbles of three sizes, randomly scattered seaweed patches, light
-//! rays and sand fill the rest of the tank.
+//! The big fish are hand-drawn oval character sprites (small/medium/large)
+//! with a soft outline, a forked tail, a bright eye and a pointed `>` snout;
+//! the little ones are the classic `<==o>` shapes.  Fish keep their heading on
+//! screen (they only change direction while off-screen, so no head or mouth
+//! ever spins around in view), rising bubbles of three sizes, randomly
+//! scattered seaweed patches, light rays and sand fill the rest of the tank.
 
 use std::f32::consts::TAU;
 
@@ -36,6 +36,10 @@ const FISH_COLORS: [Rgb; 6] = [
 // ---------------------------------------------------------------------------
 // Big sprites (drawn nose-right; mirrored when the fish swims left).
 //
+// The body is a long ellipse: a soft rounded outline, a dark back and a bright
+// belly, tapering to a single pointed `>` snout.  Only the forked tail keeps
+// hard diagonal strokes.
+//
 // Legend
 //   `#` body        `%` dark back      `+` bright belly
 //   `,` `'` `;` soft edge              `/` `\` `_` `-` `~` `|` fins
@@ -43,32 +47,35 @@ const FISH_COLORS: [Rgb; 6] = [
 // ---------------------------------------------------------------------------
 
 const SPRITE_SMALL: &[&str] = &[
-    " ##,     ,%%%,",
-    " '###,   ### o ##;,",
-    "   '####,##########>",
-    "  ,###' '#########;'",
-    " ##'     '++++++'",
+    " ##,     ,,%%%%%,",
+    "'###,  ,%%%%%%%%o%%,",
+    "  '###;############>",
+    "  ,###'#############",
+    " '###' '+++++++++++'",
+    "##'      ''+++++'",
 ];
 
 const SPRITE_MEDIUM: &[&str] = &[
-    "##,",
-    "'###,",
-    "  '###,     ,%%%%%,",
-    "    '####,  #### o ##;,",
-    "     '#####,################>",
-    "     ,####'#################;'",
-    "  ,###'     '+++++++'",
+    " ##,          ,,%%%%%%%,",
+    "'###,      ,%%%%%%%%%%%%%%%,",
+    "  '###,  ,%%%%%%%%%%%%%%%%%%%,",
+    "    '###,;################o##;",
+    "    ,###';###################>",
+    "  ,###'  '###################'",
+    " '###'     '+++++++++++++++'",
+    "##'           ''+++++++'",
 ];
 
 const SPRITE_LARGE: &[&str] = &[
-    "##,",
-    "'###,",
-    "  '###,      ,%%%%%%%%,",
-    "    '####,   ####### o ###;,",
-    "     '#####,###################/#####>",
-    "     ,#####'###################;'",
-    "  ,###'      '################'",
-    "##'          '++++++++++++'",
+    " ##,              ,,,%%%%%%%,,,",
+    "'###,         ,,%%%%%%%%%%%%%%%%%,,",
+    "  '###,     ,%%%%%%%%%%%%%%%%%%%%%%%,",
+    "    '###,  ;######################o##;",
+    "      '###,;#########################>",
+    "    ,###'  ;#########################;",
+    "  ,###'     '#######################'",
+    " '###'        ''+++++++++++++++++''",
+    "##'               '''+++++++'''",
 ];
 
 // Small stick fish, the classic `<==o>` shapes.
@@ -740,6 +747,56 @@ mod tests {
             let joined = sp.rows.join("");
             assert!(joined.contains('o'), "no eye in {joined:?}");
             assert!(joined.contains('>'), "no mouth in {joined:?}");
+        }
+    }
+
+    #[test]
+    fn big_fish_bodies_are_oval() {
+        for sp in [SMALL, MEDIUM, LARGE] {
+            // Ignore the tail columns: the body proper should widen toward the
+            // middle, then taper back toward the belly, like an ellipse.
+            let widths: Vec<isize> = sp
+                .rows
+                .iter()
+                .map(|row| {
+                    // Sprites are ASCII, so byte offsets are cell offsets.
+                    let bytes = row.as_bytes();
+                    let first = bytes
+                        .iter()
+                        .enumerate()
+                        .skip(sp.tail as usize)
+                        .find(|(_, b)| **b != b' ')
+                        .map(|(i, _)| i as isize);
+                    let last = bytes.iter().rposition(|b| *b != b' ').map(|i| i as isize);
+                    match (first, last) {
+                        (Some(a), Some(b)) => b - a + 1,
+                        _ => 0,
+                    }
+                })
+                .collect();
+            let peak = widths
+                .iter()
+                .enumerate()
+                .max_by_key(|(_, w)| **w)
+                .map(|(i, _)| i)
+                .unwrap();
+            let center = (widths.len() - 1) as f32 / 2.0;
+            assert!(
+                (peak as f32 - center).abs() <= 1.5,
+                "body peak is off-centre: {widths:?}"
+            );
+            assert!(
+                widths[..=peak].windows(2).all(|w| w[0] <= w[1]),
+                "body does not widen smoothly: {widths:?}"
+            );
+            assert!(
+                widths[peak..].windows(2).all(|w| w[0] >= w[1]),
+                "body does not taper smoothly: {widths:?}"
+            );
+            assert!(
+                widths[0] < widths[peak] && widths[widths.len() - 1] < widths[peak],
+                "top and bottom must be narrower than the middle: {widths:?}"
+            );
         }
     }
 

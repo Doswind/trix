@@ -48,7 +48,7 @@ screenshot and a short GIF; lead with those.
 **Body**
 
 > A single-threaded Rust effects engine: code rain, fire, dragon, Matrix, black
-> hole, fireworks, solar system, Mona Lisa, ballet, and 18 more. `libc` is the
+> hole, fireworks, solar system, Mona Lisa, ballet, and 22 more. `libc` is the
 > only dependency; the release binary is about 1.1 MB.
 >
 > The part I would love feedback on is the help system: `trix --help` renders a
@@ -67,7 +67,7 @@ screenshot and a short GIF; lead with those.
 **Body**
 
 > Code rain, fire, a dragon, the Matrix, a black hole, fireworks, Mona Lisa, and
-> 20 more. `trix` cycles everything, `trix --help <effect>` shows a live preview,
+> 23 more. `trix` cycles everything, `trix --help <effect>` shows a live preview,
 > and `--snapshot` writes a deterministic ANSI frame for recording.
 >
 > macOS, Linux and WSL. Static Linux x86_64/aarch64 builds. MIT.

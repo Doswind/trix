@@ -67,7 +67,7 @@ row h-1   └  q quit | space pause | n/p next | t theme | h help   i info
 | 重开 | `r` | — | 新种子 |
 | 直接切换 | `1-9 0 [ ]` + 字母 | 大小写均可 | 映射见 README |
 
-快捷键不区分大小写；不提供 `,`/`.` 和 PageUp/PageDown 别名。`lights`、`volcano`、`launch`、`plasma` 没有单键快捷键，用 `trix <effect>` 或 `n` / `p` 进入。
+快捷键不区分大小写；不提供 `,`/`.` 和 PageUp/PageDown 别名。`volcano`、`launch`、`plasma` 没有单键快捷键，用 `trix <effect>` 或 `n` / `p` 进入。
 
 ## 5. 输入解析
 

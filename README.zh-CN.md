@@ -75,6 +75,7 @@ trix dsh --trail 0                 # 关闭丢帧残影，只留光束
 trix vibe --unicode                # Claude Code 符号，自读源码
 trix plasma                        # 等离子场
 trix launch                        # 从发射台到轨道
+trix interstellar                  # 20 秒的耐心对接
 trix tomjerry --jump               # 开启跳跃
 ```
 
@@ -131,10 +132,10 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | `life` | 生命的轨迹 | Threads of Life |
 | `dsh` | 深度求索 | DeepSeek Harness |
 | `vibe` | 氛围编程 | Vibe Coding |
-| `lights` | 极光 | Aurora |
 | `volcano` | 火山爆发 | Volcano |
 | `launch` | 火箭发射 | Rocket Launch |
 | `plasma` | 等离子 | Plasma |
+| `interstellar` | 星际穿越 | Interstellar |
 
 > **截图使用默认 ASCII 字形。** Unicode 版本只出现在 [ASCII / Unicode](#ascii--unicode-双版本) 一节。所有预览都由当前代码渲染，120×36（蒙娜丽莎 120×60；深度求索 160×48），truecolor。
 
@@ -178,13 +179,13 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | --- |
 | ![氛围编程](docs/vibe-ascii.png) |
 
-| 极光 `lights` | 火山爆发 `volcano` |
+| 火山爆发 `volcano` | 火箭发射 `launch` |
 | --- | --- |
-| ![极光](docs/lights-ascii.png) | ![火山爆发](docs/volcano-ascii.png) |
+| ![火山爆发](docs/volcano-ascii.png) | ![火箭发射](docs/launch-ascii.png) |
 
-| 火箭发射 `launch` | 等离子 `plasma` |
+| 等离子 `plasma` | 星际穿越 `interstellar` |
 | --- | --- |
-| ![火箭发射](docs/launch-ascii.png) | ![等离子](docs/plasma-ascii.png) |
+| ![等离子](docs/plasma-ascii.png) | ![星际穿越](docs/interstellar-ascii.png) |
 
 <details>
 <summary><b>完整特效说明（32 个）</b></summary>
@@ -206,9 +207,9 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | 超级马里奥 (Super Mario) `mario` | **纯字符版 1-1 关卡**：云、山、灌木，砖面带灰缝的地面，**问号块/砖块/已用块**砖行，绿管道、旋转金币、板栗仔与蘑菇；自动跑跳、顶砖出币/蘑菇、踩扁敌人、`+200/+100/+1000` 飘字。**完全不使用终端背景色**：默认 ASCII 彩色字符（`# o = *`）；`--unicode` 只把**精灵**（马里奥、板栗仔、蘑菇、金币）换成 `█ ▀ ▄` 实心块，山/云/管道/砖块仍是字符并按物体配色 |
 | 心率跳动 (Heartbeat Monitor) `ecg` | 绿色心电监护仪；**约 56 BPM，随机心搏间隔**，上下幅度、QRS 宽度、平直段长度明显随机；**默认 ASCII**，`--unicode` 切换 |
 | 蒲公英 (Dandelion) `dandelion` | 3 丛×2 茎、6 个花头；左右两丛根/下段向中间弯曲；**花头尺寸 ×1.5**，其它不变 |
-| 水族馆 (Aquarium) `fish` | 全屏水族箱：**5 条手绘 sprite 大鱼**（small 20×5 / medium 30×7 / large 38×8，分叉尾 + 亮眼 + 嘴，只摆尾不转头、嘴和头固定不动），外加 8～30 条 `<==o>` / `<=-o>` 小鱼（约 35% 双层、15% 三层加粗，只留一个眼睛）；气泡用 `o` / `O` / `8` 三种字符、**每条随机深浅色**，各自沿固定的一列**缓慢直线上升**，整个上升过程左右摆动不超过 3 次；数量收敛到 10～36 颗；水草随机高矮/间距并成小片；默认 ASCII，`--unicode` 切换 `█ ▓ ▒` |
+| 水族馆 (Aquarium) `fish` | 全屏水族箱：**5 条手绘 sprite 大鱼**（small 20×6 / medium 30×8 / large 38×9，**身体为柔边椭圆、深色背部 + 亮色腹部**，分叉尾 + 单只亮眼 + **单个尖 `>` 嘴尖**；只摆尾不转头、嘴和头固定不动），外加 8～30 条 `<==o>` / `<=-o>` 小鱼（约 35% 双层、15% 三层加粗，只留一个眼睛）；气泡用 `o` / `O` / `8` 三种字符、**每条随机深浅色**，各自沿固定的一列**缓慢直线上升**，整个上升过程左右摆动不超过 3 次；数量收敛到 10～36 颗；水草随机高矮/间距并成小片；默认 ASCII，`--unicode` 切换 `█ ▓ ▒` |
 | 五光十色 (Colorful Landscape) `landscape` | 层叠远山、平湖、小船、白鹅、两侧丛林；水面/雾气/花瓣动态 |
-| 东方明珠 (Oriental Pearl) `shanghai` | 上海外滩夜景、东方明珠、高楼霓虹、黄浦江倒影；**江面随机两条大小/形状/位置都不同的船**（中式帆船 / 货船 / 渡轮三种船型，含甲板、舷窗、船楼窗光、烟囱冒烟、桅杆航灯、尾迹与水面倒影）；**每 3–5 秒夜空中飘出 1–2 颗流星**（白热头部 + 渐隐尾迹）；**默认 ASCII**，`--unicode` 可切换 |
+| 东方明珠 (Oriental Pearl) `shanghai` | 上海外滩夜景、东方明珠、高楼霓虹，黄浦江改为**等离子式的漂移 metaball 场**：青/冰蓝水流互相融合、分开，粉色与金色塔光、楼顶霓虹在其上粼粼波动；**江面随机两条大小/形状/位置都不同的船**（中式帆船 / 货船 / 渡轮三种船型，含甲板、舷窗、船楼窗光、烟囱冒烟、桅杆航灯、尾迹与水面倒影）；**每 3–5 秒夜空中飘出 1–2 颗流星**（白热头部 + 渐隐尾迹）；**默认 ASCII**，`--unicode` 可切换 |
 | 光芒万丈 (Tiananmen Radiance) `tiananmen` | 放大到约 92% 宽 / 62% 高的天安门：双层金瓦飞檐、红柱城楼与国徽、红墙、白石门套五门洞、白框标语与中央画像、红旗与两侧小楼；金色光束先从城楼后方向外向上生成，再按光束由内向外依次循环点亮 |
 | 车水马龙 (Traffic Flow) `traffic` | 城市街道两侧高楼、霓虹、车流；横向 3 行车（车顶/车身/车轮，8–16 格长）分 4–5 条车道、车道间有虚线，方向按车道交替；纵向 6 列俯视车（5–9 行，带前后灯与侧轮）；`--street horizontal\|vertical`；`--density` 调车流密度；**默认 ASCII**，`--unicode` 可切换 |
 | 龙卷风 (Tornado) `tornado` | 1–8 股龙卷风从左向右；扭曲、底部收尖、顶部更宽；整体比原来**更矮一档**（0.28～0.58 屏高）且**更淡更疏**（亮度 0.42～0.85、每行 20 颗）；底部有 30 颗碎屑**向外飘散** |
@@ -217,12 +218,12 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 | 冰上芭蕾 (Ice Ballet) `ballet` | 冰场双人舞：39 个场景秒的编舞循环 13 个舞段；默认 2× 节奏约 19.5 秒一轮（滑行、压步、arabesque、promenade、**头顶托举**、联合旋转、death spiral、sissonne 跳跃、Ina Bauer、收势），关节用两骨 IK 求解、牵手自动对齐，四肢带柔边并延迟跟随躯干；整场滑行覆盖大部分画面，围板后有三排会摇晃/举手/打闪光灯的观众，冰面留下冰刀刻痕与倒影；`--speed` 调速 |
 | 恶魔之眼 (Demon Eye) `demoneye` | 整屏一只巨大血眼：眨眼每 8～15 秒一次、单眨或双眨（约 7:3），每两次眨眼之间只甩出 1～2 次（两次跳动相隔 ≥5 秒），约 0.1 秒到位、0.45～0.85 秒内必回正中直视观众；竖瞳缩放、眼睑压暗、血丝与眨眼冲击波；`--eye-motion dart\|still`（默认 dart），`--eye-still` 让眼球钉在正中 |
 | 生命的轨迹 (Threads of Life) `life` | 0～100 岁时间轴与左右生命线；人类统一 `@` 符号 + 同排彩色大写简写 + **家属本人年龄**（非亲属朋友不带年龄）；亮光束随年龄增长（年长后可覆盖大部分生命），由尾部的暗点/短划线渐亮到 `=`，头部为 `****@` 彗尾；生命最初约 22%～42%（最多约 22 年）保留为稀疏暗淡的点；每条轨迹结束后其行位可被后来者复用（学龄 `PAL/UNI` 的 +1 行 → GF/WIFE，`DOG` 的 -1 行 → KID2，猫/父母的行位也会被后来的朋友接回）；`DOG` 终身在 -1 紧挨我；`PAL/UNI/WORK/FRIEND` 同时出现时**共用同一行**：学龄期在 +1 另一侧，有未成年 KID 时整组退到 KID/CAT 外侧最近的空行（通常为 +4；只让出孩子/宠物实际占用的行，不再固定 -5/-7），所有 KID 成年后回到内侧；`ME 0 / WIFE +1`；`KID1 +2`、`KID2 -1`（复用 DOG 让出的紧邻行）、`KID3 -2`；成年前 `KID3 -2 / KID2 -1 / ME 0 / WIFE +1 / KID1 +2` **连续无空行**，`GRAND1/GRAND2` 始终紧贴父辈一行（父辈成年漂移后随之移动）；`CAT +3` 与第一个孩子同时出生，紧贴 KID1 下方；`DAD/MOM +3/+4` 在孩子出生前两年开始让位到 `+5/+6`，`BRO +5→+7` 紧随让位；GPA/GMA/DAD/MOM 在我 0 岁时随机得到合适起始年龄（58～70 / 56～68 / 25～33 / 23～31），BRO 0～4，ME 0；KID/GRAND/CAT/DOG 从各自出生起算，GF/WIFE 与我同龄上下 2 岁；所有行固定为 1 个终端行（不随终端高度缩放，高终端也不会因取整出现空行）；`ME` 结束时触发约 6 秒的**超新星终章**（回闪与星屑放慢、彗星保持原速；白光核心、一生回闪、冲击波、星屑、加亮彗星与顶部永久光晕；回闪扫描光柱到达 ME 的停止线后以三列宽永久保留，不再消失）；死亡点与顶部星标保留 `@` + 名称 + 最终年龄，并以每秒 1 次同步显现/消失；所有死亡角色升到顶部按死亡顺序隔行排列，终点标签在流星抵达后 0.5 秒淡入；人类 `*`、猫狗 `+` 闪烁；GF 用 2 年靠近、再停留 1～2 年变 WIFE；WIFE 75～90 岁、晚于我化星；AGE 无前导零；`--life-cycle` 控制一轮秒数 |
-| 深度求索 (DeepSeek Harness) `dsh` | 巨型**两行**字标：上行 `DEEPSEEK`，下行 `HARNESS` 并明显右缩进，约占 **85–90% 屏宽、超过一半屏高**。入场时字母**逐个由隐到现**，整块字标以**阶梯式每次下落 1 行**的方式丢帧，并在 HARNESS 下方留下残影；之后字标**不再消失**：7 秒一轮的**十字光束**循环——横向光束沿字标向下浮过，在中央与纵向光束汇成明亮十字，随后纵向光束从左向右扫过，横向光束淡出；没有烟花/粒子爆发。`--trail <f>` 调残影强度；**默认 ASCII**，`--unicode` 用实心块（[GIF](docs/dsh.gif)） |
+| 深度求索 (DeepSeek Harness) `dsh` | 巨型**两行**字标，**两行都水平居中**：上行 `DEEPSEEK`，下行 `HARNESS`。字母间距不再被牺牲：**3 倍字模至少留 2 列空白**，2 倍字模优先 3/2 列，绝不出现 0 列间距，所以每个字母都能分清。**蓝色鲸鱼 Logo** 的嘴巴**紧贴 K**，在落地回弹后淡入。入场时字母**逐个由隐到现**，整块字标以**阶梯式每次下落 1 行**的方式丢帧，落到底时向上快速弹跳两行再停住；残影只属于 HARNESS，从字体脚下开始，颜色刻意压暗，不会盖到字的身体上。之后字标**不再消失**：一道**斜向光带**从字标左上角掠向右下角，经过的字符由冰蓝提亮到白色，光带离开后又落回冰蓝。光带**无缝循环、没有停顿**，字与字之间不画任何光线——只有字体本身的亮度和颜色在变。小星移到了**鲸鱼尾尖**，每隔几秒复现一次《星际穿越》孤星消失时的双闪十字光芒。没有烟花/粒子爆发。`--trail <f>` 调残影强度；**默认 ASCII**，`--unicode` 用实心块（[GIF](docs/dsh.gif)） |
 | 氛围编程 (Vibe Coding) `vibe` | 单栏 **Claude Code 转录**：读取 `src/scenes/vibe.rs`（找不到时用编译期内置副本），用**手写 Rust 语法高亮**逐字打出源码，每轮循环 6 个短窗口；每轮重新开始时先清空转录，再打新内容；包含 prompt、assistant/tool 行、`+` diff 风格代码、旋转 spinner 与 token 数、输入框和 bypass 权限 footer；**默认 ASCII**（`>`、`*`、`L`、`>>`），`--unicode` 切换为 Claude Code 风格的 `❯ ◉ └ ✻ ▶▶`（[GIF](docs/vibe.gif)） |
-| 极光 (Aurora) `lights` | 三条波浪状极光带和短垂帘在星空、雪顶山脊、月亮与湖面倒影上方缓慢流动。**纯 ASCII。** |
-| 火山爆发 (Volcano) `volcano` | 锯齿状火山锥、发光火山口、抛物线熔岩喷泉、两道熔岩流、漂移火山灰柱和周期性闪电。**默认 ASCII**；`--unicode` 用实心块画山体。 |
+| 火山爆发 (Volcano) `volcano` | 开场天空干净、没有云层；体量较小的截顶火山锥持续喷发，在高空堆出**约半个屏幕宽**的浓厚云盖：中间云层不断翻滚、持续补充、只增不减，两侧明显更淡。熔岩弹和山块从云层中间不断落下、落地炸开；火口持续喷出岩浆，两条弯曲熔岩河沿山体下流，火山闪电在灰云中爬行；前景是黑色山脊与松树。**默认 ASCII**；`--unicode` 用实心块画山体与火山灰。 |
 | 火箭发射 (Rocket Launch) `launch` | 24 秒发射大片：更大的两级火箭与双助推器、蓝调发射台、点火火球、多层尾焰与世界坐标烟雾、跟随镜头与震动、Max-Q 云层、MECO / 级间分离、二级爬升和地球弧线日出；`--rocket-scale`、`--shake`。**纯 ASCII。** |
 | 等离子 (Plasma) `plasma` | 9 个漂移的 metaball 叠加成柔和标量场，再叠正弦细节和循环调色板。**默认 ASCII**；`--unicode` 用紧凑块字符 ramp。 |
+| 星际穿越 (Interstellar) `interstellar` | 右下角一座 8 段环形空间站缓慢自转，每段舱体都有一根辐条连回中央操控室；**中央操控室整体跟着空间站旋转**（六边形轮廓、窗户、金色索引点和两根天线都会转动），外侧接三臂对接爪。一艘**中心很小、四条触手**的小船从左上入画（一条长金色索引臂、一条引擎臂、两条较短的侧臂），沿空间站左上方的半径缓慢盘旋进中心，自转速度与环同步；索引臂与金色对接臂对齐，**20.0 秒**两个中心完成对接。对接瞬间炸开一圈火花与短闪，随后船站一体点火、带着一小段淡淡的残影朝画面深处的消失点急驰、缩成一颗闪两次的星；之后空场用 0.5 秒变暗到黑、再用 0.5 秒渐变恢复，然后重新点亮进入下一轮。**默认 ASCII**；`--unicode` 用实心块画舱体（[GIF](docs/interstellar.gif)）。 |
 
 </details>
 
@@ -234,7 +235,7 @@ trix --list            # TTY 下彩色目录；管道下纯文本
 
 ## ASCII / Unicode 双版本
 
-**所有双字形特效默认 ASCII 启动。** 加 `--unicode`（或 `--charset unicode`）显式开启；`--ascii` 再强制回 ASCII。双字形特效包括 `matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`shanghai`、`tiananmen`、`traffic`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`life`、`dsh`、`vibe`、`volcano`、`plasma`。
+**所有双字形特效默认 ASCII 启动。** 加 `--unicode`（或 `--charset unicode`）显式开启；`--ascii` 再强制回 ASCII。双字形特效包括 `matrix`、`mario`、`ecg`、`dandelion`、`fish`、`landscape`、`shanghai`、`tiananmen`、`traffic`、`tornado`、`storm`、`monalisa`、`ballet`、`demoneye`、`life`、`dsh`、`vibe`、`volcano`、`plasma`、`interstellar`。
 
 `mario` / `ecg` 两版对比：
 
@@ -388,7 +389,7 @@ trix <effect> [options]
 
 快捷键不区分大小写；支持 CSI/SS3 方向键，忽略方向键修饰；Alt/Option 组合和鼠标/粘贴上报不会误触发。
 
-四个新场景（`lights`、`volcano`、`launch`、`plasma`）**没有单键快捷键**；用 `trix <effect>` 或 `n` / `p` 循环进入。
+四个新场景（`volcano`、`launch`、`plasma`、`interstellar`）**没有单键快捷键**；用 `trix <effect>` 或 `n` / `p` 循环进入。
 
 ## 主题
 
@@ -397,9 +398,9 @@ trix <effect> [options]
 | `neon` | 霓虹青 / 紫 | rain、beams、tomjerry、shanghai、traffic |
 | `matrix` | 矩阵绿 | matrix、ecg |
 | `ember` | 真实火焰（红→橙→黄→白） | fire、demoneye、volcano、launch |
-| `aurora` | 翡翠龙 / 极光金 | dragon、fish、landscape、ballet、life、lights |
+| `aurora` | 翡翠龙 / 极光金 | dragon、fish、landscape、ballet、life |
 | `ice` | 全息冰蓝 | map、solar、galaxy、tornado、storm、dsh |
-| `plasma` | 品红 / 高能 | blackhole、fireworks、plasma |
+| `plasma` | 品红 / 高能 | blackhole、fireworks、plasma、interstellar |
 | `gold` | 帝王金 | buddha、mario、dandelion、tiananmen、monalisa、vibe |
 | `chrome` | 银灰单色 | 手动选择 |
 
@@ -426,9 +427,9 @@ trix <effect> [options]
 | mario | 0.013 ms | 0.016 ms | 0.7 KiB/帧 |
 | ecg | 0.038 ms | 0.046 ms | 7.3 KiB/帧 |
 | dandelion | 0.024 ms | 0.028 ms | 3.6 KiB/帧 |
-| fish | 0.023 ms | 0.045 ms | 2.1 KiB/帧 |
+| fish | 0.045 ms | 0.059 ms | 2.2 KiB/帧 |
 | landscape | 0.038 ms | 0.043 ms | 1.7 KiB/帧 |
-| shanghai | 0.032 ms | 0.036 ms | 3.3 KiB/帧 |
+| shanghai | 0.241 ms | 0.269 ms | 12.2 KiB/帧 |
 | tiananmen | 0.095 ms | 0.105 ms | 7.0 KiB/帧 |
 | traffic | 0.029 ms | 0.036 ms | 1.7 KiB/帧 |
 | tornado | 0.043 ms | 0.051 ms | 7.8 KiB/帧 |
@@ -438,7 +439,7 @@ trix <effect> [options]
 | demoneye | 0.273 ms | 0.398 ms | 15.4 KiB/帧 |
 | life | 0.158 ms | 0.209 ms | 5.6 KiB/帧 |
 
-真实 PTY，truecolor，120×36，30 FPS，5 秒（CPU = 子进程 `utime+stime / 5s`，包含 PTY 写入，不含终端自身绘制）。下表是那一轮测到的 22 个特效；`monalisa`、`ballet`、`demoneye`、`life`、`dsh`、`vibe`、`lights`、`volcano`、`launch`、`plasma` 是后来加入的，未包含在这轮数据里：
+真实 PTY，truecolor，120×36，30 FPS，5 秒（CPU = 子进程 `utime+stime / 5s`，包含 PTY 写入，不含终端自身绘制）。下表是那一轮测到的 22 个特效；`monalisa`、`ballet`、`demoneye`、`life`、`dsh`、`vibe`、`volcano`、`launch`、`plasma`、`interstellar` 是后来加入的，未包含在这轮数据里：
 
 | 特效 | CPU（单核） | RSS | 5 秒输出 |
 | --- | ---: | ---: | ---: |
@@ -510,7 +511,7 @@ scripts/bench.sh
 - **心率跳动**：ECG 网格、P-QRS-T 波形、扫描线、HR/SpO2/SYS-DIA；默认 ASCII 波形，`--unicode` 切换 Unicode 框线/实心波形。
 - **蒲公英**：3 丛×2 茎/6 花头；左右根向中间弯曲；花头尺寸 ×1.5。
 - **东方明珠**：外滩夜景 + 东方明珠 + 黄浦江倒影；江面两条随机船只——船型（帆船/货轮/渡轮）、尺寸、船体配色、航道深度与左右漂移方向都随机，远景小船贴水、近景大船压屏，带甲板/舷窗/船楼窗光/烟囱冒烟/桅杆航灯/船首灯笼/尾迹与水面倒影；每 3–5 秒夜空随机 1–2 颗流星（约 18% 的时段空过），白热头部 + 冰蓝或暖金渐隐尾迹，飞入天际线或淡出后回收。
-- **深度求索**：两行字标（`DEEPSEEK` / 右缩进的 `HARNESS`）由 6×9 / 8×11 显示字模横向放大 2 倍排布，宽字形占据大部分屏幕。入场是逐字出现（像素从上到下刷出）与每次 1 行的量化丢帧，并在 HARNESS 下方留下哈希丢弃残影。之后字标**永久保留**；7 秒一轮的光束状态机让横向光束向下浮过，在中央与纵向光束汇成明亮十字，再让纵向光束从左向右扫过并淡出横向光束；没有烟花/粒子爆发。`--trail` 缩放残影。
+- **深度求索**：两行字标（`DEEPSEEK` / 居中的 `HARNESS`）由 6×9 / 8×11 显示字模横向放大 2 倍排布。字距现在是布局的硬约束：删掉了 0/1 列的拥挤配置，3 倍字模始终留 2 列空白，2 倍字模依次尝试 3、2、1 列。160×48 时每行 117×9、间距 3 列；248×56 时每行 206×11、间距 2 列，字母都清晰可辨。K 的右侧是手工描出的**蓝色鲸鱼**（品牌蓝身体、白色肚皮和眼斑、尾巴在右上），嘴巴紧贴 K，落地回弹后淡入；160×48 时为 20×10，120×36 为 13×6，100×30 为 11×5，100 列以下隐藏。入场是逐字出现（像素从上到下刷出）与每次 1 行的量化丢帧；落到底时整块字标会先向上快速弹跳两行，再落回最终位置，而残影停在最底行不动。残影只属于 HARNESS，从字体脚下开始，颜色压得很暗，只作为残影存在，不会像正体的第二份拷贝。之后字标**永久保留**：一道**斜向光带**从字标左上角掠向右下角，经过的字符由冰蓝提亮到白色，光带离开后又落回冰蓝；光带**无缝循环、没有停顿**。字与字之间不画任何光线——只有字体本身的亮度和颜色在变。小星位于**鲸鱼尾尖**：平时保持缓慢的微弱闪烁，每 4.6 秒复现一次《星际穿越》孤星消失时的双闪——白热 `*` 核心、十字光臂、斜向光芒和一圈短暂扩散的光点。除此之外没有烟花/粒子爆发。`--trail` 缩放残影。
 - **火箭发射**：程序化缩放的两级火箭（整流罩、芯级、双助推器、发动机喷管）由 7/9/11 列的字符网格生成；镜头跟随升空，并在点火与级间分离时震动。尾焰是带白热核心与马赫环的分层 ASCII 火焰，配合世界坐标烟雾、蒸汽与火星。周围还有蓝调天空渐变、视差星层、云层、MECO 闪光、翻滚的芯级与助推器、地球弧线大气和轨道日出。`--rocket-scale` 与 `--shake` 调整构图和震动。
 - **氛围编程**：读取 `src/scenes/vibe.rs`（找不到时用编译期内置副本），归一化为 ASCII、跳过测试模块，每轮生成 6 个 10 行窗口。手写 Rust tokenizer 为注释、字符串、数字、关键字、类型、宏和函数名上色；转录是一个只显示到当前打字位置的队列（下方保持空白），下一轮开始前会清空，带 Claude Code 风格的 spinner、token 数和输入框。
 - **地图数据离线生成**：`tools/gen_land.py` 下载 Natural Earth 并栅格化为 `src/data/land_720x360.bin`，运行时不访问网络。
@@ -533,12 +534,12 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-当前 **220** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
+当前 **254** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
 
 ## 版本与回退
 
 - **当前未发布版本：0.11.0**（`trix --version`），尚未打 tag 或创建 GitHub Release。
-- **0.11.0**：新增四个生成式场景：`lights`、`volcano`、`launch`、`plasma`。
+- **0.11.0**：新增四个生成式场景：`volcano`、`launch`、`plasma`、`interstellar`。
 - **0.10.0**：新增 `dsh`（深度求索 / DeepSeek Harness）与 `vibe`（氛围编程 / Vibe Coding），以及 `--trail` 参数。
 - **0.9.1**：包名/仓库改为 `trix-effects`（命令仍是 `trix`），加固 `install.sh`，新增缓存安全的 ASCII 预览和贡献/发布文档。
 - **0.9.0** 是短暂使用的 `trix-tui` 名字；新增风格化帮助系统，`fairy` 入口移除（源码保留），`life` 进入 26 个特效。
