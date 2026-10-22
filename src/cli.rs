@@ -74,6 +74,16 @@ impl PerfMode {
         }
     }
 
+    /// Upper bound for the requested frame rate.  `low` is deliberately
+    /// capped: it is the profile for weak terminals and slow SSH links, where
+    /// producing 30 fps only builds a queue.
+    pub fn max_fps(self, requested: u32) -> u32 {
+        match self {
+            PerfMode::Low => requested.clamp(1, 20),
+            PerfMode::High | PerfMode::Balanced => requested,
+        }
+    }
+
     /// Lower bound for the adaptive frame rate (the requested rate when the
     /// profile does not adapt).  The floor stays at 10 fps because scenes
     /// clamp their timestep to 0.1 s; going lower would make the animation
@@ -846,12 +856,14 @@ mod tests {
         assert_eq!(o.perf, PerfMode::High);
         assert_eq!(o.perf.color_slack(), 0);
         assert!(!o.perf.adaptive());
+        assert_eq!(o.perf.max_fps(30), 30);
 
         let Parsed::Run(o) = parse_args(&args("rain")).unwrap() else {
             panic!()
         };
         assert_eq!(o.perf, PerfMode::Balanced);
         assert!(o.perf.adaptive());
+        assert_eq!(o.perf.max_fps(30), 30);
         assert_eq!(o.perf.min_fps(30), 12);
         assert_eq!(o.perf.min_fps(8), 8);
         assert!(!o.no_sync);
@@ -861,7 +873,9 @@ mod tests {
         };
         assert_eq!(o.perf, PerfMode::Low);
         assert!(o.perf.color_slack() >= 6);
-        assert_eq!(o.perf.min_fps(30), 10);
+        assert_eq!(o.perf.max_fps(30), 20);
+        assert_eq!(o.perf.max_fps(15), 15);
+        assert_eq!(o.perf.min_fps(o.perf.max_fps(30)), 10);
         assert!(o.no_sync);
 
         assert!(parse_args(&args("rain --perf turbo")).is_err());

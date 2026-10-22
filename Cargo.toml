@@ -1,6 +1,6 @@
 [package]
 name = "trix-effects"
-version = "0.11.1-beta.2"
+version = "0.11.1-beta.3"
 edition = "2021"
 rust-version = "1.70"
 description = "32 animated ASCII/Unicode effects for the terminal in one fast, dependency-free Rust binary"

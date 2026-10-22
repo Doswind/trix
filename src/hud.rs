@@ -331,7 +331,10 @@ pub struct Info<'a> {
     pub target_fps: f32,
     /// Terminal traffic averaged over the last half second.
     pub ansi_kib_s: f32,
+    /// Total update + draw + encode + write time for the last frame.
     pub frame_ms: f32,
+    /// The part of `frame_ms` spent blocked writing to the terminal.
+    pub write_ms: f32,
     pub mode: ColorMode,
     pub status: Option<&'a str>,
     pub playlist: Option<PlaylistInfo>,
@@ -367,10 +370,11 @@ pub fn draw_info(canvas: &mut Canvas, frame: &Frame, info: &Info) {
     lines.push((
         Some("RUNNING"),
         format!(
-            "{:.0} fps (target {:.0}) | {:.1} ms | {:.0} KiB/s | {:.2}x | {} | {} | {}x{} | {}",
+            "{:.0} fps (target {:.0}) | {:.1} ms (write {:.1}) | {:.0} KiB/s | {:.2}x | {} | {} | {}x{} | {}",
             info.fps,
             info.target_fps,
             info.frame_ms,
+            info.write_ms,
             info.ansi_kib_s,
             frame.speed,
             theme.key,
@@ -514,6 +518,7 @@ mod tests {
                 target_fps: 30.0,
                 ansi_kib_s: 128.0,
                 frame_ms: 1.2,
+                write_ms: 0.3,
                 mode: ColorMode::True,
                 status: None,
                 playlist: None,
@@ -576,6 +581,7 @@ mod tests {
             target_fps: 30.0,
             ansi_kib_s: 128.0,
             frame_ms: 1.2,
+            write_ms: 0.3,
             mode: ColorMode::True,
             status: Some("SEEDS 090 | WIND 1.0x"),
             playlist: None,

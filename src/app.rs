@@ -57,12 +57,17 @@ impl Pacer {
     }
 
     /// Feed one frame's write time.  Returns true when the target changed.
+    ///
+    /// The thresholds are intentionally strict: a write that already uses a
+    /// third of the frame budget leaves almost no room for a transition or a
+    /// panel repaint, and the SSH/TCP buffers in front of a terminal can hide
+    /// that pressure until the user notices seconds of input lag.
     fn observe(&mut self, present: Duration) -> bool {
         let target = self.frame_dur();
-        if present > target.mul_f32(0.75) {
+        if present > target.mul_f32(0.30) {
             self.slow = self.slow.saturating_add(1);
             self.fast = 0;
-        } else if present < target.mul_f32(0.30) {
+        } else if present < target.mul_f32(0.15) {
             self.fast = self.fast.saturating_add(1);
             self.slow = 0;
         } else {
@@ -396,13 +401,24 @@ fn interactive(opts: Options) -> i32 {
     } else {
         opts.transition_secs
     };
+    // A two-scene blend is the largest burst the renderer can produce; on the
+    // low-latency profile keep it short instead of doubling the traffic for
+    // 0.6 s.
+    let trans_secs = if opts.perf == cli::PerfMode::Low {
+        trans_secs.min(0.2)
+    } else {
+        trans_secs
+    };
     let mut transition: Option<Transition> = None;
     let mut scene = scene::build(id, seed);
     scene.resize(w, h);
     let tune = tune_for(&opts);
 
     let started = Instant::now();
-    let mut pacer = Pacer::new(opts.fps, opts.perf.min_fps(opts.fps));
+    let mut pacer = Pacer::new(
+        opts.perf.max_fps(opts.fps),
+        opts.perf.min_fps(opts.perf.max_fps(opts.fps)),
+    );
     let popts = present_options(&opts);
     let mut last_tick = Instant::now();
     let mut t = 0.0f64;
@@ -412,6 +428,7 @@ fn interactive(opts: Options) -> i32 {
     let mut flash = 0.0f32;
     let mut fps_smooth = opts.fps as f32;
     let mut frame_ms = 0.0f32;
+    let mut write_ms = 0.0f32;
     let mut auto_clock = 0.0f32;
     let mut ansi_window = 0usize;
     let mut ansi_kib_s = 0.0f32;
@@ -706,6 +723,7 @@ fn interactive(opts: Options) -> i32 {
                     target_fps: pacer.fps as f32,
                     ansi_kib_s,
                     frame_ms,
+                    write_ms,
                     mode,
                     status: scene_status.as_deref(),
                     playlist: playlist_info,
@@ -721,6 +739,7 @@ fn interactive(opts: Options) -> i32 {
             Err(_) => return 0,
         };
         let present_time = present_start.elapsed();
+        write_ms = present_time.as_secs_f32() * 1000.0;
         frame_ms = render_start.elapsed().as_secs_f32() * 1000.0;
         ansi_window += written;
         if ansi_clock.elapsed() >= Duration::from_millis(500) {
@@ -1234,6 +1253,27 @@ mod tests {
             p.fps, 12,
             "the governor must not go below the profile floor"
         );
+    }
+
+    #[test]
+    fn pacer_throttles_before_the_pipe_saturates() {
+        // 14 ms of write time at 30 fps is 42% of the budget: far too little
+        // headroom for a transition or panel repaint, so the governor must
+        // step down even though the frame still technically fits.
+        let mut p = Pacer::new(30, 12);
+        let present = Duration::from_millis(14);
+        for _ in 0..3 {
+            p.observe(present);
+        }
+        assert_eq!(p.fps, 24);
+        for _ in 0..3 {
+            p.observe(present);
+        }
+        assert_eq!(p.fps, 19);
+        for _ in 0..60 {
+            p.observe(present);
+        }
+        assert_eq!(p.fps, 19, "14 ms is comfortable in a 52 ms frame");
     }
 
     #[test]

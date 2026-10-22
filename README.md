@@ -25,7 +25,7 @@
 curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | sh
 
 # Beta: remote/SSH renderer test build
-curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | TRIX_VERSION=0.11.1-beta.2 sh
+curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | TRIX_VERSION=0.11.1-beta.3 sh
 
 # Rust toolchain, straight from git
 cargo install --git https://github.com/Doswind/trix-effects --locked
@@ -458,14 +458,16 @@ Environment: Apple Silicon (ARM64), macOS, Rust 1.96.1, `--release` (LTO + `code
 
 ### Remote / SSH sessions
 
-This work ships in the **0.11.1-beta.2** pre-release; `v0.11.0` does not include `--perf` or the new encoder.
+This work ships in the **0.11.1-beta.3** pre-release; `v0.11.0` does not include `--perf` or the new encoder.
 
 The server renders a frame in well under a millisecond, so lag in a remote session is almost always **terminal traffic**, not CPU. A full-screen truecolor frame is 40–120 KiB; at 30 FPS that is 1.2–3.5 MiB/s before SSH overhead. When the client cannot parse that fast, the SSH and pty buffers fill up and the terminal starts showing frames that are seconds old — which feels like input lag, not just a lower frame rate.
 
-The defaults fix that without changing the artwork:
+If keystrokes arrive seconds late, the terminal or SSH client is behind, not the scene CPU: its display queue is still draining old frames. Lower the amount of new output and let it catch up. The defaults already aim for headroom, but the `i` panel's **write** time is the direct signal: a large write time means the pty is blocked. If keys still lag, try `--perf low --color 256 --fps 12`, `--transition none`, `--no-sync`, or a smaller terminal window.
 
-- **`--perf balanced`** (default): at most 3/255 colour drift per channel, no redundant cursor moves, `EL` for cleared tails, synchronized output, and a frame-rate governor. If a write takes more than 75% of the frame budget, the rate steps down (30 → 24 → 19 → 15 → 12 FPS); the animation clock keeps running at the requested speed, so the effect stays in real time and only drops frames. It recovers slowly when writes are cheap again.
-- **`--perf low`**: 6/255 colour drift and a 10 FPS floor for very slow links, software-rendered clients or busy CPUs.
+The defaults fix the common case without changing the artwork:
+
+- **`--perf balanced`** (default): at most 3/255 colour drift per channel, no redundant cursor moves, `EL` for cleared tails, synchronized output, and a frame-rate governor. If a write takes more than 30% of the frame budget, the rate steps down (30 → 24 → 19 → 15 → 12 FPS); the animation clock keeps running at the requested speed, so the effect stays in real time and only drops frames. It recovers slowly when writes are cheap again.
+- **`--perf low`**: 6/255 colour drift, a **20 FPS cap**, a 10 FPS floor and transitions shortened to 0.2 s for very slow links or software-rendered clients.
 - **`--color 256`**: roughly halves the remaining SGR bytes. These scenes are ASCII art, so the palette approximation is hard to see; `--color 16` is the last resort.
 - **`--no-sync`**: turns off synchronized output if a particular terminal mishandles DEC 2026.
 - **`--transition none`**: removes the 0.6 s blend that renders two scenes at once; useful on very weak links.
@@ -548,12 +550,12 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-There are currently **260** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
+There are currently **261** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
 
 ## Versions and rollback
 
 - **Current version: 0.11.0** (`trix --version`), tag **`v0.11.0`** (2026-10-22).
-- **Beta: 0.11.1-beta.2** (tag **`v0.11.1-beta.2`**, pre-release): remote/SSH renderer overhaul, `--perf high|balanced|low` and `--no-sync`. Install with `TRIX_VERSION=0.11.1-beta.2`.
+- **Beta: 0.11.1-beta.3** (tag **`v0.11.1-beta.3`**, pre-release): remote/SSH renderer overhaul, `--perf high|balanced|low` and `--no-sync`. Install with `TRIX_VERSION=0.11.1-beta.3`.
 - **0.11.0** adds four generative scenes: `volcano`, `launch`, `plasma` and `interstellar`.
 - **0.10.0** adds `dsh` (DeepSeek Harness) and `vibe` (Vibe Coding), plus the `--trail` knob.
 - **0.9.1** renames the package/repository to `trix-effects` (command stays `trix`), hardens `install.sh`, adds cache-safe ASCII previews and contributor/launch docs.

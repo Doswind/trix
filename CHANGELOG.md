@@ -2,6 +2,10 @@
 
 **English** | [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.11.1-beta.3 — 2026-10-22
+
+- Lower-latency follow-up to `0.11.1-beta.2`: the governor now treats a write that uses 30% of the frame budget (was 75%) as a saturated pipe, so a 14 ms write at 30 fps steps down to 24 and then 19 fps instead of letting the SSH/TCP queue grow. `--perf low` caps the rate at 20 fps and shortens transitions to 0.2 s; the `i` panel now reports total and write time separately. Install with `TRIX_VERSION=0.11.1-beta.3`; tests grew to 261.
+
 ## 0.11.1-beta.2 — 2026-10-22
 
 - Retry of `0.11.1-beta.1`: the Linux x86_64 job builds with `cross` instead of `apt-get install musl-tools`, and every release job has a 30-minute timeout. The beta.1 x86_64 runner stalled in apt. Install with `TRIX_VERSION=0.11.1-beta.2`.

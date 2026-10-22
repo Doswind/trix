@@ -25,7 +25,7 @@
 curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | sh
 
 # 测试版：远程 / SSH 渲染重构
-curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | TRIX_VERSION=0.11.1-beta.2 sh
+curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | TRIX_VERSION=0.11.1-beta.3 sh
 
 # 有 Rust 工具链，直接从 git 安装
 cargo install --git https://github.com/Doswind/trix-effects --locked
@@ -458,14 +458,16 @@ trix <effect> [options]
 
 ### 远程 / SSH 会话
 
-这部分包含在 **0.11.1-beta.2** 测试版中；`v0.11.0` 没有 `--perf` 和新编码器。
+这部分包含在 **0.11.1-beta.3** 测试版中；`v0.11.0` 没有 `--perf` 和新编码器。
 
 服务端渲染一帧远低于 1 ms，所以远程卡顿几乎总是**终端流量**问题，而不是 CPU。一帧全屏 truecolor 有 40–120 KiB，30 FPS 就是 1.2–3.5 MiB/s（还没算 SSH 开销）。终端解析不过来时，SSH 和 pty 缓冲区会堆积，用户看到的是几秒前的旧帧——感觉像输入延迟，而不只是帧率低。
 
-默认设置在不改变画面设计的前提下解决了这个问题：
+如果按键要过几秒才有反应，说明终端或 SSH 客户端已经落后，积压的旧帧还在排队，而不是场景 CPU 的问题。减少新输出、让它排空即可。`i` 面板里的 **write** 时间就是直接信号：write 很大说明 pty 被阻塞。如果仍然卡，可以试 `--perf low --color 256 --fps 12`、`--transition none`、`--no-sync`，或者把终端窗口调小。
 
-- **`--perf balanced`**（默认）：每通道最多 3/255 的颜色偏差、去掉冗余光标移动、行尾用 `EL` 擦除、开启同步输出，并带帧率调节器。如果一次写入超过帧预算的 75%，帧率会逐级下降（30 → 24 → 19 → 15 → 12 FPS）；动画时钟仍按真实时间推进，所以特效速度不变，只是少画几帧。链路恢复后它会慢慢升回去。
-- **`--perf low`**：每通道 6/255 颜色偏差、10 FPS 下限，适合很慢的链路、软件渲染客户端或繁忙 CPU。
+默认设置在不改变画面设计的前提下解决了常见情况：
+
+- **`--perf balanced`**（默认）：每通道最多 3/255 的颜色偏差、去掉冗余光标移动、行尾用 `EL` 擦除、开启同步输出，并带帧率调节器。如果一次写入超过帧预算的 30%，帧率会逐级下降（30 → 24 → 19 → 15 → 12 FPS）；动画时钟仍按真实时间推进，所以特效速度不变，只是少画几帧。链路恢复后它会慢慢升回去。
+- **`--perf low`**：每通道 6/255 颜色偏差、**20 FPS 上限**、10 FPS 下限，过渡缩短到 0.2 秒，适合很慢的链路或软件渲染客户端。
 - **`--color 256`**：其余 SGR 字节大约减半。这些特效本身就是 ASCII 艺术，调色板近似很难看出来；`--color 16` 是最后手段。
 - **`--no-sync`**：如果某个终端对 DEC 2026 处理有问题，可以关掉同步输出。
 - **`--transition none`**：去掉同时渲染两个场景的 0.6 秒过渡，极弱链路下可进一步减少峰值流量。
@@ -548,12 +550,12 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-当前 **260** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
+当前 **261** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
 
 ## 版本与回退
 
 - **当前版本：0.11.0**（`trix --version`），tag **`v0.11.0`**（2026-10-22）。
-- **测试版：0.11.1-beta.2**（tag **`v0.11.1-beta.2`**，pre-release）：远程/SSH 渲染重构、`--perf high|balanced|low` 与 `--no-sync`。安装时设置 `TRIX_VERSION=0.11.1-beta.2`。
+- **测试版：0.11.1-beta.3**（tag **`v0.11.1-beta.3`**，pre-release）：远程/SSH 渲染重构、`--perf high|balanced|low` 与 `--no-sync`。安装时设置 `TRIX_VERSION=0.11.1-beta.3`。
 - **0.11.0**：新增四个生成式场景：`volcano`、`launch`、`plasma`、`interstellar`。
 - **0.10.0**：新增 `dsh`（深度求索 / DeepSeek Harness）与 `vibe`（氛围编程 / Vibe Coding），以及 `--trail` 参数。
 - **0.9.1**：包名/仓库改为 `trix-effects`（命令仍是 `trix`），加固 `install.sh`，新增缓存安全的 ASCII 预览和贡献/发布文档。
