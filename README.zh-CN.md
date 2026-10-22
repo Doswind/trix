@@ -24,6 +24,9 @@
 # macOS / Linux，预编译（使用最新 GitHub Release）
 curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | sh
 
+# 测试版：远程 / SSH 渲染重构
+curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | TRIX_VERSION=0.11.1-beta.1 sh
+
 # 有 Rust 工具链，直接从 git 安装
 cargo install --git https://github.com/Doswind/trix-effects --locked
 
@@ -455,6 +458,8 @@ trix <effect> [options]
 
 ### 远程 / SSH 会话
 
+这部分包含在 **0.11.1-beta.1** 测试版中；`v0.11.0` 没有 `--perf` 和新编码器。
+
 服务端渲染一帧远低于 1 ms，所以远程卡顿几乎总是**终端流量**问题，而不是 CPU。一帧全屏 truecolor 有 40–120 KiB，30 FPS 就是 1.2–3.5 MiB/s（还没算 SSH 开销）。终端解析不过来时，SSH 和 pty 缓冲区会堆积，用户看到的是几秒前的旧帧——感觉像输入延迟，而不只是帧率低。
 
 默认设置在不改变画面设计的前提下解决了这个问题：
@@ -548,7 +553,7 @@ cargo fmt --check
 ## 版本与回退
 
 - **当前版本：0.11.0**（`trix --version`），tag **`v0.11.0`**（2026-10-22）。
-- **`master` 上尚未发布**：远程/SSH 渲染重构、`--perf high|balanced|low` 与 `--no-sync`。
+- **测试版：0.11.1-beta.1**（tag **`v0.11.1-beta.1`**，pre-release）：远程/SSH 渲染重构、`--perf high|balanced|low` 与 `--no-sync`。安装时设置 `TRIX_VERSION=0.11.1-beta.1`。
 - **0.11.0**：新增四个生成式场景：`volcano`、`launch`、`plasma`、`interstellar`。
 - **0.10.0**：新增 `dsh`（深度求索 / DeepSeek Harness）与 `vibe`（氛围编程 / Vibe Coding），以及 `--trail` 参数。
 - **0.9.1**：包名/仓库改为 `trix-effects`（命令仍是 `trix`），加固 `install.sh`，新增缓存安全的 ASCII 预览和贡献/发布文档。

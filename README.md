@@ -24,6 +24,9 @@
 # macOS / Linux, prebuilt (uses the latest GitHub release)
 curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | sh
 
+# Beta: remote/SSH renderer test build
+curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | TRIX_VERSION=0.11.1-beta.1 sh
+
 # Rust toolchain, straight from git
 cargo install --git https://github.com/Doswind/trix-effects --locked
 
@@ -455,6 +458,8 @@ Environment: Apple Silicon (ARM64), macOS, Rust 1.96.1, `--release` (LTO + `code
 
 ### Remote / SSH sessions
 
+This work ships in the **0.11.1-beta.1** pre-release; `v0.11.0` does not include `--perf` or the new encoder.
+
 The server renders a frame in well under a millisecond, so lag in a remote session is almost always **terminal traffic**, not CPU. A full-screen truecolor frame is 40–120 KiB; at 30 FPS that is 1.2–3.5 MiB/s before SSH overhead. When the client cannot parse that fast, the SSH and pty buffers fill up and the terminal starts showing frames that are seconds old — which feels like input lag, not just a lower frame rate.
 
 The defaults fix that without changing the artwork:
@@ -548,7 +553,7 @@ There are currently **260** unit / integration tests. See `.github/workflows/ci.
 ## Versions and rollback
 
 - **Current version: 0.11.0** (`trix --version`), tag **`v0.11.0`** (2026-10-22).
-- **Unreleased on `master`:** the remote/SSH renderer overhaul, `--perf high|balanced|low` and `--no-sync`.
+- **Beta: 0.11.1-beta.1** (tag **`v0.11.1-beta.1`**, pre-release): remote/SSH renderer overhaul, `--perf high|balanced|low` and `--no-sync`. Install with `TRIX_VERSION=0.11.1-beta.1`.
 - **0.11.0** adds four generative scenes: `volcano`, `launch`, `plasma` and `interstellar`.
 - **0.10.0** adds `dsh` (DeepSeek Harness) and `vibe` (Vibe Coding), plus the `--trail` knob.
 - **0.9.1** renames the package/repository to `trix-effects` (command stays `trix`), hardens `install.sh`, adds cache-safe ASCII previews and contributor/launch docs.

@@ -2,8 +2,9 @@
 
 **English** | [简体中文](CHANGELOG.zh-CN.md)
 
-## Unreleased
+## 0.11.1-beta.1 — 2026-10-22
 
+- First beta of the post-0.11.0 renderer work. Install with `TRIX_VERSION=0.11.1-beta.1` (see Install).
 - **Remote / SSH rendering overhaul**: interactive frames are now encoded by a cursor-aware diff that never re-sends a `CUP` when the cursor is already in place, erases cleared row tails with `EL`, and can share one SGR sequence across colours that differ by at most a few levels. Each frame is wrapped in DEC 2026 synchronized output, and a frame-rate governor lowers the target rate (30 → 24 → 19 → 15 → 12 FPS) when writes take more than 75% of the frame budget instead of queueing stale frames; the animation clock stays on wall time, so effects keep their speed. New `--perf high|balanced|low` (default `balanced`: 3/255 colour slack, 12 FPS floor; `low`: 6/255 and 10 FPS) and `--no-sync`. The heaviest 160x48 scene, `plasma`, drops from 80.5 to 39.9 KiB/frame in balanced mode; at 120x36 the default profile emits about 22/27/19 KiB/frame for plasma/fire/storm. The `--bench` output now reports ANSI p95 and max in addition to the mean, and the encoder is covered by a small ANSI-terminal test that replays random frames and checks every glyph, foreground and background against the canvas. READMEs, help, `--help all`, completions and both changelogs are updated; `--perf` and `--no-sync` are checked by `scripts/check_docs.py`; tests grew to 260.
 
 ## 0.11.0 — 2026-10-22
