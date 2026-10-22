@@ -2,6 +2,10 @@
 
 [English](CHANGELOG.md) | **简体中文**
 
+## 0.11.1-beta.2 — 2026-10-22
+
+- `0.11.1-beta.1` 的重试版：Linux x86_64 改用 `cross` 构建，不再执行 `apt-get install musl-tools`；所有发布任务加了 30 分钟超时。beta.1 的 x86_64 运行器卡在 apt。安装时设置 `TRIX_VERSION=0.11.1-beta.2`。
+
 ## 0.11.1-beta.1 — 2026-10-22
 
 - 0.11.0 之后渲染工作的首个测试版。安装时设置 `TRIX_VERSION=0.11.1-beta.1`（见安装一节）。

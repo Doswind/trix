@@ -2,6 +2,10 @@
 
 **English** | [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.11.1-beta.2 — 2026-10-22
+
+- Retry of `0.11.1-beta.1`: the Linux x86_64 job builds with `cross` instead of `apt-get install musl-tools`, and every release job has a 30-minute timeout. The beta.1 x86_64 runner stalled in apt. Install with `TRIX_VERSION=0.11.1-beta.2`.
+
 ## 0.11.1-beta.1 — 2026-10-22
 
 - First beta of the post-0.11.0 renderer work. Install with `TRIX_VERSION=0.11.1-beta.1` (see Install).
