@@ -538,7 +538,7 @@ There are currently **254** unit / integration tests. See `.github/workflows/ci.
 
 ## Versions and rollback
 
-- **Current unreleased version: 0.11.0** (`trix --version`); no tag or GitHub Release yet.
+- **Current version: 0.11.0** (`trix --version`), tag **`v0.11.0`** (2026-10-22).
 - **0.11.0** adds four generative scenes: `volcano`, `launch`, `plasma` and `interstellar`.
 - **0.10.0** adds `dsh` (DeepSeek Harness) and `vibe` (Vibe Coding), plus the `--trail` knob.
 - **0.9.1** renames the package/repository to `trix-effects` (command stays `trix`), hardens `install.sh`, adds cache-safe ASCII previews and contributor/launch docs.

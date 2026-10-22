@@ -538,7 +538,7 @@ cargo fmt --check
 
 ## 版本与回退
 
-- **当前未发布版本：0.11.0**（`trix --version`），尚未打 tag 或创建 GitHub Release。
+- **当前版本：0.11.0**（`trix --version`），tag **`v0.11.0`**（2026-10-22）。
 - **0.11.0**：新增四个生成式场景：`volcano`、`launch`、`plasma`、`interstellar`。
 - **0.10.0**：新增 `dsh`（深度求索 / DeepSeek Harness）与 `vibe`（氛围编程 / Vibe Coding），以及 `--trail` 参数。
 - **0.9.1**：包名/仓库改为 `trix-effects`（命令仍是 `trix`），加固 `install.sh`，新增缓存安全的 ASCII 预览和贡献/发布文档。

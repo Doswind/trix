@@ -171,7 +171,7 @@ Targets: `awesome-rust`, `awesome-cli-apps`, `awesome-terminal`,
 
 ## Launch checklist
 
-- [ ] the next release is green and the three archives + `SHA256SUMS` exist.
+- [ ] v0.11.0 is green and the three archives + `SHA256SUMS` exist.
 - [ ] README first screen has the overview image, one-liner and install command.
 - [ ] `docs/social-preview.png` uploaded in repository settings.
 - [ ] Topics and description set.

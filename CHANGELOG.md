@@ -2,7 +2,7 @@
 
 **English** | [简体中文](CHANGELOG.zh-CN.md)
 
-## 0.11.0 — unreleased (2026-10-19)
+## 0.11.0 — 2026-10-22
 
 - Added four generative scenes and rebuilt `dsh`:
   - `volcano` **Volcano** (火山爆发): rebuilt as one continuous eruption instead of a loop. The sky starts clear over a compact truncated cone; the eruption then builds a thick, churning canopy about half the screen wide. Its dense middle keeps rolling as fresh ash is supplied and never shrinks, while the flanks stay thinner. Lava bombs and rock blocks rain out of the middle and explode on landing, a continuous fountain feeds the column, two curved lava rivers crawl down the cone, and volcanic lightning crawls through the ash. ASCII by default; `--unicode` uses solid blocks for the mountain and ash.
