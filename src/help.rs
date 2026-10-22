@@ -598,6 +598,8 @@ fn curated_options(style: &HelpStyle) -> Vec<String> {
                 "--ascii",
                 "--color",
                 "--no-color",
+                "--perf",
+                "--no-sync",
                 "--no-hud",
                 "--no-alt",
             ],
@@ -834,6 +836,8 @@ fn common_rows() -> &'static [(&'static str, &'static str, &'static str)] {
             "auto",
         ),
         ("--no-color", "alias for --color mono", ""),
+        ("--perf <mode>", "high | balanced | low", "balanced"),
+        ("--no-sync", "disable synchronized output", ""),
     ]
 }
 
@@ -1178,6 +1182,18 @@ const RENDER: &[OptRow] = &[
         flags: "--no-color",
         arg: "",
         desc: "alias for --color mono",
+        default: None,
+    },
+    OptRow {
+        flags: "--perf",
+        arg: "<mode>",
+        desc: "high | balanced | low: colour slack and adaptive frame rate",
+        default: Some("balanced"),
+    },
+    OptRow {
+        flags: "--no-sync",
+        arg: "",
+        desc: "disable synchronized output (DECSET 2026)",
         default: None,
     },
     OptRow {
@@ -1700,6 +1716,8 @@ _trix() {{
     '--ascii[force ASCII glyphs]' \
     '--color[color mode]:mode:(auto truecolor 256 16 mono)' \
     '--no-color[monochrome]' \
+    '--perf[renderer profile]:mode:(high balanced low)' \
+    '--no-sync[disable synchronized output]' \
     '--no-hud[hide the HUD]' \
     '--no-alt[do not use the alternate screen]' \
     '--ghost[monalisa: pure-ASCII ghost]' \

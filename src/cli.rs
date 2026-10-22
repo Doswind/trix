@@ -33,6 +33,69 @@ impl Charset {
     }
 }
 
+/// How aggressively the renderer trades imperceptible colour steps for
+/// terminal traffic.  SSH sessions and weak terminal emulators are the reason
+/// this exists: the artwork, layout and frame rate stay the same, only the
+/// amount of ANSI the emulator has to parse changes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PerfMode {
+    /// Exact 24-bit colours, no frame-rate adaptation.
+    High,
+    /// Imperceptible colour slack plus a lower frame-rate floor under load.
+    Balanced,
+    /// More colour slack and a lower floor for slow links / weak terminals.
+    Low,
+}
+
+impl PerfMode {
+    pub fn parse(s: &str) -> Option<Self> {
+        match s.to_ascii_lowercase().as_str() {
+            "high" | "quality" | "exact" | "local" => Some(PerfMode::High),
+            "balanced" | "auto" | "default" => Some(PerfMode::Balanced),
+            "low" | "fast" | "remote" | "ssh" | "slow" => Some(PerfMode::Low),
+            _ => None,
+        }
+    }
+
+    pub fn key(self) -> &'static str {
+        match self {
+            PerfMode::High => "high",
+            PerfMode::Balanced => "balanced",
+            PerfMode::Low => "low",
+        }
+    }
+
+    /// Maximum per-channel colour drift the encoder may introduce.
+    pub fn color_slack(self) -> u8 {
+        match self {
+            PerfMode::High => 0,
+            PerfMode::Balanced => 3,
+            PerfMode::Low => 6,
+        }
+    }
+
+    /// Lower bound for the adaptive frame rate (the requested rate when the
+    /// profile does not adapt).  The floor stays at 10 fps because scenes
+    /// clamp their timestep to 0.1 s; going lower would make the animation
+    /// play in slow motion instead of just dropping frames.
+    pub fn min_fps(self, requested: u32) -> u32 {
+        let floor = match self {
+            PerfMode::High => 0,
+            PerfMode::Balanced => 12,
+            PerfMode::Low => 10,
+        };
+        if floor == 0 {
+            requested
+        } else {
+            floor.min(requested).max(1)
+        }
+    }
+
+    pub fn adaptive(self) -> bool {
+        !matches!(self, PerfMode::High)
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Options {
     pub effect: Option<String>,
@@ -47,6 +110,10 @@ pub struct Options {
     pub theme: Option<String>,
     pub charset: Option<Charset>,
     pub color: Option<ColorMode>,
+    /// Renderer trade-off profile for remote / slow terminals.
+    pub perf: PerfMode,
+    /// Disable DECSET 2026 synchronized output.
+    pub no_sync: bool,
     pub duration: Option<f64>,
     pub density: f32,
     pub spin: f32,
@@ -97,6 +164,8 @@ impl Default for Options {
             theme: None,
             charset: None,
             color: None,
+            perf: PerfMode::Balanced,
+            no_sync: false,
             duration: None,
             density: 1.0,
             spin: 0.5,
@@ -177,6 +246,13 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                 "no-alt" | "no-altscreen" => opts.no_alt = true,
                 "no-hud" => opts.no_hud = true,
                 "no-color" => opts.color = Some(ColorMode::Mono),
+                "no-sync" | "no-synchronized" => opts.no_sync = true,
+                "perf" | "performance" => {
+                    let v = take_value(args, &mut i, inline, "--perf")?;
+                    opts.perf = PerfMode::parse(&v).ok_or_else(|| {
+                        format!("invalid --perf '{v}' (expected high, balanced or low)")
+                    })?;
+                }
                 "ascii" => opts.charset = Some(Charset::Ascii),
                 "kana" => opts.charset = Some(Charset::Kana),
                 "unicode" | "utf8" => opts.charset = Some(Charset::Unicode),
@@ -457,6 +533,8 @@ pub const PRIMARY_FLAGS: &[&str] = &[
     "--ascii",
     "--color",
     "--no-color",
+    "--perf",
+    "--no-sync",
     "--no-hud",
     "--no-alt",
     "--density",
@@ -758,6 +836,35 @@ mod tests {
             panic!()
         };
         assert!(!o.ghost);
+    }
+
+    #[test]
+    fn parses_perf_profiles() {
+        let Parsed::Run(o) = parse_args(&args("rain --perf high")).unwrap() else {
+            panic!()
+        };
+        assert_eq!(o.perf, PerfMode::High);
+        assert_eq!(o.perf.color_slack(), 0);
+        assert!(!o.perf.adaptive());
+
+        let Parsed::Run(o) = parse_args(&args("rain")).unwrap() else {
+            panic!()
+        };
+        assert_eq!(o.perf, PerfMode::Balanced);
+        assert!(o.perf.adaptive());
+        assert_eq!(o.perf.min_fps(30), 12);
+        assert_eq!(o.perf.min_fps(8), 8);
+        assert!(!o.no_sync);
+
+        let Parsed::Run(o) = parse_args(&args("rain --perf low --no-sync")).unwrap() else {
+            panic!()
+        };
+        assert_eq!(o.perf, PerfMode::Low);
+        assert!(o.perf.color_slack() >= 6);
+        assert_eq!(o.perf.min_fps(30), 10);
+        assert!(o.no_sync);
+
+        assert!(parse_args(&args("rain --perf turbo")).is_err());
     }
 
     #[test]

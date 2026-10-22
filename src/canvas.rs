@@ -1,9 +1,21 @@
 //! Double-buffered character canvas with ANSI diff rendering.
 //!
 //! A frame is built into `cells`; `present` only emits cells that differ
-//! from the previous frame.  This keeps terminal traffic (and CPU spent in
-//! the terminal emulator) low for sparse effects, while busy effects still
-//! write one contiguous buffer per frame.
+//! from what the terminal is currently showing.  This keeps terminal traffic
+//! (and CPU spent in the terminal emulator) low for sparse effects, while
+//! busy effects still write one contiguous buffer per frame.
+//!
+//! The encoder is deliberately frugal because it is the only part of `trix`
+//! that runs over a network in an SSH session:
+//!
+//! * it tracks the cursor and the live SGR colours, so a run that starts where
+//!   the previous one ended costs no escape sequence at all;
+//! * cleared trailing cells use `EL` instead of a row of spaces;
+//! * neighbouring colours may differ by a couple of levels and still share one
+//!   SGR sequence (`PresentOptions::color_slack`), which collapses the tiny
+//!   per-cell deltas of a moving gradient without a visible change;
+//! * frames can be wrapped in synchronized-output markers so the emulator
+//!   paints them atomically instead of tearing at 30 Hz.
 
 use std::io::{self, Write};
 
@@ -29,11 +41,6 @@ impl Cell {
     pub fn new(ch: char, fg: Rgb) -> Self {
         Cell { ch, fg, bg: None }
     }
-
-    #[inline]
-    fn visible_eq(&self, other: &Cell) -> bool {
-        self.bg == other.bg && self.ch == other.ch && (self.ch == ' ' || self.fg == other.fg)
-    }
 }
 
 impl Default for Cell {
@@ -42,13 +49,114 @@ impl Default for Cell {
     }
 }
 
+/// How a frame is encoded for the terminal.
+///
+/// `color_slack` is a per-channel tolerance: a cell whose colour is within
+/// `slack` levels of the colour the emitter already has selected is painted
+/// with that colour instead of costing another SGR sequence.  Gradients are
+/// built from one-level steps, so a small slack removes most of the colour
+/// churn of a moving scene while keeping the difference (at most `slack`/255)
+/// below what an eye can pick out.  Zero means "exactly the requested RGB".
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PresentOptions {
+    pub color_slack: u8,
+    /// Wrap the frame in `DECSET 2026` synchronized-output markers.
+    pub sync: bool,
+    /// Use `EL` for a cleared row tail instead of writing spaces.
+    pub erase_tail: bool,
+    /// Avoid redundant cursor addressing.
+    pub cursor_moves: bool,
+}
+
+impl Default for PresentOptions {
+    fn default() -> Self {
+        PresentOptions {
+            color_slack: 0,
+            sync: false,
+            erase_tail: true,
+            cursor_moves: true,
+        }
+    }
+}
+
+/// Per-channel colour distance test used by the encoder.
+#[inline]
+fn near(a: Rgb, b: Rgb, slack: u8) -> bool {
+    a.r.abs_diff(b.r) <= slack && a.g.abs_diff(b.g) <= slack && a.b.abs_diff(b.b) <= slack
+}
+
+#[inline]
+fn bg_eq(a: Option<Rgb>, b: Option<Rgb>, slack: u8) -> bool {
+    match (a, b) {
+        (None, None) => true,
+        (Some(a), Some(b)) => near(a, b, slack),
+        _ => false,
+    }
+}
+
+#[inline]
+fn fg_eq(a: Rgb, b: Rgb, slack: u8) -> bool {
+    near(a, b, slack)
+}
+
+#[inline]
+fn digits(mut n: usize) -> usize {
+    let mut d = 1;
+    while n >= 10 {
+        n /= 10;
+        d += 1;
+    }
+    d
+}
+
+/// Move the terminal cursor to `(y, x)` with the shortest sequence we can
+/// assume every Unix terminal understands.
+fn move_cursor(out: &mut Vec<u8>, cursor: &mut Option<(usize, usize)>, y: usize, x: usize) {
+    if *cursor == Some((y, x)) {
+        return;
+    }
+    if let Some((cy, cx)) = *cursor {
+        if cy == y {
+            if cx < x {
+                let forward = x - cx;
+                // `CUF` is ESC [ digits C: three bytes plus the digits.
+                let fwd_len = 3 + digits(forward);
+                let abs_len = 4 + digits(y + 1) + digits(x + 1);
+                if fwd_len < abs_len {
+                    let _ = write!(out, "\x1b[{forward}C");
+                    *cursor = Some((y, x));
+                    return;
+                }
+            } else if cx > x {
+                // Carriage return plus a short forward move is cheaper than
+                // a full `CUP` when the target is near the left edge.
+                let len = 1 + if x == 0 { 0 } else { 3 + digits(x) };
+                let abs_len = 4 + digits(y + 1) + digits(x + 1);
+                if len < abs_len {
+                    out.push(b'\r');
+                    if x > 0 {
+                        let _ = write!(out, "\x1b[{x}C");
+                    }
+                    *cursor = Some((y, x));
+                    return;
+                }
+            }
+        }
+    }
+    let _ = write!(out, "\x1b[{};{}H", y + 1, x + 1);
+    *cursor = Some((y, x));
+}
+
 pub struct Canvas {
     pub w: usize,
     pub h: usize,
     pub cells: Vec<Cell>,
-    prev: Vec<Cell>,
+    /// What the terminal is currently displaying (not what we asked for: with
+    /// colour slack the two can differ slightly).
+    screen: Vec<Cell>,
     last_fg: Option<Rgb>,
     last_bg: Option<Rgb>,
+    cursor: Option<(usize, usize)>,
     out: Vec<u8>,
     full_ansi: Vec<u8>,
     /// Test-only guard: scenes must not write text into the HUD rows.
@@ -63,9 +171,10 @@ impl Canvas {
             w,
             h,
             cells: vec![Cell::EMPTY; w * h],
-            prev: vec![Cell::EMPTY; w * h],
+            screen: vec![Cell::EMPTY; w * h],
             last_fg: None,
             last_bg: None,
+            cursor: None,
             out: Vec::with_capacity(w * h * 8 + 512),
             full_ansi: Vec::with_capacity(w * h * 8 + 512),
             chrome_guard: false,
@@ -97,10 +206,11 @@ impl Canvas {
         self.h = h;
         self.cells.clear();
         self.cells.resize(w * h, Cell::EMPTY);
-        self.prev.clear();
-        self.prev.resize(w * h, Cell::EMPTY);
+        self.screen.clear();
+        self.screen.resize(w * h, Cell::EMPTY);
         self.last_fg = None;
         self.last_bg = None;
+        self.cursor = None;
         self.out.clear();
         self.out.reserve(w * h * 8 + 512);
         self.full_ansi.clear();
@@ -108,9 +218,10 @@ impl Canvas {
 
     /// Forget what is on screen so the next `present` repaints all cells.
     pub fn invalidate(&mut self) {
-        self.prev.fill(Cell::EMPTY);
+        self.screen.fill(Cell::EMPTY);
         self.last_fg = None;
         self.last_bg = None;
+        self.cursor = None;
     }
 
     #[inline]
@@ -329,58 +440,186 @@ impl Canvas {
 
     /// Diff-compose this frame into the internal buffer and write it.
     pub fn present<W: Write>(&mut self, dst: &mut W, mode: ColorMode) -> io::Result<usize> {
+        self.present_with(dst, mode, PresentOptions::default())
+    }
+
+    /// Diff-compose with an explicit encoder profile.
+    pub fn present_with<W: Write>(
+        &mut self,
+        dst: &mut W,
+        mode: ColorMode,
+        opts: PresentOptions,
+    ) -> io::Result<usize> {
         let mut out = std::mem::take(&mut self.out);
         out.clear();
+        // Reserve the sync marker at the front; if the frame turns out to be
+        // empty we drop it again instead of waking the terminal up twice.
+        let body_start = if opts.sync {
+            out.extend_from_slice(b"\x1b[?2026h");
+            out.len()
+        } else {
+            0
+        };
+        let color = mode.is_color();
+        let slack = if color { opts.color_slack } else { 0 };
         let mut last_fg = self.last_fg;
         let mut last_bg = self.last_bg;
+        let mut cursor = self.cursor;
 
         // Leaving a scene that painted a background: make sure the terminal
         // goes back to the baseline black even if this frame changes nothing.
-        if mode.is_color() && last_bg.is_some() && !self.cells.iter().any(|c| c.bg.is_some()) {
+        if color && last_bg.is_some() && !self.cells.iter().any(|c| c.bg.is_some()) {
             out.extend_from_slice(b"\x1b[40m");
             last_bg = None;
         }
 
+        let cell_eq = |a: Cell, b: Cell| -> bool {
+            if a.ch != b.ch {
+                return false;
+            }
+            if !color {
+                // Mono mode has no background or foreground: only the glyph
+                // is visible.
+                return true;
+            }
+            if !bg_eq(a.bg, b.bg, slack) {
+                return false;
+            }
+            a.ch == ' ' || fg_eq(a.fg, b.fg, slack)
+        };
+
         for y in 0..self.h {
             let row = y * self.w;
+
+            // Trailing blank cells can be cleared with one `EL` instead of a
+            // row of spaces (and a colour reset per space).
+            let mut tail = self.w;
+            while tail > 0 {
+                let cell = self.cells[row + tail - 1];
+                if cell.ch == ' ' && cell.bg.is_none() {
+                    tail -= 1;
+                } else {
+                    break;
+                }
+            }
+            let tail_dirty =
+                (tail..self.w).any(|x| !cell_eq(self.cells[row + x], self.screen[row + x]));
+            let use_el = opts.erase_tail && tail_dirty && self.w - tail >= 4;
+            let end = if use_el { tail } else { self.w };
+
             let mut x = 0;
-            while x < self.w {
+            while x < end {
                 let idx = row + x;
-                if self.cells[idx].visible_eq(&self.prev[idx]) {
+                if cell_eq(self.cells[idx], self.screen[idx]) {
                     x += 1;
                     continue;
                 }
-                // Start of a changed run: position the cursor once.
-                let _ = write!(out, "\x1b[{};{}H", y + 1, x + 1);
-                while x < self.w {
+                if opts.cursor_moves {
+                    move_cursor(&mut out, &mut cursor, y, x);
+                } else {
+                    let _ = write!(out, "\x1b[{};{}H", y + 1, x + 1);
+                    cursor = Some((y, x));
+                }
+                let mut wide = false;
+                while x < end {
                     let idx = row + x;
                     let cell = self.cells[idx];
-                    if cell.visible_eq(&self.prev[idx]) {
+                    if cell_eq(cell, self.screen[idx]) {
                         break;
                     }
-                    if mode.is_color() {
-                        if cell.ch != ' ' && last_fg != Some(cell.fg) {
-                            write_fg(&mut out, cell.fg, mode);
-                            last_fg = Some(cell.fg);
-                        }
-                        if last_bg != cell.bg {
-                            match cell.bg {
-                                Some(bg) => write_bg(&mut out, bg, mode),
-                                None => out.extend_from_slice(b"\x1b[40m"),
+                    if !cell.ch.is_ascii() {
+                        wide = true;
+                    }
+                    let display_fg;
+                    let display_bg;
+                    if color {
+                        if cell.ch == ' ' {
+                            // A space never shows the foreground colour, so
+                            // leaving the current SGR fg alone is free.
+                            display_fg = self.screen[idx].fg;
+                        } else {
+                            match last_fg {
+                                Some(fg) if near(cell.fg, fg, slack) => {
+                                    display_fg = fg;
+                                }
+                                _ => {
+                                    write_fg(&mut out, cell.fg, mode);
+                                    last_fg = Some(cell.fg);
+                                    display_fg = cell.fg;
+                                }
                             }
-                            last_bg = cell.bg;
                         }
+                        display_bg = match (last_bg, cell.bg) {
+                            (None, None) => None,
+                            (Some(bg), Some(target)) if near(bg, target, slack) => Some(bg),
+                            (_, Some(target)) => {
+                                write_bg(&mut out, target, mode);
+                                last_bg = Some(target);
+                                Some(target)
+                            }
+                            (Some(_), None) => {
+                                out.extend_from_slice(b"\x1b[40m");
+                                last_bg = None;
+                                None
+                            }
+                        };
+                    } else {
+                        display_fg = cell.fg;
+                        display_bg = cell.bg;
                     }
                     let mut buf = [0u8; 4];
                     out.extend_from_slice(cell.ch.encode_utf8(&mut buf).as_bytes());
-                    self.prev[idx] = cell;
+                    self.screen[idx] = Cell {
+                        ch: cell.ch,
+                        fg: display_fg,
+                        bg: display_bg,
+                    };
+                    cursor = if x + 1 < self.w {
+                        Some((y, x + 1))
+                    } else {
+                        // The terminal may keep the cursor on the last column
+                        // when autowrap is off; do not trust it.
+                        None
+                    };
                     x += 1;
                 }
+                if wide {
+                    // Wide glyphs advance two columns in some terminals, so a
+                    // relative move after this run would be unsafe.
+                    cursor = None;
+                }
             }
+
+            if use_el {
+                if opts.cursor_moves {
+                    move_cursor(&mut out, &mut cursor, y, tail);
+                } else {
+                    let _ = write!(out, "\x1b[{};{}H", y + 1, tail + 1);
+                }
+                if color && last_bg.is_some() {
+                    // `EL` paints with the current background; make sure that
+                    // is the default before erasing.
+                    out.extend_from_slice(b"\x1b[40m");
+                    last_bg = None;
+                }
+                out.extend_from_slice(b"\x1b[K");
+                for cell in &mut self.screen[row + tail..row + self.w] {
+                    *cell = Cell::EMPTY;
+                }
+                cursor = Some((y, tail));
+            }
+        }
+
+        if out.len() == body_start {
+            // Nothing changed: skip the write entirely, sync markers included.
+            out.clear();
+        } else if opts.sync {
+            out.extend_from_slice(b"\x1b[?2026l");
         }
 
         self.last_fg = last_fg;
         self.last_bg = last_bg;
+        self.cursor = cursor;
         let res = dst.write_all(&out).and_then(|_| dst.flush());
         self.out = out;
         res?;
@@ -515,7 +754,10 @@ mod tests {
         assert_eq!(sink.len(), 0);
         c.set(2, 1, 'b', Rgb::WHITE);
         c.present(&mut sink, ColorMode::True).unwrap();
-        assert!(sink.windows(4).any(|w| w == b"\x1b[2;"));
+        // The cursor already sits where the new cell starts, so the encoder
+        // must not waste a `CUP` sequence on it.
+        assert!(sink.contains(&b'b'), "{sink:?}");
+        assert!(!sink.windows(4).any(|w| w == b"\x1b[2;"), "{sink:?}");
     }
 
     #[test]
@@ -608,5 +850,276 @@ mod tests {
         let first = text.lines().next().unwrap_or("");
         assert!(first.contains("48;2;10;20;30"), "{first:?}");
         assert!(first.contains("m        "), "{first:?}");
+    }
+
+    #[test]
+    fn color_slack_is_a_hard_error_bound() {
+        let mut c = Canvas::new(3, 1);
+        let base = Rgb::new(100, 100, 100);
+        c.set(0, 0, 'a', base);
+        c.set(1, 0, 'b', base);
+        c.set(2, 0, 'c', base);
+        let mut sink = Vec::new();
+        c.present(&mut sink, ColorMode::True).unwrap();
+        sink.clear();
+        // Within slack: a colour-only drift must not cost any traffic.
+        c.set(1, 0, 'b', Rgb::new(102, 97, 103));
+        let opts = PresentOptions {
+            color_slack: 3,
+            ..PresentOptions::default()
+        };
+        c.present_with(&mut sink, ColorMode::True, opts).unwrap();
+        assert_eq!(sink.len(), 0, "{sink:?}");
+
+        // Beyond slack: the cell is repainted, and the emitted colour is the
+        // requested one (max error is bounded by the slack).
+        c.set(2, 0, 'c', Rgb::new(120, 120, 120));
+        sink.clear();
+        c.present_with(&mut sink, ColorMode::True, opts).unwrap();
+        assert!(sink.windows(4).any(|w| w == b"38;2"), "{sink:?}");
+    }
+
+    /// A deliberately small ANSI terminal used to prove that the encoder's
+    /// cursor tricks and `EL` erases rebuild the canvas exactly.
+    struct Emu {
+        w: usize,
+        h: usize,
+        ch: Vec<char>,
+        fg: Vec<Option<Rgb>>,
+        bg: Vec<Option<Rgb>>,
+        cur: (usize, usize),
+        live_fg: Option<Rgb>,
+        live_bg: Option<Rgb>,
+    }
+
+    impl Emu {
+        fn new(w: usize, h: usize) -> Self {
+            Emu {
+                w,
+                h,
+                ch: vec![' '; w * h],
+                fg: vec![None; w * h],
+                bg: vec![None; w * h],
+                cur: (0, 0),
+                live_fg: None,
+                live_bg: None,
+            }
+        }
+
+        fn put(&mut self, ch: char) {
+            let (r, c) = self.cur;
+            if r < self.h && c < self.w {
+                let idx = r * self.w + c;
+                self.ch[idx] = ch;
+                self.fg[idx] = self.live_fg;
+                self.bg[idx] = self.live_bg;
+            }
+            self.cur.1 = (c + 1).min(self.w);
+        }
+
+        fn sgr(&mut self, params: &[u8]) {
+            let text = std::str::from_utf8(params).unwrap_or("");
+            let nums: Vec<u32> = text
+                .split(';')
+                .map(|p| p.parse::<u32>().unwrap_or(0))
+                .collect();
+            let mut i = 0;
+            while i < nums.len() {
+                match nums[i] {
+                    0 => {
+                        self.live_fg = None;
+                        self.live_bg = None;
+                    }
+                    38 if i + 4 < nums.len() && nums[i + 1] == 2 => {
+                        self.live_fg = Some(Rgb::new(
+                            nums[i + 2] as u8,
+                            nums[i + 3] as u8,
+                            nums[i + 4] as u8,
+                        ));
+                        i += 4;
+                    }
+                    48 if i + 4 < nums.len() && nums[i + 1] == 2 => {
+                        self.live_bg = Some(Rgb::new(
+                            nums[i + 2] as u8,
+                            nums[i + 3] as u8,
+                            nums[i + 4] as u8,
+                        ));
+                        i += 4;
+                    }
+                    40 | 49 => self.live_bg = None,
+                    39 => self.live_fg = None,
+                    _ => {}
+                }
+                i += 1;
+            }
+        }
+
+        fn feed(&mut self, bytes: &[u8]) {
+            let mut i = 0;
+            while i < bytes.len() {
+                if bytes[i] == 0x1b {
+                    if bytes.get(i + 1) != Some(&b'[') {
+                        i += 2;
+                        continue;
+                    }
+                    let mut j = i + 2;
+                    while j < bytes.len() && !(0x40..=0x7e).contains(&bytes[j]) {
+                        j += 1;
+                    }
+                    if j >= bytes.len() {
+                        break;
+                    }
+                    let params = &bytes[i + 2..j];
+                    match bytes[j] {
+                        b'H' | b'f' => {
+                            let text = std::str::from_utf8(params).unwrap_or("");
+                            let mut parts = text.split(';');
+                            let r: usize = parts.next().and_then(|p| p.parse().ok()).unwrap_or(1);
+                            let c: usize = parts.next().and_then(|p| p.parse().ok()).unwrap_or(1);
+                            self.cur = (r.saturating_sub(1), c.saturating_sub(1));
+                        }
+                        b'C' => {
+                            let n = std::str::from_utf8(params)
+                                .ok()
+                                .and_then(|p| p.parse().ok())
+                                .unwrap_or(1);
+                            self.cur.1 = (self.cur.1 + n).min(self.w);
+                        }
+                        b'K' => {
+                            let (r, c) = self.cur;
+                            if r < self.h {
+                                for x in c.min(self.w)..self.w {
+                                    self.ch[r * self.w + x] = ' ';
+                                    self.fg[r * self.w + x] = None;
+                                    self.bg[r * self.w + x] = self.live_bg;
+                                }
+                            }
+                        }
+                        b'm' => self.sgr(params),
+                        _ => {}
+                    }
+                    i = j + 1;
+                } else if bytes[i] == b'\r' {
+                    self.cur.1 = 0;
+                    i += 1;
+                } else {
+                    let s = std::str::from_utf8(&bytes[i..]).ok();
+                    if let Some(s) = s {
+                        if let Some(ch) = s.chars().next() {
+                            self.put(ch);
+                            i += ch.len_utf8();
+                            continue;
+                        }
+                    }
+                    i += 1;
+                }
+            }
+        }
+    }
+
+    fn lcg(state: &mut u64) -> u32 {
+        *state = state
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
+        (*state >> 33) as u32
+    }
+
+    #[test]
+    fn encoder_geometry_survives_random_frames() {
+        let mut seed = 0x1234_5678_9abc_def0u64;
+        for case in 0..40 {
+            let w = 1 + (lcg(&mut seed) % 18) as usize;
+            let h = 1 + (lcg(&mut seed) % 7) as usize;
+            let mut c = Canvas::new(w, h);
+            let mut emu = Emu::new(w, h);
+            let mut sink = Vec::new();
+            for frame in 0..24 {
+                let edits = 1 + (lcg(&mut seed) as usize) % (w * h + 1);
+                for _ in 0..edits {
+                    let x = (lcg(&mut seed) as usize) % w;
+                    let y = (lcg(&mut seed) as usize) % h;
+                    match lcg(&mut seed) % 5 {
+                        0 => {
+                            c.paint(x as isize, y as isize, ' ', Rgb::BLACK, None);
+                        }
+                        1 => {
+                            let col = Rgb::new(
+                                (lcg(&mut seed) % 256) as u8,
+                                (lcg(&mut seed) % 256) as u8,
+                                (lcg(&mut seed) % 256) as u8,
+                            );
+                            c.paint(
+                                x as isize,
+                                y as isize,
+                                ' ',
+                                col,
+                                Some(Rgb::new(
+                                    (lcg(&mut seed) % 256) as u8,
+                                    (lcg(&mut seed) % 256) as u8,
+                                    (lcg(&mut seed) % 256) as u8,
+                                )),
+                            );
+                        }
+                        _ => {
+                            let glyphs = ['#', '@', 'x', 'o', '+'];
+                            let ch = glyphs[(lcg(&mut seed) as usize) % glyphs.len()];
+                            let col = Rgb::new(
+                                (lcg(&mut seed) % 256) as u8,
+                                (lcg(&mut seed) % 256) as u8,
+                                (lcg(&mut seed) % 256) as u8,
+                            );
+                            c.set(x as isize, y as isize, ch, col);
+                        }
+                    }
+                }
+                if frame % 7 == 6 {
+                    // Clearing everything exercises the `EL` tail path.
+                    c.clear();
+                }
+                let slack = (lcg(&mut seed) % 9) as u8;
+                let opts = PresentOptions {
+                    color_slack: slack,
+                    sync: frame % 2 == 0,
+                    // Exercise both encoders: adaptive cursor moves plus `EL`,
+                    // and the conservative absolute-addressing path.
+                    erase_tail: frame % 3 != 0,
+                    cursor_moves: frame % 4 != 0,
+                };
+                sink.clear();
+                c.present_with(&mut sink, ColorMode::True, opts).unwrap();
+                emu.feed(&sink);
+                for y in 0..h {
+                    for x in 0..w {
+                        let idx = y * w + x;
+                        let want = c.cells[idx];
+                        let got_ch = emu.ch[idx];
+                        assert_eq!(
+                            got_ch, want.ch,
+                            "case {case} frame {frame} at {x},{y}: {sink:?}"
+                        );
+                        match (want.bg, emu.bg[idx]) {
+                            (None, None) => {}
+                            (Some(a), Some(b)) => assert!(
+                                near(a, b, slack),
+                                "case {case} frame {frame} bg at {x},{y}: {a:?} vs {b:?} slack {slack}"
+                            ),
+                            (a, b) => panic!(
+                                "case {case} frame {frame} bg at {x},{y}: {a:?} vs {b:?}"
+                            ),
+                        }
+                        if want.ch != ' ' {
+                            let got = emu.fg[idx].unwrap_or_else(|| {
+                                panic!("case {case} frame {frame} at {x},{y}: no fg")
+                            });
+                            assert!(
+                                near(want.fg, got, slack),
+                                "case {case} frame {frame} fg at {x},{y}: {:?} vs {got:?} slack {slack}",
+                                want.fg
+                            );
+                        }
+                    }
+                }
+            }
+        }
     }
 }

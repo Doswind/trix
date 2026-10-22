@@ -29,7 +29,9 @@ pub fn is_tty(fd: i32) -> bool {
 }
 
 fn emergency_restore() {
-    const RESTORE: &[u8] = b"\x1b[0m\x1b[?7h\x1b[?25h\x1b[?1049l";
+    // `?2026l` first: a half-written synchronized frame must not leave the
+    // emulator waiting for the end marker.
+    const RESTORE: &[u8] = b"\x1b[?2026l\x1b[0m\x1b[?7h\x1b[?25h\x1b[?1049l";
     unsafe {
         libc::write(1, RESTORE.as_ptr() as *const libc::c_void, RESTORE.len());
         if let Ok(guard) = SAVED_TERMIOS.try_lock() {
@@ -153,7 +155,7 @@ impl Terminal {
             libc::tcsetattr(0, libc::TCSANOW, &self.orig);
         }
         let mut out = io::stdout().lock();
-        let _ = out.write_all(b"\x1b[0m\x1b[?7h\x1b[?25h");
+        let _ = out.write_all(b"\x1b[?2026l\x1b[0m\x1b[?7h\x1b[?25h");
         if self.alt_screen {
             let _ = out.write_all(b"\x1b[?1049l");
         }
@@ -179,9 +181,14 @@ impl Terminal {
         let _ = out.flush();
     }
 
-    pub fn present(&mut self, canvas: &mut Canvas, mode: ColorMode) -> io::Result<usize> {
+    pub fn present(
+        &mut self,
+        canvas: &mut Canvas,
+        mode: ColorMode,
+        opts: crate::canvas::PresentOptions,
+    ) -> io::Result<usize> {
         let mut out = io::stdout().lock();
-        canvas.present(&mut out, mode)
+        canvas.present_with(&mut out, mode, opts)
     }
 
     /// Non-blocking read of all currently available input bytes.

@@ -317,6 +317,8 @@ trix <effect> [options]
       --ascii             force ASCII glyphs
       --color <mode>      auto | truecolor | 256 | 16 | mono [default: auto]
       --no-color          alias for --color mono
+      --perf <mode>       high | balanced | low               [default: balanced]
+      --no-sync           disable synchronized output (DEC 2026)
       --density <f>       beams/fireworks/galaxy/traffic density [default: 1.0]
       --spin <f>          black hole rotation speed        [default: 0.5]
       --twinkle <f>       galaxy twinkle rate              [default: 1.0]
@@ -361,7 +363,7 @@ Run `trix --help all` for every flag, aliases and defaults.
 - **Top bar**: effect name and key on the left, live telemetry / speed / theme / charset on the right.
 - **Bottom bar**: always-on key bar (`q quit`, `space pause`, `n/p next`, `t theme`, `h help`, `i info`).
 - **Playlist row**: progress and the next switch countdown above the key bar.
-- **`i` panel**: runtime state plus the CLI knobs the current effect actually uses.
+- **`i` panel**: runtime state (measured and target FPS, terminal KiB/s) plus the CLI knobs the current effect actually uses.
 
 `rain`, `fire` and `monalisa` are deliberately text-free ambient scenes: no top bar and no scene labels, but the bottom key bar and playlist row remain. `--no-hud` hides the top and bottom bars for recording; the `h` / `i` panels and pause box still work. `--snapshot` renders without the HUD.
 
@@ -408,68 +410,74 @@ The four newest scenes (`volcano`, `launch`, `plasma`, `interstellar`) have **no
 
 ## Performance
 
-Environment: Apple Silicon (ARM64), macOS, Rust 1.96.1, `--release` (LTO + `codegen-units=1` + `panic=abort` + `strip`). Canvas 160×48, 240-frame offscreen benchmark:
+Environment: Apple Silicon (ARM64), macOS, Rust 1.96.1, `--release` (LTO + `codegen-units=1` + `panic=abort` + `strip`). Canvas 160x48, 240-frame offscreen benchmark, truecolor. **ANSI high** is `--perf high` (exact RGB); **ANSI balanced** is the default `--perf balanced`.
 
-| Effect | Mean render | p95 | Diff output |
-| --- | ---: | ---: | ---: |
-| rain | 0.080 ms | 0.101 ms | 14.3 KiB/frame |
-| fire | 0.454 ms | 0.548 ms | 68.3 KiB/frame |
-| dragon | 0.112 ms | 0.134 ms | 8.9 KiB/frame |
-| map | 0.161 ms | 0.189 ms | 43.6 KiB/frame |
-| matrix | 0.071 ms | 0.087 ms | 12.0 KiB/frame |
-| blackhole | 0.133 ms | 0.172 ms | 28.0 KiB/frame |
-| beams | 0.085 ms | 0.113 ms | 24.9 KiB/frame |
-| fireworks | 0.040 ms | 0.064 ms | 8.6 KiB/frame |
-| solar | 0.039 ms | 0.045 ms | 7.6 KiB/frame |
-| galaxy | 0.129 ms | 0.163 ms | 23.4 KiB/frame |
-| buddha | 0.061 ms | 0.072 ms | 11.4 KiB/frame |
-| tomjerry | 0.019 ms | 0.022 ms | 2.4 KiB/frame |
-| mario | 0.013 ms | 0.016 ms | 0.7 KiB/frame |
-| ecg | 0.038 ms | 0.046 ms | 7.3 KiB/frame |
-| dandelion | 0.024 ms | 0.028 ms | 3.6 KiB/frame |
-| fish | 0.045 ms | 0.059 ms | 2.2 KiB/frame |
-| landscape | 0.038 ms | 0.043 ms | 1.7 KiB/frame |
-| shanghai | 0.241 ms | 0.269 ms | 12.2 KiB/frame |
-| tiananmen | 0.095 ms | 0.105 ms | 7.0 KiB/frame |
-| traffic | 0.029 ms | 0.036 ms | 1.7 KiB/frame |
-| tornado | 0.043 ms | 0.051 ms | 7.8 KiB/frame |
-| storm | 0.109 ms | 0.122 ms | 29.9 KiB/frame |
-| monalisa | 0.021 ms | 0.032 ms | 0.0 KiB/frame (static) |
-| ballet | 0.120 ms | 0.151 ms | 14.5 KiB/frame |
-| demoneye | 0.273 ms | 0.398 ms | 15.4 KiB/frame |
-| life | 0.158 ms | 0.209 ms | 5.6 KiB/frame |
+| Effect | Mean render | p95 | ANSI high | ANSI balanced |
+| --- | ---: | ---: | ---: | ---: |
+| rain | 0.078 ms | 0.098 ms | 12.3 KiB/frame | 10.9 KiB/frame |
+| fire | 0.381 ms | 0.413 ms | 59.3 KiB/frame | 47.9 KiB/frame |
+| dragon | 0.125 ms | 0.140 ms | 15.0 KiB/frame | 12.3 KiB/frame |
+| map | 0.108 ms | 0.143 ms | 42.0 KiB/frame | 16.9 KiB/frame |
+| matrix | 0.053 ms | 0.068 ms | 7.9 KiB/frame | 5.1 KiB/frame |
+| blackhole | 0.097 ms | 0.113 ms | 24.8 KiB/frame | 14.1 KiB/frame |
+| beams | 0.067 ms | 0.083 ms | 23.2 KiB/frame | 13.8 KiB/frame |
+| fireworks | 0.040 ms | 0.061 ms | 7.7 KiB/frame | 4.5 KiB/frame |
+| solar | 0.054 ms | 0.067 ms | 13.7 KiB/frame | 4.2 KiB/frame |
+| galaxy | 0.085 ms | 0.094 ms | 21.6 KiB/frame | 7.6 KiB/frame |
+| buddha | 0.049 ms | 0.061 ms | 8.4 KiB/frame | 3.5 KiB/frame |
+| tomjerry | 0.025 ms | 0.036 ms | 2.2 KiB/frame | 1.3 KiB/frame |
+| mario | 0.028 ms | 0.040 ms | 1.1 KiB/frame | 1.1 KiB/frame |
+| ecg | 0.032 ms | 0.040 ms | 4.4 KiB/frame | 2.8 KiB/frame |
+| dandelion | 0.032 ms | 0.042 ms | 3.6 KiB/frame | 2.8 KiB/frame |
+| fish | 0.036 ms | 0.046 ms | 2.1 KiB/frame | 2.1 KiB/frame |
+| landscape | 0.047 ms | 0.057 ms | 1.4 KiB/frame | 1.2 KiB/frame |
+| shanghai | 0.215 ms | 0.244 ms | 11.5 KiB/frame | 4.2 KiB/frame |
+| tiananmen | 0.084 ms | 0.100 ms | 6.6 KiB/frame | 2.8 KiB/frame |
+| traffic | 0.029 ms | 0.037 ms | 1.6 KiB/frame | 1.6 KiB/frame |
+| tornado | 0.093 ms | 0.107 ms | 18.4 KiB/frame | 16.2 KiB/frame |
+| storm | 0.129 ms | 0.156 ms | 27.1 KiB/frame | 24.1 KiB/frame |
+| monalisa | 0.027 ms | 0.032 ms | 0.0 KiB/frame | 0.0 KiB/frame |
+| ballet | 0.138 ms | 0.156 ms | 25.1 KiB/frame | 7.4 KiB/frame |
+| demoneye | 0.221 ms | 0.243 ms | 16.7 KiB/frame | 4.6 KiB/frame |
+| life | 0.161 ms | 0.174 ms | 5.5 KiB/frame | 1.7 KiB/frame |
+| dsh | 0.055 ms | 0.070 ms | 10.6 KiB/frame | 4.5 KiB/frame |
+| vibe | 0.026 ms | 0.034 ms | 0.1 KiB/frame | 0.1 KiB/frame |
+| volcano | 0.074 ms | 0.111 ms | 7.2 KiB/frame | 3.0 KiB/frame |
+| launch | 0.050 ms | 0.075 ms | 7.4 KiB/frame | 3.4 KiB/frame |
+| plasma | 0.409 ms | 0.429 ms | 80.5 KiB/frame | 39.9 KiB/frame |
+| interstellar | 0.031 ms | 0.040 ms | 4.9 KiB/frame | 2.3 KiB/frame |
 
-Real PTY, truecolor, 120×36, 30 FPS, 5 seconds (CPU = child `utime+stime / 5s`, including PTY writes but not the terminal's own drawing). The sample below covers the 22 effects measured in that run; `monalisa`, `ballet`, `demoneye`, `life`, `dsh`, `vibe`, `volcano`, `launch`, `plasma` and `interstellar` were added later and are not in this table:
-
-| Effect | CPU (one core) | RSS | 5 s output |
-| --- | ---: | ---: | ---: |
-| rain | 0.46% | 2.06 MiB | 1.4 MiB |
-| fire | 1.38% | 2.09 MiB | 6.0 MiB |
-| dragon | 0.70% | 2.25 MiB | 1.3 MiB |
-| map | 0.67% | 2.22 MiB | 3.8 MiB |
-| matrix | 0.35% | 2.22 MiB | 0.9 MiB |
-| blackhole | 0.60% | 2.09 MiB | 2.2 MiB |
-| beams | 0.52% | 2.03 MiB | 2.1 MiB |
-| fireworks | 0.26% | 2.14 MiB | 0.7 MiB |
-| solar | 0.33% | 2.05 MiB | 0.8 MiB |
-| galaxy | 0.61% | 2.22 MiB | 1.9 MiB |
-| buddha | 0.34% | 2.05 MiB | 1.0 MiB |
-| tomjerry | 0.24% | 2.03 MiB | 0.2 MiB |
-| mario | 0.24% | 2.03 MiB | 0.1 MiB |
-| ecg | 0.28% | 2.05 MiB | 0.7 MiB |
-| dandelion | 0.28% | 2.08 MiB | 0.5 MiB |
-| fish | 0.21% | 2.14 MiB | 0.4 MiB |
-| landscape | 0.25% | 2.08 MiB | 0.2 MiB |
-| shanghai | 0.32% | 2.09 MiB | 0.3 MiB |
-| tiananmen | 0.35% | 2.08 MiB | 0.8 MiB |
-| traffic | 0.26% | 2.14 MiB | 0.3 MiB |
-| tornado | 0.27% | 2.08 MiB | 0.7 MiB |
-| storm | 0.63% | 2.19 MiB | 3.6 MiB |
-
-- At 30 FPS the frame budget is about 33.3 ms; the heaviest effect, `fire`, costs about **1.38% of one core** offscreen (0.454 ms/frame) and about **1.4%** interactively.
+- At 30 FPS the frame budget is about 33.3 ms; the heaviest effect, `plasma`, costs about **0.41 ms/frame** and the heaviest writers (`plasma`, `fire`) stay well under 2% of one core. Rendering has never been the bottleneck on the server.
+- The default balanced profile removes redundant cursor addressing, erases cleared row tails with `EL`, may reuse a colour that is at most 3/255 away per channel, and wraps each frame in DEC 2026 synchronized output. That cuts terminal traffic by roughly 10–90% depending on the scene, with no visible change; `--perf high` restores byte-exact 24-bit colour.
 - Startup: `--version` median about **2.2 ms**; the release binary is about **1.1 MB** (1,104 KiB).
 - Memory: peak RSS under a real PTY **2.08–2.27 MiB**.
 - Interactive mode honors `NO_COLOR`; offscreen `--snapshot` / `--bench` default to truecolor and can be overridden with `--color`.
+
+### Remote / SSH sessions
+
+The server renders a frame in well under a millisecond, so lag in a remote session is almost always **terminal traffic**, not CPU. A full-screen truecolor frame is 40–120 KiB; at 30 FPS that is 1.2–3.5 MiB/s before SSH overhead. When the client cannot parse that fast, the SSH and pty buffers fill up and the terminal starts showing frames that are seconds old — which feels like input lag, not just a lower frame rate.
+
+The defaults fix that without changing the artwork:
+
+- **`--perf balanced`** (default): at most 3/255 colour drift per channel, no redundant cursor moves, `EL` for cleared tails, synchronized output, and a frame-rate governor. If a write takes more than 75% of the frame budget, the rate steps down (30 → 24 → 19 → 15 → 12 FPS); the animation clock keeps running at the requested speed, so the effect stays in real time and only drops frames. It recovers slowly when writes are cheap again.
+- **`--perf low`**: 6/255 colour drift and a 10 FPS floor for very slow links, software-rendered clients or busy CPUs.
+- **`--color 256`**: roughly halves the remaining SGR bytes. These scenes are ASCII art, so the palette approximation is hard to see; `--color 16` is the last resort.
+- **`--no-sync`**: turns off synchronized output if a particular terminal mishandles DEC 2026.
+- **`--transition none`**: removes the 0.6 s blend that renders two scenes at once; useful on very weak links.
+- `--fps` remains an upper bound; the governor never exceeds it.
+
+```bash
+# weak SSH link / software terminal
+trix plasma --perf low --color 256 --fps 20
+
+# exact colours, no adaptation (local, fast terminal)
+trix fire --perf high
+
+# measure the real traffic of a profile
+./target/release/trix plasma --bench --size 120x36 --frames 300 --perf balanced --color 256
+```
+
+At 120x36 the heaviest scenes (plasma, fire, storm) emit about 22/27/19 KiB per frame with the default balanced profile, or about 10/17/14 KiB with `--perf low --color 256`; the governor keeps the bytes-per-second inside what the link can drain.
 
 ```bash
 scripts/bench.sh
@@ -479,13 +487,14 @@ scripts/bench.sh
 ## Compatibility and FAQ
 
 - Runs on macOS, Linux and WSL (Unix termios); native Windows is not implemented.
-- 24-bit truecolor is recommended; `--color auto` degrades automatically to 256 / 16 / mono.
+- 24-bit truecolor is recommended; `--color auto` degrades automatically to 256 / 16 / mono. On a slow SSH link prefer `--color 256` and `--perf low`.
 - Dual-form effects always start in ASCII; add `--unicode` or `--charset unicode` for Unicode. `--charset kana` can mix half-width katakana into `matrix`.
 - Linux binaries are static musl builds for `x86_64` and `aarch64`, so they run on any distribution (including Alpine) on those architectures.
 - Non-TTY runs suggest `--snapshot`; `trix --snapshot -` writes ANSI to stdout.
 - The canvas is black; a dark terminal is recommended.
 - **Why is the command `trix` but the package `trix-effects`?** Short command, unique package name — the `ripgrep` / `rg` split. Installing the package (for example with `cargo install --git …`) installs the `trix` binary.
 - **Why do screenshots show ASCII?** ASCII is the default and works in every terminal/font. Unicode previews are isolated in the ASCII / Unicode section.
+- **Why does a remote session feel laggy while the server is idle?** The bottleneck is ANSI traffic and the client's parser, not the server. The default `balanced` profile cuts the traffic substantially and drops frames when writes block; `--perf low --color 256` goes further. See [Remote / SSH sessions](#remote--ssh-sessions).
 - **How do I record a GIF?** Use `--snapshot` plus `tools/ansi2png.py`, or `tools/render_gif.py`; see [Recording and documentation tools](#recording-and-documentation-tools).
 - **Shell completions?** `trix --completions bash` (also `zsh`, `fish`); install the output in your shell's completion directory.
 
@@ -534,11 +543,12 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-There are currently **254** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
+There are currently **260** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
 
 ## Versions and rollback
 
 - **Current version: 0.11.0** (`trix --version`), tag **`v0.11.0`** (2026-10-22).
+- **Unreleased on `master`:** the remote/SSH renderer overhaul, `--perf high|balanced|low` and `--no-sync`.
 - **0.11.0** adds four generative scenes: `volcano`, `launch`, `plasma` and `interstellar`.
 - **0.10.0** adds `dsh` (DeepSeek Harness) and `vibe` (Vibe Coding), plus the `--trail` knob.
 - **0.9.1** renames the package/repository to `trix-effects` (command stays `trix`), hardens `install.sh`, adds cache-safe ASCII previews and contributor/launch docs.

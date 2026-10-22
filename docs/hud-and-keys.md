@@ -88,7 +88,7 @@ macOS `Cmd` 组合键被 Terminal.app/iTerm2 截获，TUI 收不到，只能在�
 `i` 打开一个居中面板，显示：
 
 - `EFFECT`：英文名 + key；
-- `RUNNING`：fps、帧耗时、速度、主题、字符集、尺寸、颜色模式；
+- `RUNNING`：实测 fps、目标 fps、帧耗时、终端 KiB/s、速度、主题、字符集、尺寸、颜色模式；
 - `SEED`：当前种子；
 - `STATUS`：当前场景遥测（与顶栏一致，窄屏顶栏放不下时仍可在这里看到）；
 - `PLAYLIST`：播放列表模式下的进度、切换秒数、过渡模式、倒计时；
@@ -113,7 +113,9 @@ macOS `Cmd` 组合键被 Terminal.app/iTerm2 截获，TUI 收不到，只能在�
 | tomjerry | `--jump` |
 | dsh | `--trail` |
 
-公共参数：`--theme`、`--charset`、`--fps`、`--speed`、`--color`；播放列表模式下追加 `--playlist`、`--switch`、`--transition`、`--transition-secs`；设置 `--duration` 时也会显示。
+公共参数：`--theme`、`--charset`、`--fps`、`--perf`、`--speed`、`--color`；播放列表模式下追加 `--playlist`、`--switch`、`--transition`、`--transition-secs`；设置 `--duration` 时也会显示。
+
+`target` 低于 `--fps` 说明帧率调节器认为链路或终端已经饱和；`KiB/s` 是最近 0.5 秒实际写往终端的数据量（含同步输出标记）。
 
 ## 7. 维护约束
 

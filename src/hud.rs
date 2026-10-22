@@ -324,7 +324,13 @@ pub struct PlaylistInfo {
 
 pub struct Info<'a> {
     pub effect: EffectId,
+    /// Measured frames per second.
     pub fps: f32,
+    /// Current adaptive ceiling (equal to the requested `--fps` when the
+    /// governor is not throttling).
+    pub target_fps: f32,
+    /// Terminal traffic averaged over the last half second.
+    pub ansi_kib_s: f32,
     pub frame_ms: f32,
     pub mode: ColorMode,
     pub status: Option<&'a str>,
@@ -361,9 +367,11 @@ pub fn draw_info(canvas: &mut Canvas, frame: &Frame, info: &Info) {
     lines.push((
         Some("RUNNING"),
         format!(
-            "{:.0} fps | {:.1} ms | {:.2}x | {} | {} | {}x{} | {}",
+            "{:.0} fps (target {:.0}) | {:.1} ms | {:.0} KiB/s | {:.2}x | {} | {} | {}x{} | {}",
             info.fps,
+            info.target_fps,
             info.frame_ms,
+            info.ansi_kib_s,
             frame.speed,
             theme.key,
             charset_label(frame.charset),
@@ -503,6 +511,8 @@ mod tests {
             let info = Info {
                 effect: EffectId::Rain,
                 fps: 30.0,
+                target_fps: 30.0,
+                ansi_kib_s: 128.0,
                 frame_ms: 1.2,
                 mode: ColorMode::True,
                 status: None,
@@ -563,6 +573,8 @@ mod tests {
         let info = Info {
             effect: EffectId::Dandelion,
             fps: 30.0,
+            target_fps: 30.0,
+            ansi_kib_s: 128.0,
             frame_ms: 1.2,
             mode: ColorMode::True,
             status: Some("SEEDS 090 | WIND 1.0x"),
@@ -574,6 +586,8 @@ mod tests {
         assert!(all.contains("Dandelion (dandelion)"), "{all:?}");
         assert!(all.contains("SEEDS 090"), "{all:?}");
         assert!(all.contains("--seed-count 90"), "{all:?}");
+        assert!(all.contains("target 30"), "{all:?}");
+        assert!(all.contains("KiB/s"), "{all:?}");
         assert!(all.contains("i / Esc close"), "{all:?}");
     }
 

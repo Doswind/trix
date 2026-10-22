@@ -317,6 +317,8 @@ trix <effect> [options]
       --ascii             强制 ASCII 字形
       --color <mode>      auto | truecolor | 256 | 16 | mono [默认: auto]
       --no-color          --color mono 的别名
+      --perf <mode>       high | balanced | low               [默认: balanced]
+      --no-sync           关闭同步输出（DEC 2026）
       --density <f>       beams/fireworks/galaxy/traffic 密度 [默认: 1.0]
       --spin <f>          黑洞旋转速度                      [默认: 0.5]
       --twinkle <f>       银河闪烁频率                      [默认: 1.0]
@@ -361,7 +363,7 @@ trix <effect> [options]
 - **顶栏**：左侧特效名 + key，右侧实时遥测 / 速度 / 主题 / 字符集。
 - **底栏**：常驻按键提示（`q quit`、`space pause`、`n/p next`、`t theme`、`h help`、`i info`）。
 - **播放列表行**：进度和下一次切换倒计时。
-- **`i` 面板**：运行状态 + 当前特效真正在用的 CLI 参数。
+- **`i` 面板**：运行状态（实测/目标 FPS、终端 KiB/s）+ 当前特效真正在用的 CLI 参数。
 
 `rain`、`fire`、`monalisa` 是刻意无文字的 Ambient 场景：没有顶栏和场景文字，但保留底栏和播放列表行。`--no-hud` 隐藏顶栏/底栏用于录制，`h` / `i` 面板和暂停框仍然可用；`--snapshot` 不绘制 HUD。
 
@@ -408,68 +410,74 @@ trix <effect> [options]
 
 ## 性能
 
-环境：Apple Silicon（ARM64）、macOS、Rust 1.96.1、`--release`（LTO + `codegen-units=1` + `panic=abort` + `strip`）。画布 160×48，240 帧离屏压测：
+环境：Apple Silicon（ARM64）、macOS、Rust 1.96.1、`--release`（LTO + `codegen-units=1` + `panic=abort` + `strip`）。画布 160x48，240 帧离屏压测，truecolor。**ANSI high** 是 `--perf high`（精确 RGB）；**ANSI balanced** 是默认的 `--perf balanced`。
 
-| 特效 | 平均渲染 | p95 | Diff 输出 |
-| --- | ---: | ---: | ---: |
-| rain | 0.080 ms | 0.101 ms | 14.3 KiB/帧 |
-| fire | 0.454 ms | 0.548 ms | 68.3 KiB/帧 |
-| dragon | 0.112 ms | 0.134 ms | 8.9 KiB/帧 |
-| map | 0.161 ms | 0.189 ms | 43.6 KiB/帧 |
-| matrix | 0.071 ms | 0.087 ms | 12.0 KiB/帧 |
-| blackhole | 0.133 ms | 0.172 ms | 28.0 KiB/帧 |
-| beams | 0.085 ms | 0.113 ms | 24.9 KiB/帧 |
-| fireworks | 0.040 ms | 0.064 ms | 8.6 KiB/帧 |
-| solar | 0.039 ms | 0.045 ms | 7.6 KiB/帧 |
-| galaxy | 0.129 ms | 0.163 ms | 23.4 KiB/帧 |
-| buddha | 0.061 ms | 0.072 ms | 11.4 KiB/帧 |
-| tomjerry | 0.019 ms | 0.022 ms | 2.4 KiB/帧 |
-| mario | 0.013 ms | 0.016 ms | 0.7 KiB/帧 |
-| ecg | 0.038 ms | 0.046 ms | 7.3 KiB/帧 |
-| dandelion | 0.024 ms | 0.028 ms | 3.6 KiB/帧 |
-| fish | 0.045 ms | 0.059 ms | 2.2 KiB/帧 |
-| landscape | 0.038 ms | 0.043 ms | 1.7 KiB/帧 |
-| shanghai | 0.241 ms | 0.269 ms | 12.2 KiB/帧 |
-| tiananmen | 0.095 ms | 0.105 ms | 7.0 KiB/帧 |
-| traffic | 0.029 ms | 0.036 ms | 1.7 KiB/帧 |
-| tornado | 0.043 ms | 0.051 ms | 7.8 KiB/帧 |
-| storm | 0.109 ms | 0.122 ms | 29.9 KiB/帧 |
-| monalisa | 0.021 ms | 0.032 ms | 0.0 KiB/帧（静态） |
-| ballet | 0.120 ms | 0.151 ms | 14.5 KiB/帧 |
-| demoneye | 0.273 ms | 0.398 ms | 15.4 KiB/帧 |
-| life | 0.158 ms | 0.209 ms | 5.6 KiB/帧 |
+| Effect | Mean render | p95 | ANSI high | ANSI balanced |
+| --- | ---: | ---: | ---: | ---: |
+| rain | 0.078 ms | 0.098 ms | 12.3 KiB/frame | 10.9 KiB/frame |
+| fire | 0.381 ms | 0.413 ms | 59.3 KiB/frame | 47.9 KiB/frame |
+| dragon | 0.125 ms | 0.140 ms | 15.0 KiB/frame | 12.3 KiB/frame |
+| map | 0.108 ms | 0.143 ms | 42.0 KiB/frame | 16.9 KiB/frame |
+| matrix | 0.053 ms | 0.068 ms | 7.9 KiB/frame | 5.1 KiB/frame |
+| blackhole | 0.097 ms | 0.113 ms | 24.8 KiB/frame | 14.1 KiB/frame |
+| beams | 0.067 ms | 0.083 ms | 23.2 KiB/frame | 13.8 KiB/frame |
+| fireworks | 0.040 ms | 0.061 ms | 7.7 KiB/frame | 4.5 KiB/frame |
+| solar | 0.054 ms | 0.067 ms | 13.7 KiB/frame | 4.2 KiB/frame |
+| galaxy | 0.085 ms | 0.094 ms | 21.6 KiB/frame | 7.6 KiB/frame |
+| buddha | 0.049 ms | 0.061 ms | 8.4 KiB/frame | 3.5 KiB/frame |
+| tomjerry | 0.025 ms | 0.036 ms | 2.2 KiB/frame | 1.3 KiB/frame |
+| mario | 0.028 ms | 0.040 ms | 1.1 KiB/frame | 1.1 KiB/frame |
+| ecg | 0.032 ms | 0.040 ms | 4.4 KiB/frame | 2.8 KiB/frame |
+| dandelion | 0.032 ms | 0.042 ms | 3.6 KiB/frame | 2.8 KiB/frame |
+| fish | 0.036 ms | 0.046 ms | 2.1 KiB/frame | 2.1 KiB/frame |
+| landscape | 0.047 ms | 0.057 ms | 1.4 KiB/frame | 1.2 KiB/frame |
+| shanghai | 0.215 ms | 0.244 ms | 11.5 KiB/frame | 4.2 KiB/frame |
+| tiananmen | 0.084 ms | 0.100 ms | 6.6 KiB/frame | 2.8 KiB/frame |
+| traffic | 0.029 ms | 0.037 ms | 1.6 KiB/frame | 1.6 KiB/frame |
+| tornado | 0.093 ms | 0.107 ms | 18.4 KiB/frame | 16.2 KiB/frame |
+| storm | 0.129 ms | 0.156 ms | 27.1 KiB/frame | 24.1 KiB/frame |
+| monalisa | 0.027 ms | 0.032 ms | 0.0 KiB/frame | 0.0 KiB/frame |
+| ballet | 0.138 ms | 0.156 ms | 25.1 KiB/frame | 7.4 KiB/frame |
+| demoneye | 0.221 ms | 0.243 ms | 16.7 KiB/frame | 4.6 KiB/frame |
+| life | 0.161 ms | 0.174 ms | 5.5 KiB/frame | 1.7 KiB/frame |
+| dsh | 0.055 ms | 0.070 ms | 10.6 KiB/frame | 4.5 KiB/frame |
+| vibe | 0.026 ms | 0.034 ms | 0.1 KiB/frame | 0.1 KiB/frame |
+| volcano | 0.074 ms | 0.111 ms | 7.2 KiB/frame | 3.0 KiB/frame |
+| launch | 0.050 ms | 0.075 ms | 7.4 KiB/frame | 3.4 KiB/frame |
+| plasma | 0.409 ms | 0.429 ms | 80.5 KiB/frame | 39.9 KiB/frame |
+| interstellar | 0.031 ms | 0.040 ms | 4.9 KiB/frame | 2.3 KiB/frame |
 
-真实 PTY，truecolor，120×36，30 FPS，5 秒（CPU = 子进程 `utime+stime / 5s`，包含 PTY 写入，不含终端自身绘制）。下表是那一轮测到的 22 个特效；`monalisa`、`ballet`、`demoneye`、`life`、`dsh`、`vibe`、`volcano`、`launch`、`plasma`、`interstellar` 是后来加入的，未包含在这轮数据里：
-
-| 特效 | CPU（单核） | RSS | 5 秒输出 |
-| --- | ---: | ---: | ---: |
-| rain | 0.46% | 2.06 MiB | 1.4 MiB |
-| fire | 1.38% | 2.09 MiB | 6.0 MiB |
-| dragon | 0.70% | 2.25 MiB | 1.3 MiB |
-| map | 0.67% | 2.22 MiB | 3.8 MiB |
-| matrix | 0.35% | 2.22 MiB | 0.9 MiB |
-| blackhole | 0.60% | 2.09 MiB | 2.2 MiB |
-| beams | 0.52% | 2.03 MiB | 2.1 MiB |
-| fireworks | 0.26% | 2.14 MiB | 0.7 MiB |
-| solar | 0.33% | 2.05 MiB | 0.8 MiB |
-| galaxy | 0.61% | 2.22 MiB | 1.9 MiB |
-| buddha | 0.34% | 2.05 MiB | 1.0 MiB |
-| tomjerry | 0.24% | 2.03 MiB | 0.2 MiB |
-| mario | 0.24% | 2.03 MiB | 0.1 MiB |
-| ecg | 0.28% | 2.05 MiB | 0.7 MiB |
-| dandelion | 0.28% | 2.08 MiB | 0.5 MiB |
-| fish | 0.21% | 2.14 MiB | 0.4 MiB |
-| landscape | 0.25% | 2.08 MiB | 0.2 MiB |
-| shanghai | 0.32% | 2.09 MiB | 0.3 MiB |
-| tiananmen | 0.35% | 2.08 MiB | 0.8 MiB |
-| traffic | 0.26% | 2.14 MiB | 0.3 MiB |
-| tornado | 0.27% | 2.08 MiB | 0.7 MiB |
-| storm | 0.63% | 2.19 MiB | 3.6 MiB |
-
-- 30 FPS 下约 33.3 ms/帧预算；最重的 `fire` 离屏渲染约 **1.38% 单核**（0.454 ms/帧），实际交互约 **1.4%**。
+- 30 FPS 下每帧预算约 33.3 ms；最重的 `plasma` 约 **0.41 ms/帧**，输出量最大的 `plasma`、`fire` 也只占单核不到 2%。服务端渲染从来不是瓶颈。
+- 默认 balanced 档会去掉重复的光标定位、用 `EL` 擦除行尾空白、最多复用每通道相差 3/255 的颜色，并把每帧包进 DEC 2026 同步输出。按场景不同，终端流量减少约 10–90%，肉眼没有区别；`--perf high` 可恢复逐字节精确的 24-bit 颜色。
 - 启动：`--version` 中位数约 **2.2 ms**；发布二进制约 **1.1 MB**（1,104 KiB）。
 - 内存：真实 PTY 下峰值 RSS **2.08–2.27 MiB**。
 - 交互模式遵守 `NO_COLOR`；离屏 `--snapshot` / `--bench` 默认 truecolor，可用 `--color` 覆盖。
+
+### 远程 / SSH 会话
+
+服务端渲染一帧远低于 1 ms，所以远程卡顿几乎总是**终端流量**问题，而不是 CPU。一帧全屏 truecolor 有 40–120 KiB，30 FPS 就是 1.2–3.5 MiB/s（还没算 SSH 开销）。终端解析不过来时，SSH 和 pty 缓冲区会堆积，用户看到的是几秒前的旧帧——感觉像输入延迟，而不只是帧率低。
+
+默认设置在不改变画面设计的前提下解决了这个问题：
+
+- **`--perf balanced`**（默认）：每通道最多 3/255 的颜色偏差、去掉冗余光标移动、行尾用 `EL` 擦除、开启同步输出，并带帧率调节器。如果一次写入超过帧预算的 75%，帧率会逐级下降（30 → 24 → 19 → 15 → 12 FPS）；动画时钟仍按真实时间推进，所以特效速度不变，只是少画几帧。链路恢复后它会慢慢升回去。
+- **`--perf low`**：每通道 6/255 颜色偏差、10 FPS 下限，适合很慢的链路、软件渲染客户端或繁忙 CPU。
+- **`--color 256`**：其余 SGR 字节大约减半。这些特效本身就是 ASCII 艺术，调色板近似很难看出来；`--color 16` 是最后手段。
+- **`--no-sync`**：如果某个终端对 DEC 2026 处理有问题，可以关掉同步输出。
+- **`--transition none`**：去掉同时渲染两个场景的 0.6 秒过渡，极弱链路下可进一步减少峰值流量。
+- `--fps` 仍是上限，调节器不会超过它。
+
+```bash
+# 弱网 SSH / 软件终端
+trix plasma --perf low --color 256 --fps 20
+
+# 精确颜色、不降帧（本地、快速终端）
+trix fire --perf high
+
+# 测量某个档位的真实流量
+./target/release/trix plasma --bench --size 120x36 --frames 300 --perf balanced --color 256
+```
+
+在 120x36 下，最重的场景（plasma、fire、storm）默认 balanced 档每帧约 22/27/19 KiB，`--perf low --color 256` 约 10/17/14 KiB；调节器会把每秒字节数控制在链路能排空的范围内。
 
 ```bash
 scripts/bench.sh
@@ -479,13 +487,14 @@ scripts/bench.sh
 ## 兼容性与常见问题
 
 - 支持 macOS、Linux、WSL（Unix termios）；原生 Windows 未实现。
-- 推荐 24-bit truecolor；`--color auto` 会自动降级到 256 / 16 / 单色。
+- 推荐 24-bit truecolor；`--color auto` 会自动降级到 256 / 16 / 单色。弱网 SSH 下建议 `--color 256` 加 `--perf low`。
 - 双字形特效默认 ASCII；加 `--unicode` 或 `--charset unicode` 开启 Unicode。`--charset kana` 可以在 `matrix` 中混入半角片假名。
 - Linux 二进制是 `x86_64` / `aarch64` 的静态 musl 构建，任意发行版（包括 Alpine）可用。
 - 非 TTY 运行会提示 `--snapshot`；`trix --snapshot -` 输出 ANSI 到 stdout。
 - 画布是黑色，建议深色终端。
 - **为什么命令叫 `trix`、包叫 `trix-effects`？** 短命令 + 唯一包名，类似 `ripgrep` / `rg`。安装这个包（例如 `cargo install --git …`）装出来的命令是 `trix`。
 - **为什么截图是 ASCII？** ASCII 是默认，兼容所有终端/字体；Unicode 预览只放在 ASCII / Unicode 一节。
+- **服务器很闲，为什么远程还是卡？** 瓶颈在 ANSI 流量和终端解析，不在服务端。默认 `balanced` 会显著减少流量，并在写入阻塞时降帧；`--perf low --color 256` 还能更省。见[远程 / SSH 会话](#远程--ssh-会话)。
 - **怎么录制 GIF？** 用 `--snapshot` + `tools/ansi2png.py`，或 `tools/render_gif.py`；见[录制与文档工具](#录制与文档工具)。
 - **Shell 补全？** `trix --completions bash`（也支持 `zsh`、`fish`），把输出放到对应 shell 的补全目录。
 
@@ -534,11 +543,12 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-当前 **254** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
+当前 **260** 个单元/集成测试。CI 矩阵见 `.github/workflows/ci.yml`。
 
 ## 版本与回退
 
 - **当前版本：0.11.0**（`trix --version`），tag **`v0.11.0`**（2026-10-22）。
+- **`master` 上尚未发布**：远程/SSH 渲染重构、`--perf high|balanced|low` 与 `--no-sync`。
 - **0.11.0**：新增四个生成式场景：`volcano`、`launch`、`plasma`、`interstellar`。
 - **0.10.0**：新增 `dsh`（深度求索 / DeepSeek Harness）与 `vibe`（氛围编程 / Vibe Coding），以及 `--trail` 参数。
 - **0.9.1**：包名/仓库改为 `trix-effects`（命令仍是 `trix`），加固 `install.sh`，新增缓存安全的 ASCII 预览和贡献/发布文档。

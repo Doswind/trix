@@ -4,7 +4,7 @@ use std::io::Write;
 use std::path::Path;
 use std::time::{Duration, Instant};
 
-use crate::canvas::Canvas;
+use crate::canvas::{Canvas, PresentOptions};
 use crate::cli::{self, Options, Parsed, PlaylistMode};
 use crate::color::ColorMode;
 use crate::help;
@@ -16,6 +16,74 @@ use crate::theme::{self, Theme};
 use crate::transition::{Transition, TransitionMode};
 
 const SNAPSHOT_SEED: u64 = 0x7e51_a017;
+
+/// Encoder profile for traffic that actually goes to a terminal.
+fn present_options(opts: &Options) -> PresentOptions {
+    PresentOptions {
+        color_slack: opts.perf.color_slack(),
+        sync: !opts.no_sync,
+        ..PresentOptions::default()
+    }
+}
+
+/// Adaptive frame-rate governor.
+///
+/// The requested `--fps` is an upper bound.  When writing a frame takes most
+/// of the frame budget, the terminal (or the SSH link in front of it) is the
+/// bottleneck; producing more frames only builds a queue of stale pictures.
+/// The governor lowers the rate in steps, and recovers slowly once writes are
+/// comfortably fast again.
+struct Pacer {
+    max_fps: u32,
+    min_fps: u32,
+    fps: u32,
+    slow: u32,
+    fast: u32,
+}
+
+impl Pacer {
+    fn new(max_fps: u32, min_fps: u32) -> Self {
+        Pacer {
+            max_fps,
+            min_fps: min_fps.min(max_fps).max(1),
+            fps: max_fps,
+            slow: 0,
+            fast: 0,
+        }
+    }
+
+    fn frame_dur(&self) -> Duration {
+        Duration::from_secs_f64(1.0 / self.fps as f64)
+    }
+
+    /// Feed one frame's write time.  Returns true when the target changed.
+    fn observe(&mut self, present: Duration) -> bool {
+        let target = self.frame_dur();
+        if present > target.mul_f32(0.75) {
+            self.slow = self.slow.saturating_add(1);
+            self.fast = 0;
+        } else if present < target.mul_f32(0.30) {
+            self.fast = self.fast.saturating_add(1);
+            self.slow = 0;
+        } else {
+            self.slow = 0;
+            self.fast = 0;
+        }
+
+        if self.slow >= 3 && self.fps > self.min_fps {
+            let next = ((self.fps as f32 * 0.8).floor() as u32).max(self.min_fps);
+            self.fps = next.min(self.fps - 1).max(self.min_fps);
+            self.slow = 0;
+            return true;
+        }
+        if self.fast >= 90 && self.fps < self.max_fps {
+            self.fps = (self.fps + 2).min(self.max_fps);
+            self.fast = 0;
+            return true;
+        }
+        false
+    }
+}
 
 pub fn run() -> i32 {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -195,8 +263,10 @@ fn benchmark(opts: &Options) -> i32 {
     let mut canvas = Canvas::new(w, h);
     let mut sink: Vec<u8> = Vec::with_capacity(w * h * 8 + 1024);
     let mut bytes = 0usize;
+    let mut sizes = Vec::with_capacity(frames as usize);
     let mut times = Vec::with_capacity(frames as usize);
     let mut t = 0.0;
+    let popts = present_options(opts);
 
     // Warm up allocator, caches and the scene's buffers.
     for i in 0..15 {
@@ -216,7 +286,7 @@ fn benchmark(opts: &Options) -> i32 {
         canvas.clear();
         scene.draw(&mut canvas, &frame);
         sink.clear();
-        let _ = canvas.present(&mut sink, mode);
+        let _ = canvas.present_with(&mut sink, mode, popts);
         t = frame.t;
     }
 
@@ -239,15 +309,19 @@ fn benchmark(opts: &Options) -> i32 {
         canvas.clear();
         scene.draw(&mut canvas, &frame);
         sink.clear();
-        let n = canvas.present(&mut sink, mode).unwrap_or(0);
+        let n = canvas.present_with(&mut sink, mode, popts).unwrap_or(0);
         let el = start.elapsed().as_secs_f64();
         total += el;
         times.push(el);
+        sizes.push(n);
         bytes += n;
     }
     let avg = total / frames as f64;
     times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    sizes.sort_unstable();
     let p95 = times[((frames as f64 * 0.95) as usize).min(times.len() - 1)];
+    let size_p95 = sizes[((frames as f64 * 0.95) as usize).min(sizes.len() - 1)];
+    let size_max = *sizes.last().unwrap_or(&0);
     let avg_bytes = bytes as f64 / frames as f64;
     println!("trix /// offscreen render benchmark");
     println!("  effect      {:<10} theme {}", id.key(), theme.key);
@@ -261,9 +335,17 @@ fn benchmark(opts: &Options) -> i32 {
         if avg > 0.0 { 1.0 / avg } else { 0.0 }
     );
     println!(
-        "  ansi        avg {:.1} KiB/frame  ({:.2} MiB/s at {fps} fps)",
+        "  ansi        avg {:.1} KiB/frame  p95 {:.1}  max {:.1}  ({:.2} MiB/s at {fps} fps)",
         avg_bytes / 1024.0,
+        size_p95 as f64 / 1024.0,
+        size_max as f64 / 1024.0,
         avg_bytes * fps as f64 / (1024.0 * 1024.0)
+    );
+    println!(
+        "  profile     {} (colour slack {}, sync {})",
+        opts.perf.key(),
+        opts.perf.color_slack(),
+        if opts.no_sync { "off" } else { "on" }
     );
     println!("  note        timed section = scene update + draw + diff encode");
     0
@@ -320,8 +402,8 @@ fn interactive(opts: Options) -> i32 {
     let tune = tune_for(&opts);
 
     let started = Instant::now();
-    let frame_dur = Duration::from_secs_f64(1.0 / opts.fps as f64);
-    let mut next_frame = Instant::now();
+    let mut pacer = Pacer::new(opts.fps, opts.perf.min_fps(opts.fps));
+    let popts = present_options(&opts);
     let mut last_tick = Instant::now();
     let mut t = 0.0f64;
     let mut paused = false;
@@ -331,9 +413,13 @@ fn interactive(opts: Options) -> i32 {
     let mut fps_smooth = opts.fps as f32;
     let mut frame_ms = 0.0f32;
     let mut auto_clock = 0.0f32;
+    let mut ansi_window = 0usize;
+    let mut ansi_kib_s = 0.0f32;
+    let mut ansi_clock = Instant::now();
 
     loop {
-        let now = Instant::now();
+        let frame_start = Instant::now();
+        let now = frame_start;
         let real_dt = (now - last_tick).as_secs_f32().clamp(0.0, 0.1);
         last_tick = now;
         if real_dt > 0.0005 {
@@ -617,6 +703,8 @@ fn interactive(opts: Options) -> i32 {
                 let info = hud::Info {
                     effect: id,
                     fps: fps_smooth,
+                    target_fps: pacer.fps as f32,
+                    ansi_kib_s,
                     frame_ms,
                     mode,
                     status: scene_status.as_deref(),
@@ -627,11 +715,20 @@ fn interactive(opts: Options) -> i32 {
             }
         }
 
-        if let Err(e) = term.present(&mut canvas, mode) {
-            let _ = e;
-            return 0;
-        }
+        let present_start = Instant::now();
+        let written = match term.present(&mut canvas, mode, popts) {
+            Ok(n) => n,
+            Err(_) => return 0,
+        };
+        let present_time = present_start.elapsed();
         frame_ms = render_start.elapsed().as_secs_f32() * 1000.0;
+        ansi_window += written;
+        if ansi_clock.elapsed() >= Duration::from_millis(500) {
+            let secs = ansi_clock.elapsed().as_secs_f32().max(0.001);
+            ansi_kib_s = ansi_window as f32 / 1024.0 / secs;
+            ansi_window = 0;
+            ansi_clock = Instant::now();
+        }
 
         if let Some(limit) = opts.duration {
             if started.elapsed().as_secs_f64() >= limit {
@@ -639,12 +736,19 @@ fn interactive(opts: Options) -> i32 {
             }
         }
 
-        next_frame += frame_dur;
-        let now = Instant::now();
-        if next_frame > now {
-            std::thread::sleep(next_frame - now);
-        } else {
-            next_frame = now;
+        // A write that cannot keep up with the frame budget means the SSH
+        // channel, the pseudo-terminal or the emulator is saturated.  Lower
+        // the frame rate instead of queueing seconds of stale frames; the
+        // animation clock is wall time, so the effect still plays at the
+        // requested speed, just with fewer frames.
+        if opts.perf.adaptive() && !paused {
+            pacer.observe(present_time);
+        }
+
+        let work = frame_start.elapsed();
+        let frame_dur = pacer.frame_dur();
+        if work < frame_dur {
+            std::thread::sleep(frame_dur - work);
         }
     }
 }
@@ -759,6 +863,7 @@ fn info_params(
         ("--theme".to_string(), current_theme.key.to_string()),
         ("--charset".to_string(), charset_label(charset).to_string()),
         ("--fps".to_string(), opts.fps.to_string()),
+        ("--perf".to_string(), opts.perf.key().to_string()),
         ("--speed".to_string(), format!("{speed:.2}")),
         ("--color".to_string(), mode.label().to_string()),
     ];
@@ -1108,5 +1213,58 @@ mod tests {
         assert!(text.contains("--playlist cycle"), "{text}");
         assert!(text.contains("--switch 12.0"), "{text}");
         assert!(text.contains("--transition fade"), "{text}");
+    }
+
+    #[test]
+    fn pacer_drops_to_its_floor_under_pressure() {
+        let mut p = Pacer::new(30, 12);
+        assert_eq!(p.frame_dur(), Duration::from_secs_f64(1.0 / 30.0));
+        let slow = Duration::from_millis(60);
+        for _ in 0..12 {
+            p.observe(slow);
+        }
+        assert_eq!(
+            p.fps, 12,
+            "three slow frames per step, 30 -> 24 -> 19 -> 15 -> 12"
+        );
+        for _ in 0..30 {
+            p.observe(slow);
+        }
+        assert_eq!(
+            p.fps, 12,
+            "the governor must not go below the profile floor"
+        );
+    }
+
+    #[test]
+    fn pacer_recovers_slowly_when_writes_are_cheap() {
+        let mut p = Pacer::new(30, 12);
+        p.fps = 12;
+        let fast = Duration::from_millis(1);
+        for _ in 0..89 {
+            p.observe(fast);
+        }
+        assert_eq!(p.fps, 12);
+        p.observe(fast);
+        assert_eq!(p.fps, 14);
+        for _ in 0..90 * 20 {
+            p.observe(fast);
+        }
+        assert_eq!(p.fps, 30, "it must never exceed the requested rate");
+    }
+
+    #[test]
+    fn high_profile_never_adapts() {
+        let opts = Options {
+            perf: cli::PerfMode::High,
+            fps: 60,
+            ..Options::default()
+        };
+        let mut p = Pacer::new(opts.fps, opts.perf.min_fps(opts.fps));
+        assert_eq!(p.min_fps, 60);
+        for _ in 0..100 {
+            p.observe(Duration::from_millis(500));
+        }
+        assert_eq!(p.fps, 60);
     }
 }
