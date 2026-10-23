@@ -25,7 +25,7 @@
 curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | sh
 
 # Beta: remote/SSH renderer test build
-curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | TRIX_VERSION=0.11.1-beta.3 sh
+curl -fsSL https://raw.githubusercontent.com/Doswind/trix-effects/master/install.sh | TRIX_VERSION=0.11.1-beta.4 sh
 
 # Rust toolchain, straight from git
 cargo install --git https://github.com/Doswind/trix-effects --locked
@@ -322,6 +322,8 @@ trix <effect> [options]
       --no-color          alias for --color mono
       --perf <mode>       high | balanced | low               [default: balanced]
       --no-sync           disable synchronized output (DEC 2026)
+      --line-flush        newline after each frame           [default: on]
+      --no-line-flush     disable the per-frame newline
       --density <f>       beams/fireworks/galaxy/traffic density [default: 1.0]
       --spin <f>          black hole rotation speed        [default: 0.5]
       --twinkle <f>       galaxy twinkle rate              [default: 1.0]
@@ -458,11 +460,13 @@ Environment: Apple Silicon (ARM64), macOS, Rust 1.96.1, `--release` (LTO + `code
 
 ### Remote / SSH sessions
 
-This work ships in the **0.11.1-beta.3** pre-release; `v0.11.0` does not include `--perf` or the new encoder.
+This work ships in the **0.11.1-beta.4** pre-release; `v0.11.0` does not include `--perf` or the new encoder.
 
 The server renders a frame in well under a millisecond, so lag in a remote session is almost always **terminal traffic**, not CPU. A full-screen truecolor frame is 40–120 KiB; at 30 FPS that is 1.2–3.5 MiB/s before SSH overhead. When the client cannot parse that fast, the SSH and pty buffers fill up and the terminal starts showing frames that are seconds old — which feels like input lag, not just a lower frame rate.
 
 If keystrokes arrive seconds late, the terminal or SSH client is behind, not the scene CPU: its display queue is still draining old frames. Lower the amount of new output and let it catch up. The defaults already aim for headroom, but the `i` panel's **write** time is the direct signal: a large write time means the pty is blocked. If keys still lag, try `--perf low --color 256 --fps 12`, `--transition none`, `--no-sync`, or a smaller terminal window.
+
+A full-screen frame has no newlines of its own: it is one long cursor-addressed stream. Some SSH clients, loggers and trigger engines process output line by line, so that single line grows without bound and their input path slows down. Interactive frames now append a harmless newline after homing (`ESC[?6l ESC[H LF`); `--no-line-flush` turns it off. If the same effect is fast in a local terminal but slow over SSH, this is the first thing to test.
 
 The defaults fix the common case without changing the artwork:
 
@@ -470,6 +474,7 @@ The defaults fix the common case without changing the artwork:
 - **`--perf low`**: 6/255 colour drift, a **20 FPS cap**, a 10 FPS floor and transitions shortened to 0.2 s for very slow links or software-rendered clients.
 - **`--color 256`**: roughly halves the remaining SGR bytes. These scenes are ASCII art, so the palette approximation is hard to see; `--color 16` is the last resort.
 - **`--no-sync`**: turns off synchronized output if a particular terminal mishandles DEC 2026.
+- **`--line-flush`** (default on) / **`--no-line-flush`**: the per-frame newline described above; disable it only if a client shows an extra blank line.
 - **`--transition none`**: removes the 0.6 s blend that renders two scenes at once; useful on very weak links.
 - `--fps` remains an upper bound; the governor never exceeds it.
 
@@ -550,12 +555,12 @@ cargo clippy --all-targets
 cargo fmt --check
 ```
 
-There are currently **261** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
+There are currently **262** unit / integration tests. See `.github/workflows/ci.yml` for the Linux/macOS CI matrix.
 
 ## Versions and rollback
 
 - **Current version: 0.11.0** (`trix --version`), tag **`v0.11.0`** (2026-10-22).
-- **Beta: 0.11.1-beta.3** (tag **`v0.11.1-beta.3`**, pre-release): remote/SSH renderer overhaul, `--perf high|balanced|low` and `--no-sync`. Install with `TRIX_VERSION=0.11.1-beta.3`.
+- **Beta: 0.11.1-beta.4** (tag **`v0.11.1-beta.4`**, pre-release): remote/SSH renderer overhaul, `--perf high|balanced|low`, `--no-sync` and `--line-flush`. Install with `TRIX_VERSION=0.11.1-beta.4`.
 - **0.11.0** adds four generative scenes: `volcano`, `launch`, `plasma` and `interstellar`.
 - **0.10.0** adds `dsh` (DeepSeek Harness) and `vibe` (Vibe Coding), plus the `--trail` knob.
 - **0.9.1** renames the package/repository to `trix-effects` (command stays `trix`), hardens `install.sh`, adds cache-safe ASCII previews and contributor/launch docs.

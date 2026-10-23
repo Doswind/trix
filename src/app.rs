@@ -22,6 +22,7 @@ fn present_options(opts: &Options) -> PresentOptions {
     PresentOptions {
         color_slack: opts.perf.color_slack(),
         sync: !opts.no_sync,
+        line_flush: opts.line_flush,
         ..PresentOptions::default()
     }
 }

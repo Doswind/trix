@@ -66,6 +66,15 @@ pub struct PresentOptions {
     pub erase_tail: bool,
     /// Avoid redundant cursor addressing.
     pub cursor_moves: bool,
+    /// Emit a newline after a non-empty frame (at the home position, before
+    /// the sync end marker).
+    ///
+    /// A full-screen animation has no line breaks of its own: the whole
+    /// session is one enormous line of cursor-addressed output.  Some SSH
+    /// clients and loggers process output line by line (triggers, logging,
+    /// prompt detection); a single growing line can make those paths very
+    /// slow.  One harmless newline per frame resets that line.
+    pub line_flush: bool,
 }
 
 impl Default for PresentOptions {
@@ -75,6 +84,7 @@ impl Default for PresentOptions {
             sync: false,
             erase_tail: true,
             cursor_moves: true,
+            line_flush: false,
         }
     }
 }
@@ -613,8 +623,17 @@ impl Canvas {
         if out.len() == body_start {
             // Nothing changed: skip the write entirely, sync markers included.
             out.clear();
-        } else if opts.sync {
-            out.extend_from_slice(b"\x1b[?2026l");
+        } else {
+            if opts.line_flush {
+                // Home first: LF at the top row moves down one row and can
+                // never scroll the screen.  Disabling origin mode keeps that
+                // true even if a previous program left DECOM set.
+                out.extend_from_slice(b"\x1b[?6l\x1b[H\n");
+                cursor = None;
+            }
+            if opts.sync {
+                out.extend_from_slice(b"\x1b[?2026l");
+            }
         }
 
         self.last_fg = last_fg;
@@ -853,6 +872,22 @@ mod tests {
     }
 
     #[test]
+    fn line_flush_emits_a_newline_after_content() {
+        let mut c = Canvas::new(4, 3);
+        c.set(0, 0, 'x', Rgb::WHITE);
+        let mut sink = Vec::new();
+        let opts = PresentOptions {
+            line_flush: true,
+            ..PresentOptions::default()
+        };
+        c.present_with(&mut sink, ColorMode::True, opts).unwrap();
+        let s = String::from_utf8_lossy(&sink);
+        assert!(s.contains("\x1b[H\n"), "{s:?}");
+        // The flush is cursor-only: the cell is still where it was.
+        assert_eq!(c.get(0, 0).unwrap().ch, 'x');
+    }
+
+    #[test]
     fn color_slack_is_a_hard_error_bound() {
         let mut c = Canvas::new(3, 1);
         let base = Rgb::new(100, 100, 100);
@@ -1002,6 +1037,11 @@ mod tests {
                 } else if bytes[i] == b'\r' {
                     self.cur.1 = 0;
                     i += 1;
+                } else if bytes[i] == b'\n' {
+                    // The encoder only flushes lines after homing, so this
+                    // never scrolls; keep the model simple.
+                    self.cur.0 = (self.cur.0 + 1).min(self.h - 1);
+                    i += 1;
                 } else {
                     let s = std::str::from_utf8(&bytes[i..]).ok();
                     if let Some(s) = s {
@@ -1084,6 +1124,7 @@ mod tests {
                     // and the conservative absolute-addressing path.
                     erase_tail: frame % 3 != 0,
                     cursor_moves: frame % 4 != 0,
+                    line_flush: frame % 5 == 0,
                 };
                 sink.clear();
                 c.present_with(&mut sink, ColorMode::True, opts).unwrap();

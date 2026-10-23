@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PRIMARY_FLAGS = [
     "--effect", "--playlist", "--switch", "--transition", "--transition-secs",
     "--no-fade", "--fps", "--speed", "--chase-speed", "--theme", "--charset",
-    "--unicode", "--ascii", "--color", "--no-color", "--perf", "--no-sync",
+    "--unicode", "--ascii", "--color", "--no-color", "--perf", "--no-sync", "--line-flush", "--no-line-flush",
     "--no-hud", "--no-alt",
     "--density", "--spin", "--twinkle", "--meteors", "--beam-speed",
     "--beam-motion", "--beam-jump", "--trail", "--seed-count", "--seed-speed", "--street",

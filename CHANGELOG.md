@@ -2,6 +2,10 @@
 
 **English** | [简体中文](CHANGELOG.zh-CN.md)
 
+## 0.11.1-beta.4 — 2026-10-23
+
+- **Line-oriented SSH client fix**: a full-screen frame is one long cursor-addressed stream with no newlines. Some SSH clients, loggers and trigger engines process output line by line, so the whole session becomes a single ever-growing line and their input handling can stall. Every non-empty frame now ends with `ESC[?6l ESC[H LF` after homing (so it can never scroll) and resets the encoder's cursor; `--no-line-flush` disables it. This targets the Royal TSX case where a local Custom Terminal is fast but the same effect over SSH is slow. Tests grew to 262.
+
 ## 0.11.1-beta.3 — 2026-10-22
 
 - Lower-latency follow-up to `0.11.1-beta.2`: the governor now treats a write that uses 30% of the frame budget (was 75%) as a saturated pipe, so a 14 ms write at 30 fps steps down to 24 and then 19 fps instead of letting the SSH/TCP queue grow. `--perf low` caps the rate at 20 fps and shortens transitions to 0.2 s; the `i` panel now reports total and write time separately. Install with `TRIX_VERSION=0.11.1-beta.3`; tests grew to 261.

@@ -124,6 +124,9 @@ pub struct Options {
     pub perf: PerfMode,
     /// Disable DECSET 2026 synchronized output.
     pub no_sync: bool,
+    /// Emit a newline after every non-empty frame so line-oriented SSH
+    /// clients/loggers do not accumulate one enormous line.
+    pub line_flush: bool,
     pub duration: Option<f64>,
     pub density: f32,
     pub spin: f32,
@@ -176,6 +179,7 @@ impl Default for Options {
             color: None,
             perf: PerfMode::Balanced,
             no_sync: false,
+            line_flush: true,
             duration: None,
             density: 1.0,
             spin: 0.5,
@@ -257,6 +261,8 @@ pub fn parse_args(args: &[String]) -> Result<Parsed, String> {
                 "no-hud" => opts.no_hud = true,
                 "no-color" => opts.color = Some(ColorMode::Mono),
                 "no-sync" | "no-synchronized" => opts.no_sync = true,
+                "line-flush" | "flush-lines" => opts.line_flush = true,
+                "no-line-flush" => opts.line_flush = false,
                 "perf" | "performance" => {
                     let v = take_value(args, &mut i, inline, "--perf")?;
                     opts.perf = PerfMode::parse(&v).ok_or_else(|| {
@@ -545,6 +551,8 @@ pub const PRIMARY_FLAGS: &[&str] = &[
     "--no-color",
     "--perf",
     "--no-sync",
+    "--line-flush",
+    "--no-line-flush",
     "--no-hud",
     "--no-alt",
     "--density",
@@ -867,6 +875,7 @@ mod tests {
         assert_eq!(o.perf.min_fps(30), 12);
         assert_eq!(o.perf.min_fps(8), 8);
         assert!(!o.no_sync);
+        assert!(o.line_flush, "line flushing is on by default");
 
         let Parsed::Run(o) = parse_args(&args("rain --perf low --no-sync")).unwrap() else {
             panic!()
@@ -877,6 +886,10 @@ mod tests {
         assert_eq!(o.perf.max_fps(15), 15);
         assert_eq!(o.perf.min_fps(o.perf.max_fps(30)), 10);
         assert!(o.no_sync);
+        let Parsed::Run(o) = parse_args(&args("rain --no-line-flush")).unwrap() else {
+            panic!()
+        };
+        assert!(!o.line_flush);
 
         assert!(parse_args(&args("rain --perf turbo")).is_err());
     }

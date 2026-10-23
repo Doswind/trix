@@ -600,6 +600,8 @@ fn curated_options(style: &HelpStyle) -> Vec<String> {
                 "--no-color",
                 "--perf",
                 "--no-sync",
+                "--line-flush",
+                "--no-line-flush",
                 "--no-hud",
                 "--no-alt",
             ],
@@ -838,6 +840,8 @@ fn common_rows() -> &'static [(&'static str, &'static str, &'static str)] {
         ("--no-color", "alias for --color mono", ""),
         ("--perf <mode>", "high | balanced | low", "balanced"),
         ("--no-sync", "disable synchronized output", ""),
+        ("--line-flush", "newline after each frame", ""),
+        ("--no-line-flush", "disable frame newline", ""),
     ]
 }
 
@@ -1194,6 +1198,18 @@ const RENDER: &[OptRow] = &[
         flags: "--no-sync",
         arg: "",
         desc: "disable synchronized output (DECSET 2026)",
+        default: None,
+    },
+    OptRow {
+        flags: "--line-flush",
+        arg: "",
+        desc: "emit a newline after each frame (line-oriented SSH clients)",
+        default: Some("on"),
+    },
+    OptRow {
+        flags: "--no-line-flush",
+        arg: "",
+        desc: "do not emit the per-frame newline",
         default: None,
     },
     OptRow {
@@ -1718,6 +1734,8 @@ _trix() {{
     '--no-color[monochrome]' \
     '--perf[renderer profile]:mode:(high balanced low)' \
     '--no-sync[disable synchronized output]' \
+    '--line-flush[newline after each frame]' \
+    '--no-line-flush[disable frame newline]' \
     '--no-hud[hide the HUD]' \
     '--no-alt[do not use the alternate screen]' \
     '--ghost[monalisa: pure-ASCII ghost]' \
